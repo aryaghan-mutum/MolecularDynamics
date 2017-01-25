@@ -1,5 +1,4 @@
 
-  //hellosjhsdhgsfdhsgfdsfs
 var object = (function() {
     var World = function() {
 
@@ -104,7 +103,7 @@ World.prototype = {
 	    this.atoms = [];
 
 	    // Add the player.
-	    this.addAtom(0.8, 0.0, 0.0, 2);
+	    this.addAtom(1.2, 0.0, 0.0, 2);
 	    this.player = this.atoms[this.atoms.length-1];
 	    this.player.jump = 0;
 	    this.id++;
@@ -539,6 +538,13 @@ function vdW_Coulomb() {    //Nonbonded
 
   				bond_order_uncorr[i][j] = BO_s + BO_pi + BO_pi2;    //(Equation 2)
   				bond_order_uncorr[j][i] = bond_order_uncorr[i][j];
+
+  				if (bond_order_uncorr[i][j] >  paramGeneral.cutoff) {
+  					bond_order_uncorr[i][j]	-=  paramGeneral.cutoff;
+  					bond_order_uncorr[j][i]	-=  paramGeneral.cutoff;
+  					bond_order_uncorr_sigma[i][j] -=  paramGeneral.cutoff;
+  					bond_order_uncorr_sigma[j][i] -=  paramGeneral.cutoff;
+  				}
   			
   			}  //end inner for loop
   		} //end outer for loop
@@ -551,7 +557,7 @@ function vdW_Coulomb() {    //Nonbonded
 
   	var sum = 0.0; 
   	for(var j = 0; j < world.atoms.length; j++ ) {                                                                                                        
-    	sum += bond_order_uncorr[i][j];
+    	sum += bond_order_uncorr[i][j];      //lammps: 1.67001608289134
     }
     deltap[i] = sum - sbp_i.valency;              //(equation 3a)
     deltap_boc[i] = sum - sbp_i.valBoc;           //(equation 3b) 
@@ -613,13 +619,16 @@ function vdW_Coulomb() {    //Nonbonded
       	world.bond_order_pi2[i][j] = BO_pi2_corr;
         
       		//calculate the constants
-        var pow_BOs_be2 = Math.pow( BO_s, twbp.pbe2 );
+        var pow_BOs_be2 = Math.pow( BO_s_corr, twbp.pbe2 );
         var exp_be12 = Math.exp( twbp.pbe1 * ( 1.0 - pow_BOs_be2 ) );
         var cebo = -twbp.DeSigma * exp_be12 * ( 1.0 - twbp.pbe1 * twbp.pbe2 * pow_BOs_be2 );
         
         //calculate the Bond Energy
-        var e_bond = -twbp.DeSigma * BO_s_corr * exp_be12 - twbp.DePi * BO_pi_corr - twbp.DePipi * BO_pi2_corr;  //(equation 6)
-		
+      //  var e_bond = -twbp.DeSigma * BO_s_corr * exp_be12 - twbp.DePi * BO_pi_corr - twbp.DePipi * BO_pi2_corr;  //(equation 6)
+       var e_bond = -twbp.DeSigma * BO_s_corr * exp_be12 - twbp.DePi * BO_pi_corr - twbp.DePipi * BO_pi2_corr; 
+		//lammps e_bond:  -189.4051155859183
+		//lammps BO_s_corr: 0.9030395937332151
+
 
     }  // end inner for loop   
    
