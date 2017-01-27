@@ -382,16 +382,15 @@ function getValuesFromReadFile(_rij, _paramGeneral, _onebody_parameters, _twobod
 //////////////////////////////////////////////////////////VANDER WALL COULOMBIC FUNCTION/////////////////////////////////////////////////////////
    
 function vdW_Coulomb() {    //Nonbonded
-	var exp1 = exp2 = e_vdW = CEvd = 0.0;
 	var e_core = 0;  //ignore
 	var de_core = 0; //ignore
 	var e_lg = de_lg = 0.0; //ignore
 
 	var p_vdW1 = paramGeneral.pvdW1  
 	var p_vdW1i = 1.0/p_vdW1; 
-	var Rcut = paramGeneral.swb 
+	var Rcut = paramGeneral.swb;   
 	 
-	//Tapper-term
+	//Tapper-term - (Equation 21)
 	var Tap7 = 20/Rcut;
 	var Tap6 = -70/Rcut;
 	var Tap5 = 84/Rcut;
@@ -400,12 +399,17 @@ function vdW_Coulomb() {    //Nonbonded
 	var Tap2 = 0;
 	var Tap1 = 0;
 	var Tap0 = 1;
-	var Tap = 0.0;
 	var dTap = 0.0;  
 	 
-	//Taper correction
-	Tap = (Tap7 * Math.pow(r_ij, 7)) + (Tap6 * Math.pow(r_ij, 6)) + (Tap5 * Math.pow(r_ij, 5)) + (Tap4 * Math.pow(r_ij, 4)) + 
-	(Tap3 * Math.pow(r_ij, 3)) + (Tap2 * Math.pow(r_ij, 2)) + (Tap1 * Math.pow(r_ij, 1)) + Tap0;
+	//Taper correction  (Equation 22)
+	var Tap = (Tap7 * Math.pow(r_ij, 7)) + 
+	          (Tap6 * Math.pow(r_ij, 6)) + 
+	          (Tap5 * Math.pow(r_ij, 5)) + 
+	          (Tap4 * Math.pow(r_ij, 4)) + 
+	          (Tap3 * Math.pow(r_ij, 3)) + 
+	          (Tap2 * Math.pow(r_ij, 2)) + 
+	          (Tap1 * Math.pow(r_ij, 1)) + Tap0;   
+
 	  
 	//Derivative of Tapper correction
 	dTap = 7 * Tap7 * r_ij + 6 * Tap6;
@@ -415,17 +419,17 @@ function vdW_Coulomb() {    //Nonbonded
 	dTap = dTap * r_ij + 2 * Tap2;
 	dTap += Tap1/r_ij;
 
-	  	//van der waals calculations
+	//van der waals calculations
 	var powr_vdW1 = Math.pow(r_ij, p_vdW1);
-	var powgi_vdW1 = Math.pow( 1.0 / carbonObj.gammaW, p_vdW1);   
-	var fn13 = Math.pow( powr_vdW1 + powgi_vdW1, p_vdW1i );
+	var powgi_vdW1 = Math.pow( 1.0 / oxygenObj.gammaW, p_vdW1);   
+	var fn13 = Math.pow( powr_vdW1 + powgi_vdW1, p_vdW1i );    //(Equation 23b)
 
-	exp1 = Math.exp( carbonObj.alpha * (1.0 - fn13 / carbonObj.rvdw) );
-	exp2 = Math.exp( 0.5 * carbonObj.alpha * (1.0 - fn13 / carbonObj.rvdw) );  
-	e_vdW = Tap * carbonObj.dij * (exp1 - 2.0 * exp2);  //Van der Waals interactions energy equation   - (Equation 23b)
+	var exp1 = Math.exp( oxygenObj.alpha * (1.0 - fn13 / oxygenObj.rvdw) );
+	var exp2 = Math.exp( 0.5 * oxygenObj.alpha * (1.0 - fn13 / oxygenObj.rvdw) );  
+	var e_vdW = Tap * oxygenObj.dij * (exp1 - 2.0 * exp2);  //Van der Waals interactions energy equation   - (Equation 23a)
 
 	var dfn13 = Math.pow( powr_vdW1 + powgi_vdW1, p_vdW1i - 1.0) * Math.pow(r_ij, p_vdW1 - 2.0);     
-	CEvd = dTap * carbonObj.dij * (exp1 - 2.0 * exp2) - Tap * carbonObj.dij * (carbonObj.alpha /carbonObj.rvdw) * (exp1 - exp2) * dfn13;  
+	var CEvd = dTap * oxygenObj.dij * (exp1 - 2.0 * exp2) - Tap * oxygenObj.dij * (oxygenObj.alpha /oxygenObj.rvdw) * (exp1 - exp2) * dfn13;  
 
   /*
   //Coulomb calculations 
@@ -447,26 +451,6 @@ function vdW_Coulomb() {    //Nonbonded
 
 //////////////////////////////////////////////////////////BOND ORDER/////////////////////////////////////////////////////////
 
-//lammps values: 
-// roSigma: 1.247700. mine: 2.0000
-// pbo1: -0.130200.   mine: 6.2919
-// pbo2: 6.291900     mine: 1.0000
-// pbo3 = -0.123900   mine: 7.6487
-// pbo4 = 7.648700    mine: 1.0000
-// roPi = 1.086300    mine: 6.0000
-// pbo5 = -0.124400 -correct
-// pbo6 = 29.643900   mine: 0.9114
-// roPiPi = 0.908800 -correct
-// sbp_i.valency = 2.000000. mine: 15.9990
-//sbp_i.valency_val = 4.000000 -correct I wrote sbp_i.valBoc
-// p_boc1 = 50.0000 -correct
-// p_boc2 = 9.546900 -correct
-// pboc4 20.414000 -correct
-// pboc5 0.270200  -correct
-// pboc3 = 3.375400 -correct
-
-     // paramAtom: single_body_parameters
-     // paramBond: two_body_parameters
      // Calculate uncorrected bond order (Equation 2)
 	function bondOrder() {		
 
@@ -557,7 +541,7 @@ function vdW_Coulomb() {    //Nonbonded
 
   	var sum = 0.0; 
   	for(var j = 0; j < world.atoms.length; j++ ) {                                                                                                        
-    	sum += bond_order_uncorr[i][j];      //lammps: 1.67001608289134
+    	sum += bond_order_uncorr[i][j];    
     }
     deltap[i] = sum - sbp_i.valency;              //(equation 3a)
     deltap_boc[i] = sum - sbp_i.valBoc;           //(equation 3b) 
@@ -624,20 +608,11 @@ function vdW_Coulomb() {    //Nonbonded
         var cebo = -twbp.DeSigma * exp_be12 * ( 1.0 - twbp.pbe1 * twbp.pbe2 * pow_BOs_be2 );
         
         //calculate the Bond Energy
-      //  var e_bond = -twbp.DeSigma * BO_s_corr * exp_be12 - twbp.DePi * BO_pi_corr - twbp.DePipi * BO_pi2_corr;  //(equation 6)
-       var e_bond = -twbp.DeSigma * BO_s_corr * exp_be12 - twbp.DePi * BO_pi_corr - twbp.DePipi * BO_pi2_corr; 
-		//lammps e_bond:  -189.4051155859183
-		//lammps BO_s_corr: 0.9030395937332151
-
-
+        var e_bond = -twbp.DeSigma * BO_s_corr * exp_be12 - twbp.DePi * BO_pi_corr - twbp.DePipi * BO_pi2_corr;  //(equation 6)
     }  // end inner for loop   
    
-}  // end outer for loop
-
-	
- 		
+  }  // end outer for loop
 } // end bond order function
-
 
 
 	function bondEnergy(paramGeneral, onebody_parameters, r_ij) {
@@ -656,8 +631,6 @@ return { vdW_Coulomb: vdW_Coulomb, bondOrder: bondOrder,  getValuesFromReadFile:
 
 
 
-
-
 })();  //END
 
 
@@ -668,33 +641,7 @@ return { vdW_Coulomb: vdW_Coulomb, bondOrder: bondOrder,  getValuesFromReadFile:
 
 ////////////////////////////////////////////////////////////NOTES//////////////////////////////////////////
 
-//reaxc_ffield.cpp
-//reaxc_types.h
-//reaxc_bonds.cpp
 
-
-//Note
-//twbp.p_be2 : C:0.459000, H:6.250000, O:0.345100
-//twbp.p_be1 : C:-0.773800, H:-0.460000, O:0.250600
-
-//de_s : C: 158.200400, H: 153.393400, O:142.285800,
-//de_p: C: 99.189700, H: 0.0000, O: 145.00000
-//de_pp C: 78.000000, H: 0.0000, O: 50.829300
-
-//pboc4 : C: 8.953900,  H: 3.040800, O: 3.502700 
-//pboc3 : C: 34.928900, H: 2.419700, O: 0.7640000
-//pboc5 : C: 13.536600  H: 0.000300, O: 0.002100
-
-//valency_val is valency_boc, 
-//valency_boc is valency_angle
-
-  /* Testting purpose
-  		for (var i = 0; i < world.atoms.length; i++) {
-  			for (var j = 0; j < world.atoms.length; j++) {
-  				console.log(i+" "+j+" "+bond_order_uncorr[i][j]);
-  			}
-  		}
-       */
 
 
 

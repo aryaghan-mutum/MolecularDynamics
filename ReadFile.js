@@ -1,5 +1,5 @@
 
-      var r_ij = 3.9 ;
+      var r_ij = 1.2 ;
       var globalParams = [];
 	    var carbon = [];
 	    var oxygen = [];
@@ -12,7 +12,7 @@
    roSigma_ = this.roSigma;
    this.valency  = paramAtom[1];    //valency of atom
    this.atmcMass = paramAtom[2];    //atomic mass in daltons
-   this.rvdw     = paramAtom[3];    // van der Waals radius in Amstrongs = 0.18903
+   this.rvdw     = 2 * paramAtom[3];    // van der Waals radius in Amstrongs = 0.18903
    this.dij      = paramAtom[4];    //epsilon
    this.gamma    = paramAtom[5];    //gammaEEM (charge equilibration parameter) = 0.6544
    this.roPi     = paramAtom[6];    //covalent radius 2 = 1.1341
