@@ -380,28 +380,25 @@ function getValuesFromReadFile(_rij, _paramGeneral, _onebody_parameters, _twobod
 
 
 //////////////////////////////////////////////////////////VANDER WALL COULOMBIC FUNCTION/////////////////////////////////////////////////////////
-   
-function vdW_Coulomb() {    //Nonbonded
-	var e_core = 0;  //ignore
-	var de_core = 0; //ignore
-	var e_lg = de_lg = 0.0; //ignore
 
+//Van der Waals interactions - nonbonded
+function vdW_Coulomb() {    
 	var p_vdW1 = paramGeneral.pvdW1  
 	var p_vdW1i = 1.0/p_vdW1; 
 	var Rcut = paramGeneral.swb;   
 	 
-	//Tapper-term - (Equation 21)
-	var Tap7 = 20/Rcut;
-	var Tap6 = -70/Rcut;
-	var Tap5 = 84/Rcut;
-	var Tap4 = -35/Rcut;
+	//Tapper-term   (Equation 22)
+	var Tap7 = 20 / Math.pow(Rcut, 7);
+	var Tap6 = -70 / Math.pow(Rcut, 6);
+	var Tap5 = 84 / Math.pow(Rcut, 5);
+	var Tap4 = -35 / Math.pow(Rcut, 4);
 	var Tap3 = 0;
 	var Tap2 = 0;
 	var Tap1 = 0;
 	var Tap0 = 1;
 	var dTap = 0.0;  
 	 
-	//Taper correction  (Equation 22)
+	//Taper correction  (Equation 21)
 	var Tap = (Tap7 * Math.pow(r_ij, 7)) + 
 	          (Tap6 * Math.pow(r_ij, 6)) + 
 	          (Tap5 * Math.pow(r_ij, 5)) + 
@@ -426,7 +423,9 @@ function vdW_Coulomb() {    //Nonbonded
 
 	var exp1 = Math.exp( oxygenObj.alpha * (1.0 - fn13 / oxygenObj.rvdw) );
 	var exp2 = Math.exp( 0.5 * oxygenObj.alpha * (1.0 - fn13 / oxygenObj.rvdw) );  
-	var e_vdW = Tap * oxygenObj.dij * (exp1 - 2.0 * exp2);  //Van der Waals interactions energy equation   - (Equation 23a)
+	
+	//Van der Waals interactions energy equation 
+	var e_vdW = Tap * oxygenObj.dij * (exp1 - 2.0 * exp2);    // (Equation 23a)
 
 	var dfn13 = Math.pow( powr_vdW1 + powgi_vdW1, p_vdW1i - 1.0) * Math.pow(r_ij, p_vdW1 - 2.0);     
 	var CEvd = dTap * oxygenObj.dij * (exp1 - 2.0 * exp2) - Tap * oxygenObj.dij * (oxygenObj.alpha /oxygenObj.rvdw) * (exp1 - exp2) * dfn13;  
@@ -446,14 +445,10 @@ function vdW_Coulomb() {    //Nonbonded
 } // end of LR_vdW_Coulomb function
 
 
-
-
-
 //////////////////////////////////////////////////////////BOND ORDER/////////////////////////////////////////////////////////
 
-     // Calculate uncorrected bond order (Equation 2)
+    // Bond Order and Bond Energy
 	function bondOrder() {		
-
         var val_i = val_j;
         var deltap = [];
         var deltap_boc = [];
@@ -532,9 +527,7 @@ function vdW_Coulomb() {    //Nonbonded
   			
   			}  //end inner for loop
   		} //end outer for loop
-
-     
-
+    
   // Calculate Deltaprime, Deltaprime_boc values
   for(var i = 0; i < world.atoms.length; i++ ) {
 	var sbp_i = onebody_parameters[world.atoms[i].type];
@@ -584,10 +577,10 @@ function vdW_Coulomb() {    //Nonbonded
       	  var BO_pi_corr = bond_order_uncorr_pi[i][j] *f1*f1*f4*f5;
       	  var BO_pi2_corr = bond_order_uncorr_pi2[i][j] *f1*f1*f4*f5;
 
-        world.bond_order = new Array(world.atoms.length);
-		world.bond_order_sigma =  new Array(world.atoms.length);
-       	world.bond_order_pi = new Array(world.atoms.length);
-      	world.bond_order_pi2  = new Array(world.atoms.length);
+          world.bond_order = new Array(world.atoms.length);
+		  world.bond_order_sigma =  new Array(world.atoms.length);
+          world.bond_order_pi = new Array(world.atoms.length);
+      	  world.bond_order_pi2  = new Array(world.atoms.length);
 
       	for (var k = 0; k < world.atoms.length; k++) { 
             world.bond_order[k] = new Array(world.atoms.length);
@@ -602,30 +595,30 @@ function vdW_Coulomb() {    //Nonbonded
        	world.bond_order_pi[i][j] = BO_pi_corr;
       	world.bond_order_pi2[i][j] = BO_pi2_corr;
         
-      		//calculate the constants
-        var pow_BOs_be2 = Math.pow( BO_s_corr, twbp.pbe2 );
-        var exp_be12 = Math.exp( twbp.pbe1 * ( 1.0 - pow_BOs_be2 ) );
-        var cebo = -twbp.DeSigma * exp_be12 * ( 1.0 - twbp.pbe1 * twbp.pbe2 * pow_BOs_be2 );
-        
-        //calculate the Bond Energy
-        var e_bond = -twbp.DeSigma * BO_s_corr * exp_be12 - twbp.DePi * BO_pi_corr - twbp.DePipi * BO_pi2_corr;  //(equation 6)
+        var bond_energy = bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp );
+
     }  // end inner for loop   
    
   }  // end outer for loop
 } // end bond order function
 
 
-	function bondEnergy(paramGeneral, onebody_parameters, r_ij) {
-		//calculate the constants
-        var pow_BOs_be2 = Math.pow( BO_s, twbp.pbe2 );
+	function bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp) {
+        var pow_BOs_be2 = Math.pow( BO_s_corr, twbp.pbe2 );
         var exp_be12 = Math.exp( twbp.pbe1 * ( 1.0 - pow_BOs_be2 ) );
-        var cebo = -de_s * exp_be12 * ( 1.0 - twbp.pbe1 * twbp.pbe2 * pow_BOs_be2 );
+        var cebo = -twbp.DeSigma * exp_be12 * ( 1.0 - twbp.pbe1 * twbp.pbe2 * pow_BOs_be2 );
         
         //calculate the Bond Energy
-        var e_bond = -twbp.de_s * BO_s * exp_be12 - twbp.de_p * BO_pi - de_pp * BO_pi2;  //(equation 6)
-		
+        var e_bond = -twbp.DeSigma * BO_s_corr * exp_be12 - twbp.DePi * BO_pi_corr - twbp.DePipi * BO_pi2_corr;   //(Equation 6)	      
+        return e_bond;	
 	}
 
+
+//////////////////////////////////////////////////////////Lone pair energy/////////////////////////////////////////////////////////
+
+function atomEnergy() {
+
+}
 
 return { vdW_Coulomb: vdW_Coulomb, bondOrder: bondOrder,  getValuesFromReadFile: getValuesFromReadFile };
 
