@@ -257,13 +257,14 @@ function bondType(paramBond) {
 
       window.object.vdW_Coulomb();
       window.object.bondOrder();
+      window.object.atomEnergy();
         
    
         //console.log(window.testing);
        
       
 		  
-        };  // onload function ends
+       };  // onload function ends
         reader.readAsText(input.files[0]);
       }
 

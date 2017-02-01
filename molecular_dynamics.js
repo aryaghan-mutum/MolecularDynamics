@@ -378,7 +378,6 @@ function getValuesFromReadFile(_rij, _paramGeneral, _onebody_parameters, _twobod
 	twobody_parameters = _twobody_parameters;	
 }
 
-
 //////////////////////////////////////////////////////////VANDER WALL COULOMBIC FUNCTION/////////////////////////////////////////////////////////
 
 //Van der Waals interactions - nonbonded
@@ -536,8 +535,8 @@ function vdW_Coulomb() {
   	for(var j = 0; j < world.atoms.length; j++ ) {                                                                                                        
     	sum += bond_order_uncorr[i][j];    
     }
-    deltap[i] = sum - sbp_i.valency;              //(equation 3a)
-    deltap_boc[i] = sum - sbp_i.valBoc;           //(equation 3b) 
+    deltap[i] = sum - sbp_i.valency;              //(Equation 3a)
+    deltap_boc[i] = sum - sbp_i.valBoc;           //(Equation 3b) 
   }
 
   // Corrected Bond Order calculations 
@@ -561,8 +560,8 @@ function vdW_Coulomb() {
           var exp_p1j = Math.exp( -p_boc1 * deltap_j );
           var exp_p2j = Math.exp( -p_boc2 * deltap_j );  
 
-          var f2 = exp_p1i + exp_p1j;                                                                    //(equation 4c)
-          var f3 = -1.0 / p_boc2 * Math.log( 0.5 * ( exp_p2i  + exp_p2j ) );                             //(equation 4d)
+          var f2 = exp_p1i + exp_p1j;                                                                    //(Equation 4c)
+          var f3 = -1.0 / p_boc2 * Math.log( 0.5 * ( exp_p2i  + exp_p2j ) );                             //(Equation 4d)
           var f1 = 0.5 * ( ( parseFloat(val_i) + f2 )/( parseFloat(val_i) + f2 + f3 ) +  ( parseFloat(val_j) + f2 )/( parseFloat(val_j) + f2 + f3 ) );   //(equation 4b)  
               
           // Correction for 1-3 bond orders
@@ -570,8 +569,8 @@ function vdW_Coulomb() {
           var exp_f4 = Math.exp(-(parseFloat(twbp.pboc4) * ( BO * BO ) - deltap_boc_i) * parseFloat(twbp.pboc3) + parseFloat(twbp.pboc5));   
           var exp_f5 = Math.exp(-(parseFloat(twbp.pboc4) * ( BO * BO ) - deltap_boc_j) * parseFloat(twbp.pboc3) + parseFloat(twbp.pboc5));    
 
-          var f4 = 1.0 / (1.0 + exp_f4);   //(equation 4e)
-          var f5 = 1.0 / (1.0 + exp_f5);   //(equation 4f)
+          var f4 = 1.0 / (1.0 + exp_f4);   //(Equation 4e)
+          var f5 = 1.0 / (1.0 + exp_f5);   //(Equation 4f)
       	
       	  var BO_s_corr = bond_order_uncorr_sigma[i][j] *f1*f4*f5;
       	  var BO_pi_corr = bond_order_uncorr_pi[i][j] *f1*f1*f4*f5;
@@ -590,18 +589,15 @@ function vdW_Coulomb() {
         }
 
         //corrected bond order
-		world.bond_order[i][j] = BO_s_corr + BO_pi_corr + BO_pi2_corr;     //(equation 4a)
+		world.bond_order[i][j] = BO_s_corr + BO_pi_corr + BO_pi2_corr;     //(Equation 4a)
 		world.bond_order_sigma[i][j] = BO_s_corr;
        	world.bond_order_pi[i][j] = BO_pi_corr;
       	world.bond_order_pi2[i][j] = BO_pi2_corr;
         
         var bond_energy = bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp );
-
-    }  // end inner for loop   
-   
+    }  // end inner for loop     
   }  // end outer for loop
 } // end bond order function
-
 
 	function bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp) {
         var pow_BOs_be2 = Math.pow( BO_s_corr, twbp.pbe2 );
@@ -617,11 +613,63 @@ function vdW_Coulomb() {
 //////////////////////////////////////////////////////////Lone pair energy/////////////////////////////////////////////////////////
 
 function atomEnergy() {
+	var deltap_e = [];
+    var delta_lp = [];
+
+    //declare and initialize the arrays 
+    var bond_order = new Array(world.atoms.length);
+    var bond_order_uncorr_pi = new Array(world.atoms.length);
+    var bond_order_uncorr_pi2 = new Array(world.atoms.length);
+
+    //declare and initialize the array indexes
+    for (var i = 0; i < world.atoms.length; i++) { 
+        bond_order[i] = new Array(world.atoms.length);
+  		bond_order_uncorr_pi[i] = new Array(world.atoms.length);
+  		bond_order_uncorr_pi2[i] = new Array(world.atoms.length);
+    }
+
+    for (var i = 0; i < world.atoms.length; i++) {  
+  			bond_order[i][i] = 0.0;
+  			bond_order_uncorr_pi[i][i] = 0.0;
+  			bond_order_uncorr_pi2[i][i] = 0.0;
+            
+  			for (var j = i + 1; j < world.atoms.length; j++) {   
+  				var atom_i = world.atoms[i];
+  				var atom_j = world.atoms[j];
+        
+  				var dx = atom_i.pos.x - atom_j.pos.x;
+  				var dy = atom_i.pos.y - atom_j.pos.y;
+  				var dz = atom_i.pos.z - atom_j.pos.z;
+  				var r_ij = Math.sqrt(dx*dx + dy*dy + dz*dz);
+  			
+  				var sbp_i = onebody_parameters[atom_i.type];
+  				var sbp_j = onebody_parameters[atom_j.type];	
+  				var twbp =  twobody_parameters[atom_i.type][atom_j.type];   
+  			}
+	}
+	for(var i = 0; i < world.atoms.length; i++ ) {
+		bond_order[i][i] = 0.0;
+		var sbp_i = onebody_parameters[world.atoms[i].type];
+
+  		var sum = 0.0; 
+  		for(var j = 0; j < world.atoms.length; j++ ) {                                                                                                        
+    		sum += bond_order[i][j];    
+    	}
+    	deltap_e[i] = sum - sbp_i.valency;              //(Equation 7)
+	}
+
+	for(var i = 0; i < world.atoms.length; i++ ) { 
+    /* lone-pair Energy */
+    	var p_lp2;
+    	var expvd2 = Math.exp( -75 * delta_lp[i] );
+    	var inv_expvd2 = 1 / (1 + expvd2 );
+    	var E_lp = p_lp2 * delta_lp[i] * inv_expvd2;     //(Equation 10)
+	}
 
 }
 
-return { vdW_Coulomb: vdW_Coulomb, bondOrder: bondOrder,  getValuesFromReadFile: getValuesFromReadFile };
 
+return { vdW_Coulomb: vdW_Coulomb,  bondOrder: bondOrder, atomEnergy: atomEnergy, getValuesFromReadFile: getValuesFromReadFile };
 
 
 })();  //END
@@ -629,11 +677,6 @@ return { vdW_Coulomb: vdW_Coulomb, bondOrder: bondOrder,  getValuesFromReadFile:
 
 
  
-
-
-
-////////////////////////////////////////////////////////////NOTES//////////////////////////////////////////
-
 
 
 
