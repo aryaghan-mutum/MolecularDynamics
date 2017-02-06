@@ -24,9 +24,9 @@
    this.valAngle = paramAtom[10]; 
    this.povun5   = paramAtom[11];  
    this.nu       = paramAtom[12];  
-   this.chiEEM   = paramAtom[13];    //charge equilibration parameter 
+   this.chiEEM   = paramAtom[13];     //charge equilibration parameter 
    this.etaEEM   = 2 * paramAtom[14]; //charge equilibration parameter    
-   this.nu       = paramAtom[15];    
+   this.nlp_opt  = paramAtom[15];    
    
    this.roPiPi   = paramAtom[16];  //(covalent radius 3) = 1.2114
    roPiPi_ = this.roPiPi;
@@ -101,28 +101,6 @@ var pboc3_   = null;
 var pboc4_   = null;
 var pboc5_   = null;
 
-//lammps values: 
-// roSigma: 1.247700. 
-// pbo1: -0.130200. -correct  
-// pbo2: 6.291900   -correct  
-// pbo3 = -0.123900 -correct 
-// pbo4 = 7.648700  -correct 
-// roPi = 1.086300    
-// pbo5 = -0.124400 -correct
-// pbo6 = 29.643900 -correct
-// roPiPi = 0.908800 -correct
-// sbp_i.valency = 2.000000. mine: 15.9990
-//sbp_i.valency_val = 4.000000 -correct I wrote sbp_i.valBoc
-// p_boc1 = 50.0000 -correct
-// p_boc2 = 9.546900 -correct
-// pboc4 20.414000 -correct
-// pboc5 0.270200  -correct
-// pboc3 = 3.375400 -correct
-// DeSigma = 60.146300
-// DePi = 176.620200
-// DePiPi = 51.143000
-// twbp.pbe1 = -0.28200
-// twbp.pbe2 = 0.244100
 
 function bondType(paramBond) {
    this.at1     = paramBond[0];
