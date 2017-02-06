@@ -642,15 +642,21 @@ function atomEnergy() {
 	for(var i = 0; i < world.atoms.length; i++ ) {
 		var atom_i = world.atoms[i];
   		var atom_j = world.atoms[j];
+
+
+    	var sbp_i = onebody_parameters[atom_i.type];
+  		//var sbp_j = onebody_parameters[atom_j.type];	
+  		var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[i].type]; 
   		
   		var sum = 0.0; 
   		for(var j = 0; j < world.atoms.length; j++ ) {                                                                                                        
-    		sum += world.bond_order[i][j];      	
-    	}
+    		sum += world.bond_order[i][j];  
 
     	var sbp_i = onebody_parameters[atom_i.type];
-    	//var sbp_j = onebody_parameters[atom_j.type];	
-  		//var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type];   
+    	     	
+    	}
+
+    	
     	
     	var deltap_e = sum - sbp_i.valency;                               //(Equation 7)
 	
