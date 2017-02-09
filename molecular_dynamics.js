@@ -643,21 +643,16 @@ function atomEnergy() {
 		var atom_i = world.atoms[i];
   		var atom_j = world.atoms[j];
 
-
     	var sbp_i = onebody_parameters[atom_i.type];
-  		//var sbp_j = onebody_parameters[atom_j.type];	
   		var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[i].type]; 
   		
   		var sum = 0.0; 
   		for(var j = 0; j < world.atoms.length; j++ ) {                                                                                                        
     		sum += world.bond_order[i][j];  
 
-    	var sbp_i = onebody_parameters[atom_i.type];
-    	     	
+    	    var sbp_i = onebody_parameters[atom_i.type];	     	
     	}
 
-    	
-    	
     	var deltap_e = sum - sbp_i.valency;                               //(Equation 7)
 	
 		var pow0 = 2 + deltap_e - 2 * (deltap_e/2);
@@ -666,9 +661,9 @@ function atomEnergy() {
     	deltap_i_lp[i] = sbp_i.nlp_opt - n_lp;                            //(Equation 9)
 
         // lone-pair Energy 
-    	var expvd2 = Math.exp( -75 * deltap_i_lp );
+    	var expvd2 = Math.exp( -75 * deltap_i_lp[i] );
     	var inv_expvd2 = 1 / (1 + expvd2 );
-    	E_lp += sbp_i.plp2 * deltap_i_lp[i] * inv_expvd2;                    //(Equation 10)
+    	E_lp += sbp_i.plp2 * deltap_i_lp[i] * inv_expvd2;                 //(Equation 10)
 	}
   
 	 //Initialize parameters
@@ -679,36 +674,53 @@ function atomEnergy() {
 	var p_ovun5 = sbp_i.povun5;
 	var p_ovun6 = paramGeneral.povun6;
 	var p_ovun7 = paramGeneral.povun7;
-
-
-	//Over-coordination energy 
-	var dfvl = 0.0 ;	//??
+	var p_ovun8 = paramGeneral.povun8;
+    var dfvl = 0.0 ;	
 	var sum_ovun1 = 0.0;
 	var sum_ovun2 = 0.0;
+	var delta = [];   //-0.3299838982863208
+    var delta_lp_temp = []; //-4.214210580499866e-08
+    var exp_ovun2 = 0.0;
+    var Delta_lpcorr = 0.0;
+	
+	//Over-coordination energy 	
 	for( var i = 0; i < world.atoms.length; i++ ) { 
 		if( sbp_i.atmcMass > 21.00 ) dfvl = 0.0;
 		else dfvl = 1.0;   // only for 1st-row elements
 
-		for( var i = 0; i < world.atoms.length; i++) { 
-        	sum_ovun1 += p_ovun1 * twbp.DeSigma * bond_order;
-        	sum_ovun2 += (delta[j] - dfvl * delta_lp_temp[j2]) * ( bond_order_uncorr_pi  + bond_order_uncorr_pi2  );
+		for( var j = i + 1; j < world.atoms.length; j++) { 
+        	sum_ovun1 += p_ovun1 * twbp.DeSigma * bond_order;  //bond_order = 1.670016101713679
+        	sum_ovun2 += ( delta[j] - dfvl*deltap_i_lp[j]) * ( bond_order_uncorr_pi + bond_order_uncorr_pi2  );  //bond_order_uncorr_pi = 0.7669765079804641
     	}
 
    		var exp_ovun1 = p_ovun3 * Math.exp( p_ovun4 * sum_ovun2 );
         var inv_exp_ovun1 = 1.0 / (1 + exp_ovun1);
-        var Delta_lpcorr  = delta[i] - (dfvl * delta_lp_temp[i]) * inv_exp_ovun1;
+        Delta_lpcorr  = delta[i] - (dfvl * delta_lp_temp[i]) * inv_exp_ovun1;    //(Equation 11b)
 
-        var exp_ovun2 = Math.exp( p_ovun2 * Delta_lpcorr );
+        exp_ovun2 = Math.exp( p_ovun2 * Delta_lpcorr );
         var inv_exp_ovun2 = 1.0 / (1.0 + exp_ovun2);
-
         var DlpVi = 1.0 / (Delta_lpcorr + sbp_i.valency + 1e-8);
-        var CEover1 = Delta_lpcorr * DlpVi * inv_exp_ovun2;
-
-        var CEover2 = sum_ovun1 * DlpVi * inv_exp_ovun2 * (1.0 - Delta_lpcorr * ( DlpVi + p_ovun2 * exp_ovun2 * inv_exp_ovun2 ));
-        var CEover3 = CEover2 * (1.0 - dfvl * dDelta_lp[i] * inv_exp_ovun1 );
-        var CEover4 = CEover2 * (dfvl * Delta_lp_temp[i]) * p_ovun4 * exp_ovun1 * (inv_exp_ovun1 * inv_exp_ovun1);
-	
+      
+        var Eover = (sum_ovun1 * DlpVi) * (Delta_lpcorr) * (inv_exp_ovun2);        //(Equation 11a)
 	}
+
+	//Under-coordination potential
+    var exp_ovun2n = 1.0 / exp_ovun2;
+    var exp_ovun6 = Math.exp( p_ovun6 * Delta_lpcorr );
+    var exp_ovun8 = p_ovun7 * Math.exp(p_ovun8 * sum_ovun2);
+    var inv_exp_ovun2n = 1.0 / (1.0 + exp_ovun2n);
+    var inv_exp_ovun8 = 1.0 / (1.0 + exp_ovun8);
+
+    for( var i = 0; i < world.atoms.length; i++ ) { 
+    	 var Eunder = -p_ovun5 * (1.0 - exp_ovun6) * inv_exp_ovun2n * inv_exp_ovun8;       //(Equation 12)
+
+    	 var Eunder1 = inv_exp_ovun2n * ( p_ovun5 * p_ovun6 * exp_ovun6 * inv_exp_ovun8 + p_ovun2 * Eunder * exp_ovun2n );
+         var Eunder2 = -Eunder * p_ovun8 * exp_ovun8 * inv_exp_ovun8;
+         var Eunder3 = Eunder1 * ( 1.0 - dfvl * delta_lp_temp[i] * inv_exp_ovun1);
+    	 var Eunder4 = Eunder1 * ( dfvl * delta_lp_temp[i] ) * p_ovun4 * exp_ovun1 * (inv_exp_ovun1 * inv_exp_ovun1) + Eunder2;
+    }
+
+
 
 }  //end atomEnergy function
 
@@ -719,7 +731,7 @@ return { vdW_Coulomb: vdW_Coulomb,  bondOrder: bondOrder, atomEnergy: atomEnergy
 })();  //END
 
 
-
+//note: 
  
 
 
