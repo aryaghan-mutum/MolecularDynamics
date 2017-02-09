@@ -233,9 +233,10 @@ function bondType(paramBond) {
       //Display Logic
       window.object.getValuesFromReadFile(r_ij, param_global, onebody_parameters, twobody_parameters);
 
-      window.object.vdW_Coulomb();
+      window.object.vanDerWaalsInteraction();
       window.object.bondOrder();
       window.object.atomEnergy();
+      window.object.angleEnergy();
         
    
         //console.log(window.testing);

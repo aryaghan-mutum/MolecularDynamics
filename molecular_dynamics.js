@@ -382,8 +382,15 @@ function getValuesFromReadFile(_rij, _paramGeneral, _onebody_parameters, _twobod
 
 //////////////////////////////////////////////////////////VANDER WALL COULOMBIC FUNCTION/////////////////////////////////////////////////////////
 
-//Van der Waals interactions - nonbonded
-function vdW_Coulomb() {    
+
+/// <summary>
+///   Van der Waals interactions:
+///   In van der Waals interactions, we use a distance-corrected Morse-potential (Equations. 23a-b). 
+///   By including a shielded interaction (Equation 23b) excessively high repulsions between 
+///   bonded atoms (1-2 interactions) and atoms sharing a valence angle (1-3 interactions) are avoided.
+/// </summary>
+
+function vanDerWaalsInteraction() {    
 	var p_vdW1 = paramGeneral.pvdW1  
 	var p_vdW1i = 1.0/p_vdW1; 
 	var Rcut = paramGeneral.swb;   
@@ -397,7 +404,6 @@ function vdW_Coulomb() {
 	var Tap2 = 0;
 	var Tap1 = 0;
 	var Tap0 = 1;
-	var dTap = 0.0;  
 	 
 	//Taper correction  (Equation 21)
 	var Tap = (Tap7 * Math.pow(r_ij, 7)) + 
@@ -406,16 +412,17 @@ function vdW_Coulomb() {
 	          (Tap4 * Math.pow(r_ij, 4)) + 
 	          (Tap3 * Math.pow(r_ij, 3)) + 
 	          (Tap2 * Math.pow(r_ij, 2)) + 
-	          (Tap1 * Math.pow(r_ij, 1)) + Tap0;   
+	          (Tap1 * Math.pow(r_ij, 1)) + Tap0;  
 
-	  
 	//Derivative of Tapper correction
-	dTap = 7 * Tap7 * r_ij + 6 * Tap6;
+	var dTap = 7 * Tap7 * r_ij + 6 * Tap6;
 	dTap = dTap * r_ij + 5 * Tap5;
 	dTap = dTap * r_ij + 4 * Tap;
 	dTap = dTap * r_ij + 3 * Tap3;
 	dTap = dTap * r_ij + 2 * Tap2;
 	dTap += Tap1/r_ij;
+
+	var coulomb = coulombInteraction(r_ij, Tap, dTap); 
 
 	//van der waals calculations
 	var powr_vdW1 = Math.pow(r_ij, p_vdW1);
@@ -431,24 +438,55 @@ function vdW_Coulomb() {
 	var dfn13 = Math.pow( powr_vdW1 + powgi_vdW1, p_vdW1i - 1.0) * Math.pow(r_ij, p_vdW1 - 2.0);     
 	var CEvd = dTap * oxygenObj.dij * (exp1 - 2.0 * exp2) - Tap * oxygenObj.dij * (oxygenObj.alpha /oxygenObj.rvdw) * (exp1 - exp2) * dfn13;  
 
-  /*
-  //Coulomb calculations 
-  dr3gamij_1 = ( r_ij * r_ij * r_ij + twbp.gamma );
-  dr3gamij_3 = pow( dr3gamij_1 , 0.33333333333333 );
+   
+} // end of vanDerWaalsInteraction function
 
-  tmp = Tap / dr3gamij_3;
-  lr.H = EV_to_KCALpMOL * tmp;
-  lr.e_ele = C_ele * tmp;
 
-  lr.CEclmb = C_ele * ( dTap -  Tap * r_ij / dr3gamij_1 ) / dr3gamij_3;
- */
+/// <summary>
+///   Coulomb Ineraction:
+///   As with the van der Waals-interactions, Coulomb interactions are taken into account between all atom pairs. 
+///   To adjust for orbital overlap between atoms at close distances a shielded Coulomb-potential is used (Equation 24).
+/// </summary>
+function coulombInteraction(r_ij, Tap, dTap){
 
-} // end of LR_vdW_Coulomb function
+	for(var i = 0; i < world.atoms.length; i++) {
+  				var atom_i = world.atoms[i];
+  				var atom_j = world.atoms[j]; 
+  	for(var j = i+1; j < world.atoms.length; j++) {	
+
+  		var sbp_i = onebody_parameters[atom_i.type];
+  		//var sbp_j = onebody_parameters[atom_j.type];	
+   		 var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type];   
+ 		
+ 		 var C_ele = 0.0;	
+          var dr3gamij_1 = ( r_ij * r_ij * r_ij + twbp.gamma );
+             var dr3gamij_3 = Math.pow( dr3gamij_1 , 0.33333333333333 );
+
+  //var tmp = Tap / dr3gamij_3;
+  
+  //var e_coul += C_ele * system->my_atoms[i].q * system->my_atoms[j].q * tmp;      // (Equation 24)
+
+ // var CEclmb = C_ele * system->my_atoms[i].q * system->my_atoms[j].q * 
+  //             ( dTap -  Tap * r_ij / dr3gamij_1 ) / dr3gamij_3;
+
+	}
+
+
+
+
+}
+}
 
 
 //////////////////////////////////////////////////////////BOND ORDER/////////////////////////////////////////////////////////
 
-    // Bond Order and Bond Energy
+/// <summary>
+///   Bond Order and Bond Energy:
+///   A fundamental assumption of ReaxFF is that the bond order BO’ij between a pair of atoms can be obtained directly 
+///   from the interatomic distance rij as given in Equation (2). In calculating the bond orders, ReaxFF distinguishes 
+///   between contributions from sigma bonds, pi-bonds and double pi bonds.
+/// </summary>
+    
 	function bondOrder() {		
         var val_i = val_j;
         var deltap = [];
@@ -549,6 +587,7 @@ function vdW_Coulomb() {
 
   // Corrected Bond Order calculations 
   for(var i = 0; i < world.atoms.length; i++ ) {     
+   
     val_i = sbp_i.valency;    
     sbp_i = onebody_parameters[world.atoms[i].type]; 
     var deltap_i = deltap[i];
@@ -584,6 +623,8 @@ function vdW_Coulomb() {
       	  var BO_pi_corr = bond_order_uncorr_pi[i][j] *f1*f1*f4*f5;
       	  var BO_pi2_corr = bond_order_uncorr_pi2[i][j] *f1*f1*f4*f5;
 
+      	  var bond_energy = bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp );
+
           world.bond_order = new Array(world.atoms.length);
 		  world.bond_order_sigma =  new Array(world.atoms.length);
           world.bond_order_pi = new Array(world.atoms.length);
@@ -602,11 +643,8 @@ function vdW_Coulomb() {
        	world.bond_order_pi[i][j] = BO_pi_corr;
       	world.bond_order_pi2[i][j] = BO_pi2_corr;
         
-        var bond_energy = bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp );
     }  // end inner for loop     
   }  // end outer for loop
-
-
 
 
    // Corrected overcoordination (deltap_i):
@@ -629,7 +667,7 @@ function bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp) {
     var exp_be12 = Math.exp( twbp.pbe1 * ( 1.0 - pow_BOs_be2 ) );
     var cebo = -twbp.DeSigma * exp_be12 * ( 1.0 - twbp.pbe1 * twbp.pbe2 * pow_BOs_be2 );
         
-        //calculate the Bond Energy
+    //calculate the Bond Energy
     var e_bond = -twbp.DeSigma * BO_s_corr * exp_be12 - twbp.DePi * BO_pi_corr - twbp.DePipi * BO_pi2_corr;   //(Equation 6)	      
     return e_bond;	
 }
@@ -637,16 +675,22 @@ function bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp) {
 
 //////////////////////////////////////////////////////////Lone pair energy/////////////////////////////////////////////////////////
 
+/// <summary>
+///   Lone pair energy:
+///   Equation (8) is used to determine the number of lone pairs around an atom. Δ e is determined iin Equation (7) 
+///   and describes the difference between the total number of outer shell electrons (6 for oxygen, 4 for silicon, 1 for hydrogen) 
+///   and the sum of bond orders around an atomic center.
+/// </summary>
+
 function atomEnergy() {
 	//var deltap_e = new Array(world.atoms.length);
    var deltap_i_lp = new Array(world.atoms.length);
    var p_lp1 = paramGeneral.plp1;  
 	
-
     //declare and initialize the arrays
-	var bond_order = world.bond_order;
-	var bond_order_uncorr_pi = world.bond_order_pi;
-	var bond_order_uncorr_pi2 = world.bond_order_pi2;
+   var bond_order = world.bond_order;
+   var bond_order_uncorr_pi = world.bond_order_pi;
+   var bond_order_uncorr_pi2 = world.bond_order_pi2;
   
   // var bond_order = new Array(world.atoms.length);
   // var bond_order_uncorr_pi = new Array(world.atoms.length);
@@ -663,7 +707,6 @@ function atomEnergy() {
   		var sum = 0.0; 										 //NAN  ??
   		for(var j = 0; j < world.atoms.length; j++ ) {                                                                                                        
     		sum += world.bond_order[i][j];  
-
     	    var sbp_i = onebody_parameters[atom_i.type];	     	
     	}
 
@@ -679,8 +722,19 @@ function atomEnergy() {
     	E_lp += sbp_i.plp2 * deltap_i_lp[i] * inv_expvd2;                 //(Equation 10)
 	}
   
+	 var over  = overCoordination(sbp_i, twbp, bond_order, bond_order_uncorr_pi, bond_order_uncorr_pi2, deltap_i_lp);
 
-	 //Initialize parameters
+}  //end atomEnergy function
+
+
+/// <summary>
+///   Over Coordination:
+///   For an overcoordinated atom (Δi>0), equations (11a-b) impose an energy penalty on the system. 
+///   The degree of overcoordination Δ is decreased if the atom contains a broken-up lone electron pair. 
+///   This is done by calculating a corrected overcoordination (equation 11b), taking the deviation from 
+///   the optimal number of lone pairs, as calculated in equation (9), into account.
+/// </summary>
+function overCoordination(sbp_i, twbp,  bond_order, bond_order_uncorr_pi, bond_order_uncorr_pi2, deltap_i_lp) {
 	var p_ovun1 = twbp.povun1;
 	var p_ovun2 = sbp_i.povun2;
 	var p_ovun3 = paramGeneral.povun3;
@@ -696,9 +750,7 @@ function atomEnergy() {
     var delta_lp_temp = []; //-4.214210580499866e-08
     var exp_ovun2 = 0.0;
     var Delta_lpcorr = 0.0;
-	
 
-	//Over-coordination energy 	
 	for( var i = 0; i < world.atoms.length; i++ ) { 
 		if( sbp_i.atmcMass > 21.00 ) dfvl = 0.0;
 		else dfvl = 1.0;   // only for 1st-row elements
@@ -717,31 +769,50 @@ function atomEnergy() {
         var DlpVi = 1.0 / (Delta_lpcorr + sbp_i.valency + 1e-8);
       
         var Eover = (sum_ovun1 * DlpVi) * (Delta_lpcorr) * (inv_exp_ovun2);        //(Equation 11a)
-	}
+
+  		var under = underCoordination(exp_ovun2, p_ovun6, Delta_lpcorr, p_ovun7, p_ovun8, sum_ovun2, dfvl, delta_lp_temp);
+        return Eover;
+	}	  
+}  //end overCoordination function
 
 
-	//Under-coordination potential
+
+/// <summary>
+///   Under Coordination:
+///   For an undercoordinated atom (Δi<0), we want to take into account the energy contribution for the resonance 
+//    of the π-electron between attached under-coordinated atomic centers. This is done by equations 12 where Eunder 
+//    is only important if the bonds between under-coordinated atom i and its under-coordinated neighbors j partly have π-bond character.
+/// </summary>
+function underCoordination(exp_ovun2, p_ovun6, Delta_lpcorr, p_ovun7, p_ovun8, sum_ovun2, p_ovun5, p_ovun2, dfvl, delta_lp_temp) {
     var exp_ovun2n = 1.0 / exp_ovun2;
     var exp_ovun6 = Math.exp( p_ovun6 * Delta_lpcorr );
     var exp_ovun8 = p_ovun7 * Math.exp(p_ovun8 * sum_ovun2);
     var inv_exp_ovun2n = 1.0 / (1.0 + exp_ovun2n);
     var inv_exp_ovun8 = 1.0 / (1.0 + exp_ovun8);
 
+    var Eunder = 0.0;
     for( var i = 0; i < world.atoms.length; i++ ) { 
-    	 var Eunder = -p_ovun5 * (1.0 - exp_ovun6) * inv_exp_ovun2n * inv_exp_ovun8;       //(Equation 12)
+    	 Eunder = -p_ovun5 * (1.0 - exp_ovun6) * inv_exp_ovun2n * inv_exp_ovun8;       //(Equation 12)
 
     	 var Eunder1 = inv_exp_ovun2n * ( p_ovun5 * p_ovun6 * exp_ovun6 * inv_exp_ovun8 + p_ovun2 * Eunder * exp_ovun2n );
          var Eunder2 = -Eunder * p_ovun8 * exp_ovun8 * inv_exp_ovun8;
-         var Eunder3 = Eunder1 * ( 1.0 - dfvl * delta_lp_temp[i] * inv_exp_ovun1);
-    	 var Eunder4 = Eunder1 * ( dfvl * delta_lp_temp[i] ) * p_ovun4 * exp_ovun1 * (inv_exp_ovun1 * inv_exp_ovun1) + Eunder2;
+       //  var Eunder3 = Eunder1 * ( 1.0 - dfvl * delta_lp_temp[i] * inv_exp_ovun1);
+    //	 var Eunder4 = Eunder1 * ( dfvl * delta_lp_temp[i] ) * p_ovun4 * exp_ovun1 * (inv_exp_ovun1 * inv_exp_ovun1) + Eunder2;
     }
 
+    return Eunder;
+
+}  //end underCoordination function
 
 
-}  //end atomEnergy function
+
+function angleEnergy(){
 
 
-return { vdW_Coulomb: vdW_Coulomb,  bondOrder: bondOrder, atomEnergy: atomEnergy, getValuesFromReadFile: getValuesFromReadFile };
+}
+
+
+return { vanDerWaalsInteraction: vanDerWaalsInteraction,  bondOrder: bondOrder, atomEnergy: atomEnergy, angleEnergy: angleEnergy, getValuesFromReadFile: getValuesFromReadFile };
 
 
 })();  //END
@@ -752,6 +823,9 @@ return { vdW_Coulomb: vdW_Coulomb,  bondOrder: bondOrder, atomEnergy: atomEnergy
 //set the vakue for delta_i  
 // why world.bond_order shows NaN  ?
 //  WHY delta_i[ SHOWS NaN ?
+
+//find the value for EV_to_KCALpMOL, lr->H, lr->e_ele, C_ele in lammps
+// value of system->my_atoms[i] ?
 
 
 
