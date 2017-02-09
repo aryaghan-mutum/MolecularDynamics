@@ -28,7 +28,6 @@ var object = (function() {
 	this.twobody_parameters = null;
 	this.deltap_i = null;    //used in Equation 5
 	this.deltap_i_lp = null;    //used in Equation 9
-	
 
 	var self = this;
 	var tick = function() {
@@ -464,6 +463,7 @@ function vdW_Coulomb() {
         var bond_order_uncorr_pi = new Array(world.atoms.length);
         var bond_order_uncorr_pi2 = new Array(world.atoms.length);
 
+
         //declare and initialize the array indexes
         for (var i = 0; i < world.atoms.length; i++) { 
         	bond_order_uncorr[i] = new Array(world.atoms.length);
@@ -471,6 +471,7 @@ function vdW_Coulomb() {
   			bond_order_uncorr_pi[i] = new Array(world.atoms.length);
   			bond_order_uncorr_pi2[i] = new Array(world.atoms.length);
         }
+
 
 		for (var i = 0; i < world.atoms.length; i++) {  
   			bond_order_uncorr[i][i] = 0.0;
@@ -530,6 +531,8 @@ function vdW_Coulomb() {
   			}  //end inner for loop
   		} //end outer for loop
     
+
+
   // Calculate Deltaprime, Deltaprime_boc values
   for(var i = 0; i < world.atoms.length; i++ ) {
 	var sbp_i = onebody_parameters[world.atoms[i].type];
@@ -541,6 +544,8 @@ function vdW_Coulomb() {
     deltap[i] = sum - sbp_i.valency;              //(Equation 3a)
     deltap_boc[i] = sum - sbp_i.valBoc;           //(Equation 3b) 
   }
+
+
 
   // Corrected Bond Order calculations 
   for(var i = 0; i < world.atoms.length; i++ ) {     
@@ -602,6 +607,8 @@ function vdW_Coulomb() {
   }  // end outer for loop
 
 
+
+
    // Corrected overcoordination (deltap_i):
   for(var i = 0; i < world.atoms.length; i++ ) {
 	var sbp_i = onebody_parameters[world.atoms[i].type];
@@ -613,40 +620,47 @@ function vdW_Coulomb() {
     deltap_i[i] = sum - sbp_i.valency;              //(Equation 5)
   }
 
+
 } // end bond order function
 
-	function bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp) {
-        var pow_BOs_be2 = Math.pow( BO_s_corr, twbp.pbe2 );
-        var exp_be12 = Math.exp( twbp.pbe1 * ( 1.0 - pow_BOs_be2 ) );
-        var cebo = -twbp.DeSigma * exp_be12 * ( 1.0 - twbp.pbe1 * twbp.pbe2 * pow_BOs_be2 );
+
+function bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp) {
+    var pow_BOs_be2 = Math.pow( BO_s_corr, twbp.pbe2 );
+    var exp_be12 = Math.exp( twbp.pbe1 * ( 1.0 - pow_BOs_be2 ) );
+    var cebo = -twbp.DeSigma * exp_be12 * ( 1.0 - twbp.pbe1 * twbp.pbe2 * pow_BOs_be2 );
         
         //calculate the Bond Energy
-        var e_bond = -twbp.DeSigma * BO_s_corr * exp_be12 - twbp.DePi * BO_pi_corr - twbp.DePipi * BO_pi2_corr;   //(Equation 6)	      
-        return e_bond;	
-	}
+    var e_bond = -twbp.DeSigma * BO_s_corr * exp_be12 - twbp.DePi * BO_pi_corr - twbp.DePipi * BO_pi2_corr;   //(Equation 6)	      
+    return e_bond;	
+}
 
 
 //////////////////////////////////////////////////////////Lone pair energy/////////////////////////////////////////////////////////
 
 function atomEnergy() {
 	//var deltap_e = new Array(world.atoms.length);
-    var deltap_i_lp = new Array(world.atoms.length);
-	var p_lp1 = paramGeneral.plp1;  
-	                      
-    //declare and initialize the arrays 
-    var bond_order = new Array(world.atoms.length);
-    var bond_order_uncorr_pi = new Array(world.atoms.length);
-    var bond_order_uncorr_pi2 = new Array(world.atoms.length);
+   var deltap_i_lp = new Array(world.atoms.length);
+   var p_lp1 = paramGeneral.plp1;  
+	
 
+    //declare and initialize the arrays
+	var bond_order = world.bond_order;
+	var bond_order_uncorr_pi = world.bond_order_pi;
+	var bond_order_uncorr_pi2 = world.bond_order_pi2;
+  
+  // var bond_order = new Array(world.atoms.length);
+  // var bond_order_uncorr_pi = new Array(world.atoms.length);
+  // var bond_order_uncorr_pi2 = new Array(world.atoms.length);
+//parseFloat
     var E_lp = 0.0;
 	for(var i = 0; i < world.atoms.length; i++ ) {
 		var atom_i = world.atoms[i];
-  		var atom_j = world.atoms[j];
+  	//	var atom_j = world.atoms[j];
 
     	var sbp_i = onebody_parameters[atom_i.type];
   		var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[i].type]; 
   		
-  		var sum = 0.0; 
+  		var sum = 0.0; 										 //NAN  ??
   		for(var j = 0; j < world.atoms.length; j++ ) {                                                                                                        
     		sum += world.bond_order[i][j];  
 
@@ -654,11 +668,10 @@ function atomEnergy() {
     	}
 
     	var deltap_e = sum - sbp_i.valency;                               //(Equation 7)
-	
 		var pow0 = 2 + deltap_e - 2 * (deltap_e/2);
 		var n_lp = ( deltap_e/2 ) + Math.exp( -p_lp1 * pow0 * pow0 );     //(Equation 8)
        
-    	deltap_i_lp[i] = sbp_i.nlp_opt - n_lp;                            //(Equation 9)
+    	deltap_i_lp[i] = sbp_i.nlp_opt - n_lp;                            //(Equation 9)    //NAN  ??
 
         // lone-pair Energy 
     	var expvd2 = Math.exp( -75 * deltap_i_lp[i] );
@@ -666,6 +679,7 @@ function atomEnergy() {
     	E_lp += sbp_i.plp2 * deltap_i_lp[i] * inv_expvd2;                 //(Equation 10)
 	}
   
+
 	 //Initialize parameters
 	var p_ovun1 = twbp.povun1;
 	var p_ovun2 = sbp_i.povun2;
@@ -678,31 +692,33 @@ function atomEnergy() {
     var dfvl = 0.0 ;	
 	var sum_ovun1 = 0.0;
 	var sum_ovun2 = 0.0;
-	var delta = [];   //-0.3299838982863208
+	var delta_i = new Array(world.atoms.length);   //-0.3299838982863208
     var delta_lp_temp = []; //-4.214210580499866e-08
     var exp_ovun2 = 0.0;
     var Delta_lpcorr = 0.0;
 	
+
 	//Over-coordination energy 	
 	for( var i = 0; i < world.atoms.length; i++ ) { 
 		if( sbp_i.atmcMass > 21.00 ) dfvl = 0.0;
 		else dfvl = 1.0;   // only for 1st-row elements
 
 		for( var j = i + 1; j < world.atoms.length; j++) { 
-        	sum_ovun1 += p_ovun1 * twbp.DeSigma * bond_order;  //bond_order = 1.670016101713679
-        	sum_ovun2 += ( delta[j] - dfvl*deltap_i_lp[j]) * ( bond_order_uncorr_pi + bond_order_uncorr_pi2  );  //bond_order_uncorr_pi = 0.7669765079804641
+        	sum_ovun1 += p_ovun1 * twbp.DeSigma * bond_order;  
+        	sum_ovun2 += ( delta_i[j] - dfvl*deltap_i_lp[j]) * ( bond_order_uncorr_pi + bond_order_uncorr_pi2  );  
     	}
 
    		var exp_ovun1 = p_ovun3 * Math.exp( p_ovun4 * sum_ovun2 );
         var inv_exp_ovun1 = 1.0 / (1 + exp_ovun1);
-        Delta_lpcorr  = delta[i] - (dfvl * delta_lp_temp[i]) * inv_exp_ovun1;    //(Equation 11b)
+        Delta_lpcorr  = delta_i[i] - (dfvl * deltap_i_lp[i]) * inv_exp_ovun1;    //(Equation 11b)
 
         exp_ovun2 = Math.exp( p_ovun2 * Delta_lpcorr );
-        var inv_exp_ovun2 = 1.0 / (1.0 + exp_ovun2);
+        var inv_exp_ovun2 = 1.0 / (1.0 + exp_ovun2);  
         var DlpVi = 1.0 / (Delta_lpcorr + sbp_i.valency + 1e-8);
       
         var Eover = (sum_ovun1 * DlpVi) * (Delta_lpcorr) * (inv_exp_ovun2);        //(Equation 11a)
 	}
+
 
 	//Under-coordination potential
     var exp_ovun2n = 1.0 / exp_ovun2;
@@ -732,7 +748,10 @@ return { vdW_Coulomb: vdW_Coulomb,  bondOrder: bondOrder, atomEnergy: atomEnergy
 
 
 //note: 
- 
+
+//set the vakue for delta_i  
+// why world.bond_order shows NaN  ?
+//  WHY delta_i[ SHOWS NaN ?
 
 
 
