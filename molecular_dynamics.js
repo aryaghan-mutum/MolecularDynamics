@@ -688,9 +688,9 @@ function atomEnergy() {
    var p_lp1 = paramGeneral.plp1;  
 	
     //declare and initialize the arrays
-   var bond_order = world.bond_order;
-   var bond_order_uncorr_pi = world.bond_order_pi;
-   var bond_order_uncorr_pi2 = world.bond_order_pi2;
+  var bond_order = world.bond_order;
+  var bond_order_uncorr_pi = world.bond_order_pi;
+  var bond_order_uncorr_pi2 = world.bond_order_pi2;
   
   // var bond_order = new Array(world.atoms.length);
   // var bond_order_uncorr_pi = new Array(world.atoms.length);
@@ -704,9 +704,9 @@ function atomEnergy() {
     	var sbp_i = onebody_parameters[atom_i.type];
   		var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[i].type]; 
   		
-  		var sum = 0.0; 										 //NAN  ??
+  		var sum = 0.0; 										
   		for(var j = 0; j < world.atoms.length; j++ ) {                                                                                                        
-    		sum += world.bond_order[i][j];  
+    		sum += world.bond_order[i][j];               //NAN  ??
     	    var sbp_i = onebody_parameters[atom_i.type];	     	
     	}
 
@@ -722,7 +722,7 @@ function atomEnergy() {
     	E_lp += sbp_i.plp2 * deltap_i_lp[i] * inv_expvd2;                 //(Equation 10)
 	}
   
-	 var over  = overCoordination(sbp_i, twbp, bond_order, bond_order_uncorr_pi, bond_order_uncorr_pi2, deltap_i_lp);
+	var over  = overCoordination(sbp_i, twbp, bond_order, bond_order_uncorr_pi, bond_order_uncorr_pi2, deltap_i_lp);
 
 }  //end atomEnergy function
 
@@ -734,23 +734,23 @@ function atomEnergy() {
 ///   This is done by calculating a corrected overcoordination (equation 11b), taking the deviation from 
 ///   the optimal number of lone pairs, as calculated in equation (9), into account.
 /// </summary>
-function overCoordination(sbp_i, twbp,  bond_order, bond_order_uncorr_pi, bond_order_uncorr_pi2, deltap_i_lp) {
+function overCoordination(sbp_i, twbp, bond_order, bond_order_uncorr_pi, bond_order_uncorr_pi2, deltap_i_lp) {
+	
 	var p_ovun1 = twbp.povun1;
 	var p_ovun2 = sbp_i.povun2;
 	var p_ovun3 = paramGeneral.povun3;
 	var p_ovun4 = paramGeneral.povun4;
 	var p_ovun5 = sbp_i.povun5;
-	var p_ovun6 = paramGeneral.povun6;
-	var p_ovun7 = paramGeneral.povun7;
-	var p_ovun8 = paramGeneral.povun8;
-    var dfvl = 0.0 ;	
+    
+    var dfvl = 0.0;	
 	var sum_ovun1 = 0.0;
 	var sum_ovun2 = 0.0;
 	var delta_i = new Array(world.atoms.length);   //-0.3299838982863208
     var delta_lp_temp = []; //-4.214210580499866e-08
     var exp_ovun2 = 0.0;
     var Delta_lpcorr = 0.0;
-
+    
+    var Eover = 0.0;
 	for( var i = 0; i < world.atoms.length; i++ ) { 
 		if( sbp_i.atmcMass > 21.00 ) dfvl = 0.0;
 		else dfvl = 1.0;   // only for 1st-row elements
@@ -768,11 +768,12 @@ function overCoordination(sbp_i, twbp,  bond_order, bond_order_uncorr_pi, bond_o
         var inv_exp_ovun2 = 1.0 / (1.0 + exp_ovun2);  
         var DlpVi = 1.0 / (Delta_lpcorr + sbp_i.valency + 1e-8);
       
-        var Eover = (sum_ovun1 * DlpVi) * (Delta_lpcorr) * (inv_exp_ovun2);        //(Equation 11a)
+        Eover = (sum_ovun1 * DlpVi) * (Delta_lpcorr) * (inv_exp_ovun2);        //(Equation 11a)    
+	}
 
-  		var under = underCoordination(exp_ovun2, p_ovun6, Delta_lpcorr, p_ovun7, p_ovun8, sum_ovun2, dfvl, delta_lp_temp);
-        return Eover;
-	}	  
+    var under = underCoordination(exp_ovun2, sum_ovun2, delta_lp_temp, Delta_lpcorr, dfvl);
+	
+	return Eover;	  
 }  //end overCoordination function
 
 
@@ -783,7 +784,12 @@ function overCoordination(sbp_i, twbp,  bond_order, bond_order_uncorr_pi, bond_o
 //    of the π-electron between attached under-coordinated atomic centers. This is done by equations 12 where Eunder 
 //    is only important if the bonds between under-coordinated atom i and its under-coordinated neighbors j partly have π-bond character.
 /// </summary>
-function underCoordination(exp_ovun2, p_ovun6, Delta_lpcorr, p_ovun7, p_ovun8, sum_ovun2, p_ovun5, p_ovun2, dfvl, delta_lp_temp) {
+function underCoordination(exp_ovun2, sum_ovun2, delta_lp_temp, Delta_lpcorr, dfvl) {
+    
+	var p_ovun6 = paramGeneral.povun6;
+	var p_ovun7 = paramGeneral.povun7;
+	var p_ovun8 = paramGeneral.povun8;
+
     var exp_ovun2n = 1.0 / exp_ovun2;
     var exp_ovun6 = Math.exp( p_ovun6 * Delta_lpcorr );
     var exp_ovun8 = p_ovun7 * Math.exp(p_ovun8 * sum_ovun2);
