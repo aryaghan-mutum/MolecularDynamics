@@ -433,7 +433,7 @@ function vanDerWaalsInteraction() {
 	var exp2 = Math.exp( 0.5 * oxygenObj.alpha * (1.0 - fn13 / oxygenObj.rvdw) );  
 	
 	//Van der Waals interactions energy equation 
-	var e_vdW = Tap * oxygenObj.dij * (exp1 - 2.0 * exp2);    // (Equation 23a)
+	var E_vdW = Tap * oxygenObj.dij * (exp1 - 2.0 * exp2);    // (Equation 23a)
 
 	var dfn13 = Math.pow( powr_vdW1 + powgi_vdW1, p_vdW1i - 1.0) * Math.pow(r_ij, p_vdW1 - 2.0);     
 	var CEvd = dTap * oxygenObj.dij * (exp1 - 2.0 * exp2) - Tap * oxygenObj.dij * (oxygenObj.alpha /oxygenObj.rvdw) * (exp1 - exp2) * dfn13;  
@@ -668,8 +668,8 @@ function bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp) {
     var cebo = -twbp.DeSigma * exp_be12 * ( 1.0 - twbp.pbe1 * twbp.pbe2 * pow_BOs_be2 );
         
     //calculate the Bond Energy
-    var e_bond = -twbp.DeSigma * BO_s_corr * exp_be12 - twbp.DePi * BO_pi_corr - twbp.DePipi * BO_pi2_corr;   //(Equation 6)	      
-    return e_bond;	
+    var E_bond = -twbp.DeSigma * BO_s_corr * exp_be12 - twbp.DePi * BO_pi_corr - twbp.DePipi * BO_pi2_corr;   //(Equation 6)	      
+    return E_bond;	
 }
 
 
@@ -750,7 +750,7 @@ function overCoordination(sbp_i, twbp, bond_order, bond_order_uncorr_pi, bond_or
     var exp_ovun2 = 0.0;
     var Delta_lpcorr = 0.0;
     
-    var Eover = 0.0;
+    var E_over = 0.0;
 	for( var i = 0; i < world.atoms.length; i++ ) { 
 		if( sbp_i.atmcMass > 21.00 ) dfvl = 0.0;
 		else dfvl = 1.0;   // only for 1st-row elements
@@ -768,12 +768,12 @@ function overCoordination(sbp_i, twbp, bond_order, bond_order_uncorr_pi, bond_or
         var inv_exp_ovun2 = 1.0 / (1.0 + exp_ovun2);  
         var DlpVi = 1.0 / (Delta_lpcorr + sbp_i.valency + 1e-8);
       
-        Eover = (sum_ovun1 * DlpVi) * (Delta_lpcorr) * (inv_exp_ovun2);        //(Equation 11a)    
+        E_over = (sum_ovun1 * DlpVi) * (Delta_lpcorr) * (inv_exp_ovun2);        //(Equation 11a)    
 	}
 
     var under = underCoordination(exp_ovun2, sum_ovun2, delta_lp_temp, Delta_lpcorr, dfvl);
 	
-	return Eover;	  
+	return E_over;	  
 }  //end overCoordination function
 
 
@@ -796,17 +796,17 @@ function underCoordination(exp_ovun2, sum_ovun2, delta_lp_temp, Delta_lpcorr, df
     var inv_exp_ovun2n = 1.0 / (1.0 + exp_ovun2n);
     var inv_exp_ovun8 = 1.0 / (1.0 + exp_ovun8);
 
-    var Eunder = 0.0;
+    var E_under = 0.0;
     for( var i = 0; i < world.atoms.length; i++ ) { 
     	 Eunder = -p_ovun5 * (1.0 - exp_ovun6) * inv_exp_ovun2n * inv_exp_ovun8;       //(Equation 12)
 
-    	 var Eunder1 = inv_exp_ovun2n * ( p_ovun5 * p_ovun6 * exp_ovun6 * inv_exp_ovun8 + p_ovun2 * Eunder * exp_ovun2n );
-         var Eunder2 = -Eunder * p_ovun8 * exp_ovun8 * inv_exp_ovun8;
+    	 var E_under1 = inv_exp_ovun2n * ( p_ovun5 * p_ovun6 * exp_ovun6 * inv_exp_ovun8 + p_ovun2 * Eunder * exp_ovun2n );
+         var E_under2 = -Eunder * p_ovun8 * exp_ovun8 * inv_exp_ovun8;
        //  var Eunder3 = Eunder1 * ( 1.0 - dfvl * delta_lp_temp[i] * inv_exp_ovun1);
     //	 var Eunder4 = Eunder1 * ( dfvl * delta_lp_temp[i] ) * p_ovun4 * exp_ovun1 * (inv_exp_ovun1 * inv_exp_ovun1) + Eunder2;
     }
 
-    return Eunder;
+    return E_under;
 
 }  //end underCoordination function
 
@@ -818,7 +818,10 @@ function angleEnergy(){
 }
 
 
-return { vanDerWaalsInteraction: vanDerWaalsInteraction,  bondOrder: bondOrder, atomEnergy: atomEnergy, angleEnergy: angleEnergy, getValuesFromReadFile: getValuesFromReadFile };
+return { vanDerWaalsInteraction: vanDerWaalsInteraction,  
+	     bondOrder: bondOrder,  atomEnergy: atomEnergy,  
+	     angleEnergy: angleEnergy,  
+	     getValuesFromReadFile: getValuesFromReadFile };
 
 
 })();  //END
