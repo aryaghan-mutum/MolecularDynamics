@@ -13,12 +13,13 @@
    this.valency  = paramAtom[1];    //valency of atom
    this.atmcMass = paramAtom[2];    //atomic mass in daltons
    this.rvdw     = 2 * paramAtom[3];    // van der Waals radius in Amstrongs = 0.18903
-   this.dij      = paramAtom[4];    //epsilon
-   this.gamma    = paramAtom[5];    //gammaEEM (charge equilibration parameter) = 0.6544
+   this.dij      = paramAtom[4];    //epsilon  
+   this.gamma    = Math.pow (1/paramAtom[5], 3);    //gammaEEM (charge equilibration parameter) = 0.6544
+   gamma_  = this.gamma;    
    this.roPi     = paramAtom[6];    //covalent radius 2 = 1.1341
    roPi_ = this.roPi;
-   this.valE     = paramAtom[7];    //val(e) (an additional valence, see atoms O and N) = 4
    
+   this.valE     = paramAtom[7];    //val(e) (an additional valence, see atoms O and N) = 4 
    this.alpha    = paramAtom[8]; 
    this.gammaW   = paramAtom[9];     //gamma(w) (van der Waals screening distance in Å) 
    this.valAngle = paramAtom[10]; 
@@ -27,7 +28,7 @@
    this.chiEEM   = paramAtom[13];     //charge equilibration parameter 
    this.etaEEM   = 2 * paramAtom[14]; //charge equilibration parameter    
    this.nlp_opt  = paramAtom[15];    
-   
+  
    this.roPiPi   = paramAtom[16];  //(covalent radius 3) = 1.2114
    roPiPi_ = this.roPiPi;
    this.plp2     = paramAtom[17];  // elp (lone pair energy—carbon has no lone pairs, see O and N ) = 0.0
@@ -38,9 +39,9 @@
    pboc3_ = this.pboc3;
    this.pboc5    = paramAtom[21];
    pboc5_ = this.pboc5;
+   
    this.nu       = paramAtom[22];
    this.nu 	     = paramAtom[23]
-   
    this.povun2   = paramAtom[24]     
    this.pvaL3    = paramAtom[25];
    this.nu       = paramAtom[26];   
@@ -100,6 +101,7 @@ var roPiPi_  = null;
 var pboc3_   = null;
 var pboc4_   = null;
 var pboc5_   = null;
+var gamma_   = null;
 
 
 function bondType(paramBond) {
@@ -127,6 +129,7 @@ function bondType(paramBond) {
    this.pboc3   = pboc3_;
    this.pboc4   = pboc4_;
    this.pboc5   = pboc5_;
+   this.gamma   = gamma_;
 }
 
 

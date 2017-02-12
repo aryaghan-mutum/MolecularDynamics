@@ -465,7 +465,7 @@ function coulombInteraction(r_ij, Tap, dTap){
   		   //var sbp_j = onebody_parameters[atom_j.type];	
    		   var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type];   
  			
-           var dr3gamij_1 = parseFloat( r_ij * r_ij * r_ij + twbp.DePipi);  //twbp.gamma = 0.8630975892069014
+           var dr3gamij_1 = parseFloat( r_ij * r_ij * r_ij + twbp.gamma);  //twbp.gamma = 0.8630975892069014
            var dr3gamij_3 = Math.pow( dr3gamij_1 , 0.33333333333333 );
            var tmp = Tap / dr3gamij_3;
   
