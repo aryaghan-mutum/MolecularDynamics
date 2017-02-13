@@ -450,8 +450,8 @@ function vanDerWaalsInteraction() {
 function coulombInteraction(r_ij, Tap, dTap){
 
 	const C_ELE = 332.06371;  //Coulomb's constant
-	var q_i = 0.0;
-	var q_j = 0.0;
+	const q_i = 0.262462;
+	const q_j = -0.262462;
 
 	var E_coul = 0.0;
 	for(var i = 0; i < world.atoms.length; i++) {
@@ -511,7 +511,6 @@ function coulombInteraction(r_ij, Tap, dTap){
   			bond_order_uncorr_pi[i] = new Array(world.atoms.length);
   			bond_order_uncorr_pi2[i] = new Array(world.atoms.length);
         }
-
 
 		for (var i = 0; i < world.atoms.length; i++) {  
   			bond_order_uncorr[i][i] = 0.0;
@@ -585,91 +584,95 @@ function coulombInteraction(r_ij, Tap, dTap){
     deltap_boc[i] = sum - sbp_i.valBoc;           //(Equation 3b) 
   }
 
+	world.bond_order = new Array(world.atoms.length);
+	world.bond_order_sigma =  new Array(world.atoms.length);
+	world.bond_order_pi = new Array(world.atoms.length);
+	world.bond_order_pi2  = new Array(world.atoms.length);
 
+	for (var k = 0; k < world.atoms.length; k++) { 
+		world.bond_order[k] = new Array(world.atoms.length);
+  		world.bond_order_sigma[k] = new Array(world.atoms.length);
+  		world.bond_order_pi[k] = new Array(world.atoms.length);
+  		world.bond_order_pi2[k] = new Array(world.atoms.length);
+	}
 
-  // Corrected Bond Order calculations 
-  for(var i = 0; i < world.atoms.length; i++ ) {     
+	// Zero diagonal elements.
+	for (var i = 0; i < world.atoms.length; i++ ) {  
+		world.bond_order[i][i] = 0.0;
+  		world.bond_order_sigma[i][i] = 0.0;
+  		world.bond_order_pi[i][i] = 0.0;
+  		world.bond_order_pi2[i][i] = 0.0;
+	}
+
+    // Corrected Bond Order calculations 
+ 	for(var i = 0; i < world.atoms.length; i++ ) {     
    
-    val_i = sbp_i.valency;    
-    sbp_i = onebody_parameters[world.atoms[i].type]; 
-    var deltap_i = deltap[i];
-    var deltap_boc_i = deltap_boc[i];  
+    	val_i = sbp_i.valency;    
+    	sbp_i = onebody_parameters[world.atoms[i].type]; 
+    	var deltap_i = deltap[i];
+    	var deltap_boc_i = deltap_boc[i];  
        
-    for(var j = i + 1; j < world.atoms.length; j++ ) {   
-    	var sbp_j = onebody_parameters[world.atoms[j].type];                                      
-        var val_j = sbp_j.valency;             
-        var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type];  
+    	for(var j = i + 1; j < world.atoms.length; j++ ) {   
+    		var sbp_j = onebody_parameters[world.atoms[j].type];                                      
+        	var val_j = sbp_j.valency;             
+        	var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type];  
   	                   
-          var deltap_j = deltap[j];
-          var deltap_boc_j = deltap_boc[j];  
+          	var deltap_j = deltap[j];
+          	var deltap_boc_j = deltap_boc[j];  
 
-          // Correction for overcoordination 
-          var exp_p1i = Math.exp( -p_boc1 * deltap_i );
-          var exp_p2i = Math.exp( -p_boc2 * deltap_i );
-          var exp_p1j = Math.exp( -p_boc1 * deltap_j );
-          var exp_p2j = Math.exp( -p_boc2 * deltap_j );  
+          	// Correction for overcoordination 
+          	var exp_p1i = Math.exp( -p_boc1 * deltap_i );
+          	var exp_p2i = Math.exp( -p_boc2 * deltap_i );
+          	var exp_p1j = Math.exp( -p_boc1 * deltap_j );
+          	var exp_p2j = Math.exp( -p_boc2 * deltap_j );  
 
-          var f2 = exp_p1i + exp_p1j;                                                                    //(Equation 4c)
-          var f3 = -1.0 / p_boc2 * Math.log( 0.5 * ( exp_p2i  + exp_p2j ) );                             //(Equation 4d)
-          var f1 = 0.5 * ( ( parseFloat(val_i) + f2 )/( parseFloat(val_i) + f2 + f3 ) +  ( parseFloat(val_j) + f2 )/( parseFloat(val_j) + f2 + f3 ) );   //(equation 4b)  
+          	var f2 = exp_p1i + exp_p1j;                                                                    //(Equation 4c)
+          	var f3 = -1.0 / p_boc2 * Math.log( 0.5 * ( exp_p2i  + exp_p2j ) );                             //(Equation 4d)
+          	var f1 = 0.5 * ( ( parseFloat(val_i) + f2 )/( parseFloat(val_i) + f2 + f3 ) +  ( parseFloat(val_j) + f2 )/( parseFloat(val_j) + f2 + f3 ) );   //(equation 4b)  
               
-          // Correction for 1-3 bond orders
-          var BO = bond_order_uncorr[i][j];       
-          var exp_f4 = Math.exp(-(parseFloat(twbp.pboc4) * ( BO * BO ) - deltap_boc_i) * parseFloat(twbp.pboc3) + parseFloat(twbp.pboc5));   
-          var exp_f5 = Math.exp(-(parseFloat(twbp.pboc4) * ( BO * BO ) - deltap_boc_j) * parseFloat(twbp.pboc3) + parseFloat(twbp.pboc5));    
+          	// Correction for 1-3 bond orders
+          	var BO = bond_order_uncorr[i][j];       
+          	var exp_f4 = Math.exp(-(parseFloat(twbp.pboc4) * ( BO * BO ) - deltap_boc_i) * parseFloat(twbp.pboc3) + parseFloat(twbp.pboc5));   
+          	var exp_f5 = Math.exp(-(parseFloat(twbp.pboc4) * ( BO * BO ) - deltap_boc_j) * parseFloat(twbp.pboc3) + parseFloat(twbp.pboc5));    
 
-          var f4 = 1.0 / (1.0 + exp_f4);   //(Equation 4e)
-          var f5 = 1.0 / (1.0 + exp_f5);   //(Equation 4f)
+          	var f4 = 1.0 / (1.0 + exp_f4);   //(Equation 4e)
+          	var f5 = 1.0 / (1.0 + exp_f5);   //(Equation 4f)
       	
-      	  var BO_s_corr = bond_order_uncorr_sigma[i][j] *f1*f4*f5;
-      	  var BO_pi_corr = bond_order_uncorr_pi[i][j] *f1*f1*f4*f5;
-      	  var BO_pi2_corr = bond_order_uncorr_pi2[i][j] *f1*f1*f4*f5;
+      	  	var BO_s_corr = bond_order_uncorr_sigma[i][j] *f1*f4*f5;
+      	  	var BO_pi_corr = bond_order_uncorr_pi[i][j] *f1*f1*f4*f5;
+      	  	var BO_pi2_corr = bond_order_uncorr_pi2[i][j] *f1*f1*f4*f5;
 
-      	  var bond_energy = bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp );
+      	  	var bond_energy = bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp );
 
-          world.bond_order = new Array(world.atoms.length);
-		  world.bond_order_sigma =  new Array(world.atoms.length);
-          world.bond_order_pi = new Array(world.atoms.length);
-      	  world.bond_order_pi2  = new Array(world.atoms.length);
 
-      	for (var k = 0; k < world.atoms.length; k++) { 
-            world.bond_order[k] = new Array(world.atoms.length);
-  			world.bond_order_sigma[k] = new Array(world.atoms.length);
-  			world.bond_order_pi[k] = new Array(world.atoms.length);
-  			world.bond_order_pi2[k] = new Array(world.atoms.length);
-        }
+        	//corrected bond order
+			world.bond_order[i][j] = BO_s_corr + BO_pi_corr + BO_pi2_corr;     //(Equation 4a)
+			world.bond_order[j][i] = world.bond_order[i][j];
+		
+			world.bond_order_sigma[i][j] = BO_s_corr;
+			world.bond_order_sigma[j][i] = BO_s_corr;
+       	
+       		world.bond_order_pi[i][j] = BO_pi_corr;
+       		world.bond_order_pi[j][i] = BO_pi_corr;
+      	
+      		world.bond_order_pi2[i][j] = BO_pi2_corr;
+      		world.bond_order_pi2[j][i] = BO_pi2_corr;
 
-        //corrected bond order
-		world.bond_order[i][j] = BO_s_corr + BO_pi_corr + BO_pi2_corr;     //(Equation 4a)
-		world.bond_order_sigma[i][j] = BO_s_corr;
-       	world.bond_order_pi[i][j] = BO_pi_corr;
-      	world.bond_order_pi2[i][j] = BO_pi2_corr;
-
-      	//temp fix
-      	for(i=0; i<world.bond_order.length; i++){
-      		for(j=0; j < world.bond_order[i].length; j++){
-      			if(world.bond_order[i][j]==null){
-      				world.bond_order[i][j] = 0;
-      				world.bond_order_pi[i][j] = 0;
-      				world.bond_order_pi2[i][j] = 0;
-      			}
-      		}
-      	}
         
-    }  // end inner for loop     
-  }  // end outer for loop
+    	}  // end inner for loop     
+  	}  // end outer for loop
 
 
    // Corrected overcoordination (deltap_i):
-  for(var i = 0; i < world.atoms.length; i++ ) {
-	var sbp_i = onebody_parameters[world.atoms[i].type];
+  	for(var i = 0; i < world.atoms.length; i++ ) {
+		var sbp_i = onebody_parameters[world.atoms[i].type];
 
-  	var sum = 0.0; 
-  	for(var j = 0; j < world.atoms.length; j++ ) {                                                                                                        
-    	sum += bond_order_uncorr[i][j];    
-    }
-    deltap_i[i] = sum - sbp_i.valency;              //(Equation 5)
-  }
+  		var sum = 0.0; 
+  		for(var j = 0; j < world.atoms.length; j++ ) {                                                                                                        
+    		sum += bond_order_uncorr[i][j];    
+    	}
+    	deltap_i[i] = sum - sbp_i.valency;              //(Equation 5)
+  	}
 
 
 } // end bond order function
@@ -708,10 +711,6 @@ function atomEnergy() {
    var bond_order_uncorr_pi = world.bond_order_pi;
    var bond_order_uncorr_pi2 = world.bond_order_pi2;
 
-  //var bond_order = new Array(world.atoms.length);
-  //var bond_order_uncorr_pi = new Array(world.atoms.length);
-  //var bond_order_uncorr_pi2 = new Array(world.atoms.length);   //parseFloat
-
     var E_lp = 0.0;
 	for(var i = 0; i < world.atoms.length; i++ ) {
 		var atom_i = world.atoms[i];
@@ -725,10 +724,11 @@ function atomEnergy() {
     		sum += world.bond_order[i][j];             
     	    var sbp_i = onebody_parameters[atom_i.type];	     	
     	}
- 
-    	deltap_e[i] = 1.670016101713679 - sbp_i.valE;                     //(Equation 7)
+
+    	deltap_e[i] = sum - sbp_i.valE;                     //(Equation 7)
 		vlplex[i] = deltap_e[i] - 2.0 * parseInt(deltap_e[i] / 2.0);
 		var explp1 = Math.exp( -p_lp1 * ( 2.0 + (vlplex[i])) * ( 2.0 + (vlplex[i])));
+		
 		var n_lp = explp1 - parseInt(deltap_e[i]/2.0);                    //(Equation 8)        
     	deltap_i_lp[i] = sbp_i.nlp_opt - n_lp;                            //(Equation 9)   
 
@@ -737,7 +737,7 @@ function atomEnergy() {
     	var expvd2 = Math.exp( -75 * deltap_i_lp[i] );
     	var inv_expvd2 = 1 / (1 + expvd2 );
     	
-    	E_lp += sbp_i.plp2 * deltap_i_lp[i] * inv_expvd2;                 //(Equation 10)
+    	E_lp = sbp_i.plp2 * deltap_i_lp[i] * inv_expvd2;                 //(Equation 10)
 
         var dElp = p_lp2 * inv_expvd2 + 75 * p_lp2 * deltap_i_lp[i] * expvd2 * (inv_expvd2 * inv_expvd2);
 
@@ -759,8 +759,7 @@ function atomEnergy() {
 /// </summary>
 function overCoordination(sbp_i, twbp, bond_order, bond_order_uncorr_pi, bond_order_uncorr_pi2, deltap_i_lp) {
 	
-	var delta_i = new Array(world.atoms.length);  
-	
+	var delta_i = new Array(world.atoms.length);  	
 	var p_ovun1 = twbp.povun1;
 	var p_ovun2 = sbp_i.povun2;
 	var p_ovun3 = paramGeneral.povun3;
@@ -774,15 +773,18 @@ function overCoordination(sbp_i, twbp, bond_order, bond_order_uncorr_pi, bond_or
     var delta_lpcorr = 0.0;
     
     var E_over = 0.0;
+    var sum = 0.0; 
 	for( var i = 0; i < world.atoms.length; i++ ) { 
 		
 		if( sbp_i.atmcMass > 21.00 ) dfvl = 0.0;
 		else dfvl = 1.0;   // only for 1st-row elements
         
-        delta_i[i] = 1.670016101713679 - sbp_i.valency;   
 		for( var j = i + 1; j < world.atoms.length; j++) {  
+    		sum += world.bond_order[i][j];     
+    		delta_i[j] = sum - sbp_i.valency;           
+     	     	
         	sum_ovun1 += p_ovun1 * twbp.DeSigma * bond_order[i][j];    
-        	sum_ovun2 +=  (delta_i[i] - dfvl*deltap_i_lp[j]) * ( bond_order_uncorr_pi[i][j] + bond_order_uncorr_pi2[i][j] );  
+        	sum_ovun2 +=  (delta_i[j] - dfvl*deltap_i_lp[j]) * ( bond_order_uncorr_pi[i][j] + bond_order_uncorr_pi2[i][j] );  
     	}
 
    		var exp_ovun1 = p_ovun3 * Math.exp( p_ovun4 * sum_ovun2 );
@@ -856,19 +858,6 @@ return { vanDerWaalsInteraction: vanDerWaalsInteraction,
 
 
 //note: 
-
-//set the vakue for delta_i  
-// why world.bond_order shows NaN  ?
-//  WHY delta_i[ SHOWS NaN ?
-
-//find the value for EV_to_KCALpMOL, lr->H, lr->e_ele, C_ele in lammps
-// value of system->my_atoms[i] ?
-
-//EV_to_KCALpMOL = 14.4
-//lr->e_ele = 240.4669351291589
-//C_ele = 332.06371
-
-//can we put default as 0 in world.atoms.length. it's not values for two arrays or how to calculate the world.atoms array
 
 
 
