@@ -233,6 +233,23 @@ function bondType(paramBond) {
       twobody_parameters[2][2]= hhObj33;
       twobody_parameters[1][2]= ohObj23;
 
+/*
+      for (var i = 0; i < onebody_parameters.length; i++) {
+        for (var j = i; j < onebody_parameters.length; j++) {
+          twobody_parameters[i][j].roSigma = 0.5 * (onebody_parameters[i].roSigma + onebody_parameters[j].roSigma);
+          twobody_parameters[i][j].roPi    = 0.5 * (onebody_parameters[i].roPi + onebody_parameters[j].roPi);
+          twobody_parameters[i][j].roPiPi  = 0.5 * (onebody_parameters[i].roPiPi + onebody_parameters[j].roPiPi);
+          twobody_parameters[i][j].pboc3   = 0.5 * (onebody_parameters[i].pboc3 + onebody_parameters[j].pboc3);
+          twobody_parameters[i][j].pboc4   = 0.5 * (onebody_parameters[i].pboc4 + onebody_parameters[j].pboc4);
+          twobody_parameters[i][j].pboc5   = 0.5 * (onebody_parameters[i].pboc5 + onebody_parameters[j].pboc5);  
+          twobody_parameters[i][j].rvdw   = 0.5 * (onebody_parameters[i].rvdw + onebody_parameters[j].rvdw);  
+          twobody_parameters[i][j].gammaW   = 0.5 * (onebody_parameters[i].gammaW + onebody_parameters[j].gammaW);  
+          twobody_parameters[i][j].gamma   = 0.5 * (onebody_parameters[i].gamma + onebody_parameters[j].gamma);  
+          twobody_parameters[i][j].alpha   = 0.5 * (onebody_parameters[i].alpha + onebody_parameters[j].alpha); 
+        }
+      }
+*/
+
       //Display Logic
       window.object.getValuesFromReadFile(r_ij, param_global, onebody_parameters, twobody_parameters);
 

@@ -424,19 +424,24 @@ function vanDerWaalsInteraction() {
 
 	var coulomb = coulombInteraction(r_ij, Tap, dTap); 
 
+	for(var i = 0; i < world.atoms.length; i++) {	
+  	   		var atom_i = world.atoms[i];
+  			var sbp_i = onebody_parameters[atom_i.type];	
+	}
+	
 	//van der waals calculations
 	var powr_vdW1 = Math.pow(r_ij, p_vdW1);
-	var powgi_vdW1 = Math.pow( 1.0 / oxygenObj.gammaW, p_vdW1);   
+	var powgi_vdW1 = Math.pow( 1.0 / sbp_i.gammaW, p_vdW1);   
 	var fn13 = Math.pow( powr_vdW1 + powgi_vdW1, p_vdW1i );    //(Equation 23b)
 
-	var exp1 = Math.exp( oxygenObj.alpha * (1.0 - fn13 / oxygenObj.rvdw) );
-	var exp2 = Math.exp( 0.5 * oxygenObj.alpha * (1.0 - fn13 / oxygenObj.rvdw) );  
+	var exp1 = Math.exp( sbp_i.alpha * (1.0 - fn13 / sbp_i.rvdw) );
+	var exp2 = Math.exp( 0.5 * sbp_i.alpha * (1.0 - fn13 / sbp_i.rvdw) );  
 	
 	//Van der Waals interactions energy equation 
-	var E_vdW = Tap * oxygenObj.dij * (exp1 - 2.0 * exp2);    // (Equation 23a)
+	var E_vdW = Tap * sbp_i.dij * (exp1 - 2.0 * exp2);    // (Equation 23a)
 
 	var dfn13 = Math.pow( powr_vdW1 + powgi_vdW1, p_vdW1i - 1.0) * Math.pow(r_ij, p_vdW1 - 2.0);     
-	var CEvd = dTap * oxygenObj.dij * (exp1 - 2.0 * exp2) - Tap * oxygenObj.dij * (oxygenObj.alpha /oxygenObj.rvdw) * (exp1 - exp2) * dfn13;  
+	var CEvd = dTap * sbp_i.dij * (exp1 - 2.0 * exp2) - Tap * sbp_i.dij * (sbp_i.alpha /sbp_i.rvdw) * (exp1 - exp2) * dfn13;  
 
    
 } // end of vanDerWaalsInteraction function
