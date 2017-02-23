@@ -472,7 +472,7 @@ function coulombInteraction(r_ij, Tap, dTap){
   		   //var sbp_j = onebody_parameters[atom_j.type];	
    		   var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type];   
  			
-           var dr3gamij_1 = parseFloat( r_ij * r_ij * r_ij + twbp.gamma);  
+           var dr3gamij_1 = ( r_ij * r_ij * r_ij + twbp.gamma);  
            var dr3gamij_3 = Math.pow( dr3gamij_1 , 0.33333333333333 );
            var tmp = Tap / dr3gamij_3;
   
@@ -635,7 +635,7 @@ function coulombInteraction(r_ij, Tap, dTap){
 
           	var f2 = exp_p1i + exp_p1j;                                                                    //(Equation 4c)
           	var f3 = -1.0 / p_boc2 * Math.log( 0.5 * ( exp_p2i  + exp_p2j ) );                             //(Equation 4d)
-          	var f1 = 0.5 * ( ( parseFloat(val_i) + f2 )/( parseFloat(val_i) + f2 + f3 ) +  ( parseFloat(val_j) + f2 )/( parseFloat(val_j) + f2 + f3 ) );   //(equation 4b)  
+          	var f1 = 0.5 * ( ( val_i + f2 )/( val_i + f2 + f3 ) + ( val_j + f2 )/( val_j + f2 + f3 ) );   //(Equation 4b)  
               
           	// Correction for 1-3 bond orders
           	var BO = bond_order_uncorr[i][j];       
@@ -848,11 +848,11 @@ function underCoordination(sbp_i, exp_ovun2, sum_ovun2, delta_lpcorr, dfvl) {
 }  //end underCoordination function
 
 
-/*
+
 function angleEnergy(){
 
 	var delta_boc = new Array(world.atoms.length);
-	var vlplex = new Array(world.atoms.length);
+	var vlpex = new Array(world.atoms.length);
 	var nlp = new Array(world.atoms.length);
 	var dDelta_lp = new Array(world.atoms.length);
 
@@ -866,6 +866,7 @@ function angleEnergy(){
   		
   	    var BOA_ij =  bo_ij.BO - control.thb_cut;
  		var BOA_jk   = bo_jk.BO - control.thb_cut;
+        
         // ANGLE ENERGY 
   		var expval6 = Math.exp( sbp_i.pval7 * delta_boc[i] );
 
@@ -925,14 +926,14 @@ function angleEnergy(){
 
         var theta_0 = 180.0 - thbp.theta_00 * (1.0 - Math.exp(-paramGeneral.pval10 * (2.0 - SBO2)));       //(Equation 13g)  
 
-        var penalty_energy = penaltyEnergy(thbp, BOA_ij, BOA_jk);
-        var coalition_energy = coalitionEnergy(BOA_ij, BOA_jk);
+       // var penalty_energy = penaltyEnergy(thbp, BOA_ij, BOA_jk);
+       // var coalition_energy = coalitionEnergy(BOA_ij, BOA_jk);
 
 	}
 
 } //end angleEnergy function
 
-
+/*
 function penaltyEnergy(BOA_ij, BOA_jk){
 
 	var delta = new Array(world.atoms.length);
@@ -967,12 +968,13 @@ function coalitionEnergy(){
 
    return E_coa;
 }   ////end coalitionEnergy function
-
 */
 
 
+
 return { vanDerWaalsInteraction: vanDerWaalsInteraction,  
-	     bondOrder: bondOrder,  atomEnergy: atomEnergy,  
+	     bondOrder: bondOrder,  
+	     atomEnergy: atomEnergy,  
 	     angleEnergy: angleEnergy,  
 	     getValuesFromReadFile: getValuesFromReadFile };
 
