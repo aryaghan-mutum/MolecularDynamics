@@ -849,7 +849,7 @@ function underCoordination(sbp_i, exp_ovun2, sum_ovun2, delta_lpcorr, dfvl) {
 
 
 
-function angleEnergy(){
+function valenceEnergy(){
 
 	var delta_boc = new Array(world.atoms.length);
 	var vlpex = new Array(world.atoms.length);
@@ -864,21 +864,21 @@ function angleEnergy(){
   		var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[i].type]; 
   		var thbp =  threebody_parameters[world.atoms[i].type][world.atoms[i].type];
   		
-  	    var BOA_ij =  bo_ij.BO - control.thb_cut;
- 		var BOA_jk   = bo_jk.BO - control.thb_cut;
+  	   // var BOA_ij =  bo_ij.BO - control.thb_cut;
+ 	//	var BOA_jk   = bo_jk.BO - control.thb_cut;
         
         // ANGLE ENERGY 
   		var expval6 = Math.exp( sbp_i.pval7 * delta_boc[i] );
 
-  		var exp3ij = Math.exp( -sbp_i.pval3 * Math.pow( BOA_ij, thbp.p_val4 ) );
+  		var exp3ij = Math.exp( -sbp_i.pval3 * Math.pow( 2, thbp.pval4 ) );
         var f7_ij = 1.0 - exp3ij; 			  											   //(Equation 13b)
-        var Cf7ij = sbp_i.pval3 * thbp.p_val4 * Math.pow( BOA_ij, thbp.p_val4 - 1.0 ) * exp3ij;
+        var Cf7ij = sbp_i.pval3 * thbp.pval4 * Math.pow( BOA_ij, thbp.pval4 - 1.0 ) * exp3ij;
 
-        var exp3jk = Math.exp( -sbp_i.pval3 * Math.pow( BOA_jk, thbp.p_val4 ) );
+        var exp3jk = Math.exp( -sbp_i.pval3 * Math.pow( BOA_jk, thbp.pval4 ) );
         var f7_jk = 1.0 - exp3jk;
-        var Cf7jk = sbp_i.p_val3 * thbp.p_val4 * Math.pow( BOA_jk, thbp.p_val4 - 1.0 ) * exp3jk;
+        var Cf7jk = sbp_i.p_val3 * thbp.pval4 * Math.pow( BOA_jk, thbp.pval4 - 1.0 ) * exp3jk;
 
-        var expval7 = Math.exp( -thbp.p_val7 * delta_boc[j] );
+        var expval7 = Math.exp( -thbp.pval7 * delta_boc[j] );
         var trm8 = 1.0 + expval6 + expval7;
         var f8_Dj = sbp_i.pval5 - ( (sbp_i.pval5 - 1.0) * (2.0 + expval6) / trm8 );   	  //(Equation 13c)  
         var Cf8j = ( (1.0 - sbp_i.pval5) / (trm8 * trm8) ) * ( p_val6 * expval6 * trm8 - (2.0 + expval6) * ( p_val6 * expval6 - p_val7 * expval7 ) );
@@ -931,7 +931,7 @@ function angleEnergy(){
 
 	}
 
-} //end angleEnergy function
+} //end valenceEnergy function
 
 /*
 function penaltyEnergy(BOA_ij, BOA_jk){
@@ -975,7 +975,7 @@ function coalitionEnergy(){
 return { vanDerWaalsInteraction: vanDerWaalsInteraction,  
 	     bondOrder: bondOrder,  
 	     atomEnergy: atomEnergy,  
-	     angleEnergy: angleEnergy,  
+	     valenceEnergy: valenceEnergy,  
 	     getValuesFromReadFile: getValuesFromReadFile };
 
 
