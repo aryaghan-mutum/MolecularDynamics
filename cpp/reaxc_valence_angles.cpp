@@ -244,8 +244,6 @@ void Valence_Angles( reax_system *system, control_params *control,
                 p_val7 = thbp->p_val7;
                 theta_00 = thbp->theta_00;
 
-  //fprintf( stdout, " ~~~~~    thbp->p_val1   : %.16g\n",  thbp->p_val1 );
-
                 exp3ij = exp( -p_val3 * pow( BOA_ij, p_val4 ) );
                 f7_ij = 1.0 - exp3ij;
                 Cf7ij = p_val3 * p_val4 * pow( BOA_ij, p_val4 - 1.0 ) * exp3ij;

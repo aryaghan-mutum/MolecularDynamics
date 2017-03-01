@@ -27,8 +27,12 @@ var object = (function() {
 	this.onebody_parameters = null;
 	this.twobody_parameters = null;
 	this.threebody_parameters = null;
-	this.deltap_i = null;    //used in Equation 5
+	this.deltap_i = null;       //used in Equation 5
 	this.deltap_i_lp = null;    //used in Equation 9
+	this.deltap_boc = null;     //used in bondOrder() and valenceEnergy()
+	this.vlpex = null;			//used in atomEnergy() and valenceEnergy()
+	this.n_lp = null;			//used in atomEnergy() and valenceEnergy()
+	this.deltap = null;			//used in bondOrder() and valenceEnergy()
 
 	var self = this;
 	var tick = function() {
@@ -469,7 +473,7 @@ function coulombInteraction(r_ij, Tap, dTap){
   		   var atom_j = world.atoms[j]; 
 
   		   var sbp_i = onebody_parameters[atom_i.type];
-  		   //var sbp_j = onebody_parameters[atom_j.type];	
+  		   var sbp_j = onebody_parameters[atom_j.type];	
    		   var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type];   
  			
            var dr3gamij_1 = ( r_ij * r_ij * r_ij + twbp.gamma);  
@@ -498,8 +502,8 @@ function coulombInteraction(r_ij, Tap, dTap){
     
 	function bondOrder() {		
         var val_i = val_j;
-        var deltap = [];
-        var deltap_boc = [];
+        deltap = [];
+        deltap_boc = [];
         
         var p_boc1 = paramGeneral.pboc1;  
         var p_boc2 = paramGeneral.pboc2; 
@@ -710,21 +714,25 @@ function atomEnergy() {
    var deltap_e = new Array(world.atoms.length);
    var deltap_i_lp = new Array(world.atoms.length);
    var dDeltap_i_lp =  new Array(world.atoms.length);
-   var vlplex = new Array(world.atoms.length);
-   var p_lp1 = paramGeneral.plp1;  
+   vlpex = new Array(world.atoms.length);
+   n_lp  = new Array(world.atoms.length);
 	
    //declare and initialize the arrays
    var bond_order = world.bond_order;
    var bond_order_uncorr_pi = world.bond_order_pi;
    var bond_order_uncorr_pi2 = world.bond_order_pi2;
 
+    var p_lp1 = paramGeneral.plp1;  
+
     var E_lp = 0.0;
 	for(var i = 0; i < world.atoms.length; i++ ) {
+	    for(var j = i+1; j < world.atoms.length; j++) {
 		var atom_i = world.atoms[i];
   	//	var atom_j = world.atoms[j];
 
     	var sbp_i = onebody_parameters[atom_i.type];
-  		var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[i].type]; 
+
+  		var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type]; 
   		
   		var sum = 0.0; 										
   		for(var j = 0; j < world.atoms.length; j++ ) {                                                                                                        
@@ -733,11 +741,11 @@ function atomEnergy() {
     	}
 
     	deltap_e[i] = sum - sbp_i.valE;                     //(Equation 7)
-		vlplex[i] = deltap_e[i] - 2.0 * parseInt(deltap_e[i] / 2.0);
-		var explp1 = Math.exp( -p_lp1 * ( 2.0 + (vlplex[i])) * ( 2.0 + (vlplex[i])));
+		vlpex[i] = deltap_e[i] - 2.0 * parseInt(deltap_e[i] / 2.0);
+		var explp1 = Math.exp( -p_lp1 * ( 2.0 + (vlpex[i])) * ( 2.0 + (vlpex[i])));
 		
-		var n_lp = explp1 - parseInt(deltap_e[i]/2.0);                    //(Equation 8)        
-    	deltap_i_lp[i] = sbp_i.nlp_opt - n_lp;                            //(Equation 9)   
+		n_lp[i] = explp1 - parseInt(deltap_e[i]/2.0);                    //(Equation 8)        
+    	deltap_i_lp[i] = sbp_i.nlp_opt - n_lp[i];                            //(Equation 9)   
 
         // lone-pair Energy 
         var p_lp2 = sbp_i.plp2;
@@ -748,8 +756,9 @@ function atomEnergy() {
 
         var dElp = p_lp2 * inv_expvd2 + 75 * p_lp2 * deltap_i_lp[i] * expvd2 * (inv_expvd2 * inv_expvd2);
 
-        dDeltap_i_lp[i] = 2.0 * p_lp1 * explp1 * (2.0 + vlplex[i]);
+        dDeltap_i_lp[i] = 2.0 * p_lp1 * explp1 * (2.0 + vlpex[i]);
         var CElp = dElp * dDeltap_i_lp[i];
+		}
 	}
   
 	var over  = overCoordination(sbp_i, twbp, bond_order, bond_order_uncorr_pi, bond_order_uncorr_pi2, deltap_i_lp);
@@ -851,45 +860,49 @@ function underCoordination(sbp_i, exp_ovun2, sum_ovun2, delta_lpcorr, dfvl) {
 
 function valenceEnergy(){
 
-	var delta_boc = new Array(world.atoms.length);
-	var vlpex = new Array(world.atoms.length);
-	var nlp = new Array(world.atoms.length);
+//	var n_lp = new Array(world.atoms.length);
 	var dDelta_lp = new Array(world.atoms.length);
 
     var bond_order = world.bond_order;
+    var bond_order_uncorr_pi = world.bond_order_pi;
+    var bond_order_uncorr_pi2 = world.bond_order_pi2;
 
-	for(var i = 0; i < world.atoms.length; i++ ){
+	for(var j = 0; j < world.atoms.length; j++ ){
+		for (var i = 0; i < world.atoms.length; i++) {
+			for (var k = i + 1; k < world.atoms.length; k++) {
+		//			if (i==j || k==j) continue;
+	   	
 	    var atom_i = world.atoms[i];
     	var sbp_i = onebody_parameters[atom_i.type];
-  		var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[i].type]; 
-  		var thbp =  threebody_parameters[world.atoms[i].type][world.atoms[i].type];
+  		var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type]; 
+  		var thbp =  threebody_parameters[world.atoms[i].type][world.atoms[j].type][world.atoms[k].type];
   		
-  	   // var BOA_ij =  bo_ij.BO - control.thb_cut;
- 	//	var BOA_jk   = bo_jk.BO - control.thb_cut;
+		const  cut = 0.001;
+  	    var BOA_ij = bond_order[i][j] - cut;       //fix
+ 		var BOA_jk = bond_order[i][j] - cut;		 //fix
         
         // ANGLE ENERGY 
-  		var expval6 = Math.exp( sbp_i.pval7 * delta_boc[i] );
+  		var expval6 = Math.exp( paramGeneral.pval7 * deltap_boc[j] ); //Note: pval7 in JS is pval6 in C++ but the value is same
 
-  		var exp3ij = Math.exp( -sbp_i.pval3 * Math.pow( 2, thbp.pval4 ) );
+  		var exp3ij = Math.exp(-sbp_i.pval3 * Math.pow( BOA_ij, thbp.pval4 ) );
         var f7_ij = 1.0 - exp3ij; 			  											   //(Equation 13b)
         var Cf7ij = sbp_i.pval3 * thbp.pval4 * Math.pow( BOA_ij, thbp.pval4 - 1.0 ) * exp3ij;
 
         var exp3jk = Math.exp( -sbp_i.pval3 * Math.pow( BOA_jk, thbp.pval4 ) );
         var f7_jk = 1.0 - exp3jk;
-        var Cf7jk = sbp_i.p_val3 * thbp.pval4 * Math.pow( BOA_jk, thbp.pval4 - 1.0 ) * exp3jk;
+        var Cf7jk = sbp_i.pval3 * thbp.pval4 * Math.pow( BOA_jk, thbp.pval4 - 1.0 ) * exp3jk;
 
-        var expval7 = Math.exp( -thbp.pval7 * delta_boc[j] );
+        var expval7 = Math.exp( -thbp.pval7 * deltap_boc[j] );
         var trm8 = 1.0 + expval6 + expval7;
         var f8_Dj = sbp_i.pval5 - ( (sbp_i.pval5 - 1.0) * (2.0 + expval6) / trm8 );   	  //(Equation 13c)  
-        var Cf8j = ( (1.0 - sbp_i.pval5) / (trm8 * trm8) ) * ( p_val6 * expval6 * trm8 - (2.0 + expval6) * ( p_val6 * expval6 - p_val7 * expval7 ) );
+       // var Cf8j = ( (1.0 - sbp_i.pval5) / (trm8 * trm8) ) * ( sbp_i.pval6 * expval6 * trm8 - (2.0 + expval6) * ( pval6 * expval6 - pval7 * expval7 ) );
 
 
     	var SBOp = 0;
     	var prod_SBO = 1;
-    		for( k = 0; k < world.atoms.length; k++ ) {
-      			//var bo_jt = &(bonds->select.bond_list[t].bo_data);
-      			SBOp += (bo_jt.BO_pi + bo_jt.BO_pi2);
-     			var temp = ( bo_jt.BO * bo_jt.BO );
+    		for( var k = 0; k < world.atoms.length; k++ ) {
+      			SBOp += (bond_order_uncorr_pi + bond_order_uncorr_pi2 );
+     			var temp = (bond_order * bond_order);   //fix
       			temp *= temp;
       			temp *= temp;
       			prod_SBO *= Math.exp(-temp);
@@ -897,78 +910,84 @@ function valenceEnergy(){
 
     	var vlpadj = 0;
     	var dSBO2 = 0;
-    	if( vlpex[i] >= 0 ){
+    	if( vlpex[j] >= 0 ){
      		 vlpadj = 0;
      		 dSBO2 = prod_SBO - 1;
     	}
    		else{
-      		vlpadj = nlp[i];
+      		vlpadj = n_lp[j];
       		dSBO2 = (prod_SBO - 1) * (1 - paramGeneral.pval8 * dDelta_lp[i]);
     	}
 
-		var SBO = SBOp + (1 - prod_SBO) * (-delta_boc[i] - paramGeneral.pval8 * vlpadj);      	  //(Equation 13d)  
-    	var dSBO1 = -8 * prod_SBO * ( delta_boc[i] + paramGeneral.pval8 * vlpadj );
+		var SBO = SBOp + (1 - prod_SBO) * (-deltap_boc[i] - paramGeneral.pval8 * vlpadj);      	  //(Equation 13d)  
+    	var dSBO1 = -8 * prod_SBO * ( deltap_boc[i] + paramGeneral.pval8 * vlpadj );
 
 
     	var SBO2 = 0;
     	var CSBO2 = 0; 
    		if( SBO <= 0 ) SBO2 = 0, CSBO2 = 0;
     	else if( SBO > 0 && SBO <= 1 ) {
-       		 SBO2 = Math.pow( SBO, p_val9 );     									 //(Equation 13f) 
+       		 SBO2 = Math.pow( SBO, paramGeneral.pval9 );     									 //(Equation 13f) 
         	 CSBO2 = paramGeneral.pval9  * Math.pow( SBO, paramGeneral.pval8  - 1 );
         }
     	else if( SBO > 1 && SBO < 2 ) {
-     		 SBO2 = 2 - pow( 2-SBO, p_val9 );
-     		 CSBO2 = p_val9 * pow( 2 - SBO, p_val9 - 1 );
+     		 SBO2 = 2 - Math.pow( 2-SBO, paramGeneral.pval9 );
+     		 CSBO2 = paramGeneral.pval9  * Math.pow( 2 - SBO, paramGeneral.pval9  - 1 );
     	}
     	else SBO2 = 2, CSBO2 = 0;
 
 
-        var theta_0 = 180.0 - thbp.theta_00 * (1.0 - Math.exp(-paramGeneral.pval10 * (2.0 - SBO2)));       //(Equation 13g)  
+        var theta_0 = 180.0 - thbp.thetao * (1.0 - Math.exp(-paramGeneral.pval10 * (2.0 - SBO2)));       //(Equation 13g)  
 
-       // var penalty_energy = penaltyEnergy(thbp, BOA_ij, BOA_jk);
-       // var coalition_energy = coalitionEnergy(BOA_ij, BOA_jk);
+        var penalty_energy = penaltyEnergy(BOA_ij, BOA_jk);
+        var coalition_energy = coalitionEnergy(thbp, BOA_ij, BOA_jk);
 
 	}
+  }
+}
 
 } //end valenceEnergy function
 
-/*
-function penaltyEnergy(BOA_ij, BOA_jk){
 
-	var delta = new Array(world.atoms.length);
+function penaltyEnergy(BOA_ij, BOA_jk){
 
 	var f9_Dj = 0.0; 
 	for(var i = 0; i < world.atoms.length; i++ ){
   		  var exp_pen2ij = Math.exp( -paramGeneral.ppen2 * ( BOA_ij - 2.0 )*( BOA_ij - 2.0 ) );
     	  var exp_pen2jk = Math.exp( -paramGeneral.ppen2 * ( BOA_jk - 2.0 )*( BOA_jk - 2.0 ) );
-          var exp_pen3 = Math.exp( -paramGeneral.ppen3 * delta[i] );
-          var exp_pen4 = Math.exp( paramGeneral.ppen4 * delta[i] );
-          var trm_pen34 = 1.0 + exp_pen3 + exp_pen4;
-          f9_Dj = ( 2.0 + exp_pen3 ) / trm_pen34;        //(Equation 14b)  
+          var exp_pen3   = Math.exp( -paramGeneral.ppen3 * deltap[i] );    				//Note: deltap in JS is Delta in C++
+          var exp_pen4   = Math.exp(  paramGeneral.ppen4 * deltap[i] );
+          var trm_pen34  = 1.0 + exp_pen3 + exp_pen4;
+          f9_Dj = ( 2.0 + exp_pen3 ) / trm_pen34;       //(Equation 14b)  
     }
 
     return f9_Dj;
 }   ////end penaltyEnergy function
 
 
-function coalitionEnergy(){
+function coalitionEnergy(thbp, BOA_ij, BOA_jk){
 
-	var delta_val = new Array(world.atoms.length);
- 	
+	var bond_order = world.bond_order;
+
  	var E_coa = 0.0;
 	for(var i = 0; i < world.atoms.length; i++ ){
-        var exp_coa2 = Math.exp( paramGeneral.pcoa2 * delta_val[i] );
+	//	for(var k = i+1; i < world.atoms.length; k++ ){
+	   		var x = paramGeneral.pcoa3;
+        	var y = paramGeneral.pcoa4;
+
+        	var exp_coa2 = Math.exp( paramGeneral.pcoa2 * deltap_boc[i] );   //Note: deltap_boc in JS is delta_val in C++
+
         E_coa += E_coa = thbp.pcoa1 / (1. + exp_coa2) *
-                 Math.exp( -paramGeneral. * (total_bond_order[i]-BOA_ij)*(total_bond_order[i]-BOA_ij)  ) *
-                 Math.exp( -paramGeneral.pcoa3 * (total_bond_order[i]-BOA_jk)*(total_bond_order[i]-BOA_jk) ) *
+                 Math.exp( -paramGeneral.pcoa3 * (bond_order[i] -BOA_ij) *(bond_order[i] -BOA_ij) ) *
+                 Math.exp( -paramGeneral.pcoa3 * (bond_order[i] -BOA_jk) *(bond_order[i] -BOA_jk) ) *
                  Math.exp( -paramGeneral.pcoa4 * (BOA_ij - 1.5)*(BOA_ij - 1.5) ) *
                  Math.exp( -paramGeneral.pcoa4 * (BOA_jk - 1.5)*(BOA_jk - 1.5) ); 		 
-   }
+ //  }
+}
 
    return E_coa;
 }   ////end coalitionEnergy function
-*/
+
 
 
 
@@ -982,7 +1001,37 @@ return { vanDerWaalsInteraction: vanDerWaalsInteraction,
 })();  //END
 
 
-//note: 
+//lammp values
+//bond_order  1.670016101713679
+//BOA_ij = 1.669016101713679, 
+//BOA_jk = 1.9455576873351772e-312  
+
+//delta_boc[i] = -2.329983898286321  c
+//vlpex[i] = -0.3299838982863204	c
+//nlp[j] = 2.000000042142106  c
+//delta[i] -0.3299838982863208 c
+//delta_val[i] c
+
+//fix SBO and SBO2 values
+//thetao is showing 0 instaed of 67.2326
+
+/* check values:
+pval7  c
+pval3  c
+pval4
+pval5  c
+paramGeneral.pval8  c
+paramGeneral.pval9  c
+paramGeneral.pval10 c
+paramGeneral.ppen2  c  check again
+paramGeneral.ppen3  c  check again
+paramGeneral.ppen4  c  check again
+paramGeneral.pcoa2  c  check again
+paramGeneral.pcoa3  c  check again
+paramGeneral.pcoa4  c  check again
+*/
+
+
 
 
 

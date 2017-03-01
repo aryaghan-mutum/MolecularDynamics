@@ -65,7 +65,7 @@ function paramGlobal(paramGeneral) {
    this.notused = parseFloat(paramGeneral[18]);	
    this.ppen2   = parseFloat(paramGeneral[19]);	
    this.ppen3   = parseFloat(paramGeneral[20]);
-   this.pval4   = parseFloat(paramGeneral[21]);
+   this.ppen4   = parseFloat(paramGeneral[21]);
    this.notused = parseFloat(paramGeneral[22]);	 
    this.ptor2   = parseFloat(paramGeneral[23]);	
    this.ptor3 	= parseFloat(paramGeneral[24]);	
@@ -145,14 +145,12 @@ function angles(paramAngle) {
     this.at2    = parseFloat(paramAngle[1]);
     this.at3    = parseFloat(paramAngle[2]);
     this.thetao = parseFloat(paramAngle[3]);
-    this.o      = parseFloat(paramAngle[4]);
-    this.pval1  = parseFloat(paramAngle[5]);
-    this.pval2  = parseFloat(paramAngle[6]);
-    this.pval2  = parseFloat(paramAngle[6]);
-    this.pcoa1  = parseFloat(paramAngle[7]);
-    this.pval7  = parseFloat(paramAngle[8]);
-    this.pen1   = parseFloat(paramAngle[9]);
-    this.pval4  = parseFloat(paramAngle[10]);
+    this.pval1  = parseFloat(paramAngle[4]);
+    this.pval2  = parseFloat(paramAngle[5]);
+    this.pcoa1  = parseFloat(paramAngle[6]);
+    this.pval7  = parseFloat(paramAngle[7]);
+    this.pen1   = parseFloat(paramAngle[8]);
+    this.pval4  = parseFloat(paramAngle[9]);
 }
 
 
@@ -401,15 +399,8 @@ function angles(paramAngle) {
 
 //NOTE:
 /*
-var roSigma_ = null;
-var roPi_    = null;
-var roPiPi_  = null;
-var pboc3_   = null;
-var pboc4_   = null;
-var pboc5_   = null;
-var gamma_   = null;
 
-find the value for lgre and lgre in lammps in reaxc_ffield.cpp
+find the value for rvdw, lgre and lgre in reaxc_ffield.cpp
 -> why is their no array in getValuesFromReadFile(_onebody_parameters);
 */
 
