@@ -11,9 +11,9 @@
    this.roSigma  = parseFloat(paramAtom[0]);    //ro(sigma) single bond covalent radius in A = 1.3817
    this.valency  = parseFloat(paramAtom[1]);    //valency of atom
    this.atmcMass = parseFloat(paramAtom[2]);    //atomic mass in daltons
-   this.rvdw     = parseFloat(2 * paramAtom[3]);    // van der Waals radius in Amstrongs = 0.18903
+   this.rvdw     = parseFloat(paramAtom[3]);    // van der Waals radius in Amstrongs = 0.18903
    this.dij      = parseFloat(paramAtom[4]);    //epsilon  
-   this.gamma    = parseFloat(Math.pow(1/paramAtom[5], 3));    //gammaEEM (charge equilibration parameter) = 0.6544
+   this.gamma    = parseFloat(paramAtom[5]);    //gammaEEM (charge equilibration parameter) = 0.6544
    this.roPi     = parseFloat(paramAtom[6]);    //covalent radius 2 = 1.1341
    this.valE     = parseFloat(paramAtom[7]);    //val(e) (an additional valence, see atoms O and N) = 4 
    this.alpha    = parseFloat(paramAtom[8]); 
@@ -41,8 +41,7 @@
    this.ecore 	 = parseFloat(paramAtom[30]);   //ecore2
    this.acore 	 = parseFloat(paramAtom[31]);   //acore2  
 }
-var x = null;
-//General parameters
+
 function paramGlobal(paramGeneral) {
    this.pboc1   = parseFloat(paramGeneral[0]);
    this.pboc2   = parseFloat(paramGeneral[1]);
@@ -104,39 +103,39 @@ function bondType(paramBond) {
    this.pbo1    = parseFloat(paramBond[14]);
    this.pbo2    = parseFloat(paramBond[15]);
 
-this.atomID= null;
-this.roSigma= null;
-this.valency= null;
-this.atmcMass= null;
-this.rvdw= null;
-this.dij= null;
-this.gamma= null;
-this.roPi= null;
-this.valE= null;
-this.alpha= null;
-this.gammaW= null;
-this.valAngle= null;
-this.povun5= null;
-this.nu= null;
-this.chiEEM= null;
-this.etaEEM= null;
-this.nlp_opt= null;
-this.roPiPi= null;
-this.plp2= null;
-this.heatInc= null;
-this.pboc4= null;
-this.pboc3= null;
-this.pboc5= null;
-this.nu= null;
-this.nu= null;
-this.povun2= null;
-this.pval3= null;
-this.nu= null;
-this.valBoc= null;
-this.pval5= null;
-this.rcore= null;
-this.ecore= null;
-this.acore= null;
+   this.atomID   = null;
+   this.roSigma  = null;
+   this.valency  = null;
+   this.atmcMass = null;
+   this.rvdw     = null;
+   this.dij      = null;
+   this.gamma    = null;
+   this.roPi     = null;
+   this.valE     = null;
+   this.alpha    = null;
+   this.gammaW   = null;
+   this.valAngle = null;
+   this.povun5   = null;
+   this.nu       = null;
+   this.chiEEM   = null;
+   this.etaEEM   = null;
+   this.nlp_opt  = null;
+   this.roPiPi   = null;
+   this.plp2     = null;
+   this.heatInc  = null;
+   this.pboc4    = null;
+   this.pboc3    = null;
+   this.pboc5    = null;
+   this.nu       = null;
+   this.nu       = null;
+   this.povun2   = null;
+   this.pval3    = null;
+   this.nu       = null;
+   this.valBoc   = null;
+   this.pval5    = null;
+   this.rcore    = null;
+   this.ecore    = null;
+   this.acore    = null;
 
 }
 
@@ -380,9 +379,10 @@ function angles(paramAngle) {
       window.object.getValuesFromReadFile(r_ij, param_global, onebody_parameters, twobody_parameters, threebody_parameters);
 
       window.object.vanDerWaalsInteraction();
+      window.object.coulombInteraction();
       window.object.bondOrder();
-      window.object.atomEnergy();
-      window.object.valenceEnergy();
+      window.object.lonepairEnergy();
+      //window.object.valenceEnergy();
         
    
         //console.log(window.testing);
