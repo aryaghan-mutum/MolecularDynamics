@@ -669,8 +669,8 @@ function coulombInteraction(){
               
           	// Correction for 1-3 bond orders
           	var BO = bond_order_uncorr[i][j];       
-          	var exp_f4 = Math.exp(-(parseFloat(twbp.pboc4) * ( BO * BO ) - deltap_boc_i) * parseFloat(twbp.pboc3) + parseFloat(twbp.pboc5));   
-          	var exp_f5 = Math.exp(-(parseFloat(twbp.pboc4) * ( BO * BO ) - deltap_boc_j) * parseFloat(twbp.pboc3) + parseFloat(twbp.pboc5));    
+          	var exp_f4 = Math.exp(-(twbp.pboc4 * ( BO * BO ) - deltap_boc_i) * twbp.pboc3 + twbp.pboc5);   
+          	var exp_f5 = Math.exp(-(twbp.pboc4 * ( BO * BO ) - deltap_boc_j) * twbp.pboc3 + twbp.pboc5);    
 
           	var f4 = 1.0 / (1.0 + exp_f4);   //(Equation 4e)
           	var f5 = 1.0 / (1.0 + exp_f5);   //(Equation 4f)
@@ -831,7 +831,7 @@ function overCoordination(sbp_i, twbp, bond_order, bond_order_uncorr_pi, bond_or
 
         exp_ovun2 = Math.exp( sbp_i.povun2 * delta_lpcorr );
         var inv_exp_ovun2 = 1.0 / (1.0 + exp_ovun2);  
-        var dlpVi = 1.0 / (delta_lpcorr + parseFloat(sbp_i.valency) + 1e-8);   
+        var dlpVi = 1.0 / (delta_lpcorr + sbp_i.valency + 1e-8);   
       
         E_over = (sum_ovun1 * dlpVi) * (delta_lpcorr) * (inv_exp_ovun2);        //(Equation 11a)    
 	}
