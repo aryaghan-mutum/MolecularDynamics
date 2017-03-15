@@ -312,32 +312,33 @@ function angles(paramAngle) {
       var threebody_parameters_len = 5;
       var threebody_parameters = new Array(threebody_parameters_len);
           
-      for(var i =1; i < threebody_parameters_len+1; i++){
+      for(var i =0; i < threebody_parameters_len; i++){
           threebody_parameters[i] = new Array(threebody_parameters_len);
-        for(var j = 1; j < threebody_parameters_len+1; j++){
+        for(var j = 0; j < threebody_parameters_len; j++){
           threebody_parameters[i][j] = new Array(threebody_parameters_len);
         }
       }
 
       //C-1, H-2, O-3
-      threebody_parameters[1][1][1]= ccc;
-      threebody_parameters[1][1][2]= cch;
-      threebody_parameters[2][1][2]= hch;
-      threebody_parameters[1][2][2]= chh;
-      threebody_parameters[1][2][1]= chc;
-      threebody_parameters[2][2][2]= hhh;
-      threebody_parameters[1][1][3]= cco;
-      threebody_parameters[3][1][3]= oco;
-      threebody_parameters[2][1][3]= hco;
-      threebody_parameters[1][3][1]= coc;
-      threebody_parameters[1][3][3]= coo;
-      threebody_parameters[3][3][3]= ooo;
-      threebody_parameters[1][3][2]= coh;
-      threebody_parameters[2][3][3]= hoo;
-      threebody_parameters[2][3][2]= hoh;
-      threebody_parameters[1][2][3]= cho;
-      threebody_parameters[3][2][3]= oho;
-      threebody_parameters[2][2][3]= hho;
+    
+      threebody_parameters[0][0][0]= ccc;
+      threebody_parameters[0][0][1]= cch;
+      threebody_parameters[1][0][1]= hch;
+      threebody_parameters[0][1][1]= chh;
+      threebody_parameters[0][1][0]= chc;
+      threebody_parameters[1][1][1]= hhh;
+      threebody_parameters[0][0][2]= cco;
+      threebody_parameters[2][0][2]= oco;
+      threebody_parameters[1][0][2]= hco;
+      threebody_parameters[0][2][0]= coc;
+      threebody_parameters[0][2][2]= coo;
+      threebody_parameters[2][2][2]= ooo;
+      threebody_parameters[0][2][1]= coh;
+      threebody_parameters[1][2][2]= hoo;
+      threebody_parameters[1][2][1]= hoh;
+      threebody_parameters[0][1][2]= cho;
+      threebody_parameters[2][1][2]= oho;
+      threebody_parameters[1][1][2]= hho;
 
       // This nested for loop puts all the values from onebody_parameters into twobody_parameters array.
       for (var i = 0; i < onebody_parameters.length; i++) {
@@ -382,7 +383,7 @@ function angles(paramAngle) {
       window.object.coulombInteraction();
       window.object.bondOrder();
       window.object.lonepairEnergy();
-      //window.object.valenceEnergy();
+      window.object.valenceEnergy();
         
    
         //console.log(window.testing);
