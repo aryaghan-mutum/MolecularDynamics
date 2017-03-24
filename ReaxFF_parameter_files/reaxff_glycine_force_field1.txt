@@ -42,7 +42,7 @@ Reactive MD-force field: Glycine November 21
   4    ! Nr of atoms; cov.r; valency;a.m;Rvdw;Evdw;gammaEEM;cov.r2;#            
             alfa;gammavdW;valency;Eunder;Eover;chiEEM;etaEEM;n.u.               
             cov r3;Elp;Heat inc.;n.u.;n.u.;n.u.;n.u.                            
-            ov/un;val1;n.u.;val3,vval4 
+            ovun;val1;n.u.;val3,vval4 
                                          
  C    1.3817   4.0000  12.0000   1.8903   0.1838   0.6544   1.1341   4.0000     
       9.7559   2.1346   4.0000  34.9350  79.5548   5.4088   6.0000   0.0000     

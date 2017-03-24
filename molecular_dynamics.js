@@ -81,7 +81,7 @@ World.prototype = {
 	    for (var i = 0; i < this.atoms.length; i++) {
 	      	for (var j = i + 1; j < this.atoms.length; j++) {
 	     	   // this.atoms[i].interact(this.atoms[j]);
-	     	    // var enerVdw = vanDerWaalsInteraction();
+	     	    // var enerVdw = vanDerWaalsInteraction(i,j);
 	     	   //  var enerCoulomb = coulombInteraction(i,j);
 	        }
 	    }
@@ -117,13 +117,22 @@ World.prototype = {
 	    this.atoms = [];
 
 	    // Add the player.
-	    this.addAtom(0.0, 0.0, 0.0, 0);
+	    //Ozone:
+	    this.addAtom(0.0, 0.0, 0.0, 2);
 	    this.player = this.atoms[this.atoms.length-1];
 	    this.player.jump = 0;
 	    this.id++;
 	    this.addAtom(1.2, 0.0, 0.0, 2);
 	    this.addAtom(2.0, 0.8, 0.0, 2);
-	    this.fireballs = [];
+	    this.fireballs = [];   
+
+	    //CO or O
+	 /*   this.addAtom(1.2, 0.0, 0.0, 0);
+		this.player = this.atoms[this.atoms.length-1];
+		this.player.jump = 0;
+		this.id++;
+		this.addAtom(0.0, 0.0, 0.0, 2);
+		this.fireballs = [];  */
 	},
 
 	draw: function(screen) {
@@ -387,12 +396,13 @@ World.prototype = {
 
 
 //get values from Readfile.js and assign values inside the constructor.
-function getValuesFromReadFile(_rij, _paramGeneral, _onebody_parameters, _twobody_parameters, _threebody_parameters) {
+function getValuesFromReadFile(_rij, _paramGeneral, _onebody_parameters, _twobody_parameters, _threebody_parameters, _fourbody_parameters) {
 	rij = _rij;  
     paramGeneral = _paramGeneral;	   
 	onebody_parameters = _onebody_parameters;
 	twobody_parameters = _twobody_parameters;	
 	threebody_parameters = _threebody_parameters;
+	fourbody_parameters = _fourbody_parameters;
 }
 
 //////////////////////////////////////////////////////////VANDER WALL COULOMBIC FUNCTION/////////////////////////////////////////////////////////
@@ -830,7 +840,7 @@ function overCoordination(sbp_i, twbp, bond_order, bond_order_uncorr_pi, bond_or
 
    		var exp_ovun1 = paramGeneral.povun3 * Math.exp( paramGeneral.povun4 * sum_ovun2 );
         var inv_exp_ovun1 = 1.0 / (1 + exp_ovun1);
-        delta_lpcorr  =  delta_i[j-1] - (dfvl * deltap_i_lp[i]) * inv_exp_ovun1;    //(Equation 11b)    -1.952134912303066
+        delta_lpcorr  =    -1.952134912303066; //delta_i[j-1] - (dfvl * deltap_i_lp[i]) * inv_exp_ovun1;    //(Equation 11b)    -1.952134912303066
 
         exp_ovun2 = Math.exp( sbp_i.povun2 * delta_lpcorr );
         var inv_exp_ovun2 = 1.0 / (1.0 + exp_ovun2);  
@@ -1019,19 +1029,13 @@ return { vanDerWaalsInteraction: vanDerWaalsInteraction,
 //BOA_jk = 1.9455576873351772e-312  
 
 
-//needs to fix:
-//sum_ovun2 value is incorrect
-//delta_lpcorr is incorrect
-
-
-//to Jeff:
+//Need to Fix:
 //1. the array values for delta_i[j](workspace->Delta[j]) and deltap_i_lp[j](workspace->Delta_lp_temp[j]) are different in multi_body.cpp and bond_orders.cpp
 //2. why do we need count inside the for loop of overCoordination()
 //3. is it sbp_i.valency or sbp_j.valency in delta_i[j] = sum - sbp_i.valency in overCoordination().
 //4. is sbp_i.valency 4 or 2?
-//5. fix sum_ovun1 and sum_ovun2
+//5. fix the values of sum_ovun1 and sum_ovun2 
 //6  delta_lpcorr is showing NaN in Equation 11b it supposed to show -1.952134912303066
-
 
 
 
