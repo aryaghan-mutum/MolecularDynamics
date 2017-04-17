@@ -576,11 +576,17 @@ function coulombInteraction(){
   				var dy = atom_i.pos.y - atom_j.pos.y;
   				var dz = atom_i.pos.z - atom_j.pos.z;
   				var r_ij = Math.sqrt(dx*dx + dy*dy + dz*dz);
-  			
+  				
+
+  				//var sbp_i = onebody_parameters[myMap.get(atom_i.type)];
+  				//var sbp_j = onebody_parameters[myMap.get(atom_j.type)];	
+  				//var twbp  = twobody_parameters[atom_i.type][atom_j.type];   
+
   				var sbp_i = onebody_parameters[atom_i.type];
   				var sbp_j = onebody_parameters[atom_j.type];	
-  				var twbp  = twobody_parameters[atom_i.type][atom_j.type];   
-  
+  				var twbp =  twobody_parameters[atom_i.type][atom_j.type];
+  				
+  				
   				if( sbp_i.roSigma > 0.0 && sbp_j.roSigma > 0.0 ) {
 			    	var C12 = twbp.pbo1 * Math.pow( r_ij / twbp.roSigma, twbp.pbo2 );
     				var BO_s = (1.0 + paramGeneral.cutoff) * Math.exp( C12 );
@@ -1036,6 +1042,21 @@ return { vanDerWaalsInteraction: vanDerWaalsInteraction,
 //4. is sbp_i.valency 4 or 2?
 //5. fix the values of sum_ovun1 and sum_ovun2 
 //6  delta_lpcorr is showing NaN in Equation 11b it supposed to show -1.952134912303066
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

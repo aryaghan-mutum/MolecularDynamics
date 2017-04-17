@@ -200,17 +200,12 @@ function hbonds(hydrogenBonds) {
 
     var atomtype = null; 
 
-    if(type == "atom")  atomtype = new atomType(newArray); // creating an atom object from an array 
-    
-    else if(type == "bond")  atomtype = new bondType(newArray); // creating a bond object from an array 
-    
-    else if(type == "angle") atomtype = new angles(newArray);   // creating a angle object from an array 
-    
+    if(type == "atom")  atomtype = new atomType(newArray);             // creating an atom object from an array  
+    else if(type == "bond")  atomtype = new bondType(newArray);       // creating a bond object from an array 
+    else if(type == "angle") atomtype = new angles(newArray);         // creating an angle object from an array 
     else if(type == "torsions") atomtype = new torsions(newArray);   // creating a torsions object from an array 
-    
-    else if(type == "diag") atomtype = new diag(newArray); // creating a diag object from an array 
-    
-    else if(type == "hbonds") atomtype = new hbonds(newArray);   // creating a hbonds object from an array 
+    else if(type == "diag") atomtype = new diag(newArray);           // creating a diag object from an array 
+    else if(type == "hbonds") atomtype = new hbonds(newArray);      // creating a hbonds object from an array 
 	  
     return atomtype;
 
@@ -256,212 +251,136 @@ function hbonds(hydrogenBonds) {
         reader.onload = function() {
         
         var text = reader.result;
-	      var arrayOfLines = text.split("\n");
+	      var arrayOfLines = text.split("\n ");
         var node = document.getElementById('output');
         var onebody_parameters = new Array();
         var twobody_parameters = new Array();
         var threebody_parameters = new Array();
         var fourbody_parameters = new Array();
         var diagonalAtom = new Array();
-		  	var diagonalType = false;	 
         var hydrogenbonds = new Array();
-        var hydrogenType = false;
+       // var myMap = new Map();
 		  
 
       //THIS PROGRAM DYNAMICALLY READS THE INPUT FROM A FILE AND AUTOMATICALLY RECOGNIZES 
       //THE HEADERS AND THE BODY AND THEN STORES THE VALUES IN APPROPRIATE ARRAYS:
-      
-      var i = 0;
-      var count = 1;
-      var num_of_atoms = 0;
-      while(count < arrayOfLines.length) {
 
-        var str = arrayOfLines[count];
 
-        console.log(str.match(/^\s*[0-9][0-9]*\s*\!\s*[A-Za-z ]*/)!=null);  //1st header line
-        if (str.match(/^\s*[0-9][0-9]*\s*\!\s*[A-Za-z ]*/) != null) {   
-           
-            if(str.match("Nr of off-diagonal terms")) diagonalType = true;
-            if(str.match("Nr of hydrogen bonds")) hydrogenType = true;
-            
-            i=1;
-            var elementLen = str.match(/[0-9][0-9]*/); 
-            console.log("First line of the Header");
-            console.log(str);
-        } 
-        else if (str.match(/^\s*[a-zA-Z()]{3,}[a-zA-Z;()]*/) != null) {   
-            i++;
-            console.log("Remaining Headers");
-            console.log(str);
-        }   
-        else {    //This condition recognizes the body that has values
+      var count = 1;    
+      var onebody_len = 4;
+      var twobody_len = 2;
+      var atomName;
 
-          if(str.match(/^\s*[0-9][0-9.]*\s*\![a-z()0-9]*/) != null) //recognizes paramGeneral type
-          {   
-            console.log("Global params");
-            for( var i = count, j = 0; j < elementLen; i++, j++) {
-              globalParams[j] = arrayOfLines[i];
-              globalParams[j] = globalParams[j].replace(/\s\s+/g, ' ').split(" ")[1];
-              console.log(globalParams[j]);  
-              count++;                   
-            }
-     
-            var param_global = new paramGlobal(globalParams);     
-            count=count-1;
-          }   
-          else if(str.match(/^\s*[A-Z][a-z]*\s\s*[0-9][0-9]*.[0-9][0-9]*\s/) != null) //single body 
-          {  
-             num_of_atoms = elementLen[0];
-              for( var j = 0; j < elementLen[0]; j++) {
-                    console.log("carbon");  
-                    str = arrayOfLines[count];
-                    var atomName = str.match(/[A-Z][a-z]*/);
-                    onebody_parameters[atomName] = loadAtoms(arrayOfLines, count, count+i, "atom" );         
-                    count = count + i;  
-              }
-                count=count-1;
-          } 
-          else if((str.match(/^\s*[0-9]\s\s*[0-9]\s\s*[0-9][0-9]*.[0-9][0-9]*\s/) != null) && diagonalType )   //  Nr of off-diagonal
-          {
-              for(var k = 0; k <= num_of_atoms; k++) { diagonalAtom[k] = new Array(); }
-              
-              for( var j = 0; j < elementLen[0]; j++ ) { 
-                    str = arrayOfLines[count];
-                    var atomName = str.split(" ");
-                    diagonalAtom[atomName[2]][atomName[4]] = loadAtoms(arrayOfLines, count, count+i, "diag" );         
-                    count = count + i;  
-                
-               }
-              diagonalType = false;
-              count = count - 1;
-          }    
-          else if ((str.match(/^\s*[0-9]\s\s*[0-9]\s\s*[0-9]\s\s*[0-9][0-9]*.[0-9][0-9]*\s/) != null) && hydrogenType )  // Nr of hydrogen bonds
-          {
-              for(var k = 0; k <= num_of_atoms; k++) { 
-                hydrogenbonds[k] = new Array(); 
-                 for(var l = 0; l <= num_of_atoms; l++) { 
-                    hydrogenbonds[k][l] = new Array(); 
-                  }
-              }
-              
-              for( var j = 0; j < elementLen[0]; j++ ) { 
-                    str = arrayOfLines[count];
-                    var atomName = str.split(" ");
-                    hydrogenbonds[atomName[2]][atomName[4]][atomName[6]] = loadAtoms(arrayOfLines, count, count+i, "hbonds" );         
-                    count = count + i;  
-                
-               }
-              count = count - 1;
-          }   
-          else if(str.match(/^\s*[0-9]\s\s*[0-9]\s\s*[0-9][0-9]*.[0-9][0-9]*\s/) != null )    //two body           
-          {
-              for(var k = 0; k <= num_of_atoms; k++) { twobody_parameters[k] = new Array(); }
-              
-              for( var j = 0; j < elementLen[0]; j++ ) { 
-                    str = arrayOfLines[count];
-                    var atomName = str.split(" ");
-                    twobody_parameters[atomName[2]][atomName[4]] = loadAtoms(arrayOfLines, count, count+i, "bond" );         
-                    count = count + i;           
-              }
-              count = count - 1;
-          } 
-          else if(str.match(/^\s*[0-9]\s\s*[0-9]\s\s*[0-9]\s\s*[0-9][0-9]*.[0-9][0-9]*\s/) != null)  // three body    
-          {   
-              for(var k = 0; k <= num_of_atoms; k++) { 
-                  threebody_parameters[k] = new Array(); 
-                 for(var l = 0; l <= num_of_atoms; l++) { 
-                    threebody_parameters[k][l] = new Array(); 
-                  }
-              }
-             
-              for( var j = 0; j < elementLen[0]; j++ ) { 
-                    str = arrayOfLines[count];
-                    var atomName = str.split(" ");
-                    threebody_parameters[atomName[2]][atomName[4]][atomName[6]] = loadAtoms(arrayOfLines, count, count+i, "angle" );         
-                    count = count + i;           
-              }
-              count = count - 1;    
-          }  
-          else if(str.match(/^\s*[0-9]\s\s*[0-9]\s\s*[0-9]\s\s*[0-9]\s/) != null )    //four body 
-          {
-              for(var k = 0; k <= num_of_atoms; k++) { 
-                  fourbody_parameters[k] = new Array(); 
-                for(var l = 0; l <= num_of_atoms; l++) { 
-                    fourbody_parameters[k][l] = new Array(); 
-                  for(var m = 0; m <= num_of_atoms; m++){
-                         fourbody_parameters[k][l][m] = new Array(); 
-                    }
-                }
-              }
+      //Global paramters
+      var elementLen = arrayOfLines[count].match(/[0-9][0-9]*/);
+      count++;
+      for( var i = count, j = 0; j < elementLen; count++, i++, j++) {
+          globalParams[j] = arrayOfLines[i];
+          globalParams[j] = globalParams[j].replace(/\s\s+/g, ' ').split(" ")[1];              
+      }    
+      var param_global = new paramGlobal(globalParams);
 
-              for( var j = 0; j < elementLen[0]; j++ ) { 
-                    str = arrayOfLines[count];
-                    var atomName = str.split(" ");
-                    fourbody_parameters[atomName[2]][atomName[4]][atomName[6]][atomName[8]] = loadAtoms(arrayOfLines, count, count+i, "torsions" );         
-                    count = count + i;           
-              }
-              count = count - 1;  
-          }    
-         
+      //Allocation of Arrays 
+      var num_of_atoms = parseInt(arrayOfLines[count].match(/[0-9][0-9]*/));
+
+      //twobody:
+      for(var k = 0; k <= num_of_atoms; k++) { 
+        twobody_parameters[k] = new Array(num_of_atoms); 
+      }
+
+      //diagonalAtom:
+      for(var k = 0; k <= num_of_atoms; k++) { 
+        diagonalAtom[k] = new Array(); 
+      } 
+
+      //threebody:
+      for(var k = 0; k <= num_of_atoms; k++) { 
+         threebody_parameters[k] = new Array(); 
+          for(var l = 0; l <= num_of_atoms; l++) { 
+            threebody_parameters[k][l] = new Array(); 
           }
-          count++;
       }
 
+      //fourbody:
+          for(var k = 0; k <= num_of_atoms; k++) { 
+            fourbody_parameters[k] = new Array(); 
+              for(var l = 0; l <= num_of_atoms; l++) { 
+                fourbody_parameters[k][l] = new Array(); 
+                 for(var m = 0; m <= num_of_atoms; m++) {
+                   fourbody_parameters[k][l][m] = new Array(); 
+                 }
+              }
+          }
 
-
-      //onebody_parameters:
-      var onebody_parameters = [ carbonObj, hydrogenObj, oxygenObj ];
-      
-      //twobody_parameters:
-      var param_bond = [ ccObj11, coObj12, ooObj22, chObj13, hhObj33, ohObj23];
-      var twobody_parameters = new Array(4);
+      //hydrogenbonds:     
+          for(var k = 0; k <= num_of_atoms; k++) { 
+            hydrogenbonds[k] = new Array(); 
+              for(var l = 0; l <= num_of_atoms; l++) { 
+                hydrogenbonds[k][l] = new Array(); 
+              }
+          }
+       
+      //Populating Arrays  
+   
+      //onebody
+      elementLen = arrayOfLines[count].match(/[0-9][0-9]*/);
+      for(var i = count+onebody_len; i <= count+(elementLen*onebody_len); i+=onebody_len){
+         str = arrayOfLines[i];
+         atomName = str.match(/[A-Z][a-z]*/);
+         onebody_parameters[atomName] = loadAtoms(arrayOfLines, i, i+onebody_len, "atom" );  
+      }  
+      count += ((parseInt(elementLen[0])+1)*onebody_len);
  
-      for(var i =0; i < twobody_parameters.length; i++){
-        twobody_parameters[i] = new Array(4);
-      }
 
-      twobody_parameters[0][0]= ccObj11;
-      twobody_parameters[0][1]= coObj12;
-      twobody_parameters[1][0]= coObj12;
-      twobody_parameters[1][1]= ooObj22;
-      twobody_parameters[0][2]= chObj13;
-      twobody_parameters[2][0]= chObj13;
-      twobody_parameters[2][2]= hhObj33;
-      twobody_parameters[1][2]= ohObj23;
-      twobody_parameters[2][1]= ohObj23;
-    
-      //threebody_parameters:
-      var param_angle = [ ccc, cch, hch, chh, chc, hhh, cco, oco, hco, coc, coo, ooo, coh, hoo, hoh, cho, oho, hho ];
-      var threebody_parameters_len = 5;
-      var threebody_parameters = new Array(threebody_parameters_len);
-         
-      for(var i =0; i < threebody_parameters_len; i++){
-          threebody_parameters[i] = new Array(threebody_parameters_len);
-        for(var j = 0; j < threebody_parameters_len; j++){
-          threebody_parameters[i][j] = new Array(threebody_parameters_len);
-        }
+      //twobody
+      elementLen = arrayOfLines[count].match(/[0-9][0-9]*/);  
+      for(var i = count+twobody_len; i <= count+(elementLen*twobody_len); i+=twobody_len){
+          str = arrayOfLines[i];
+          atomName = str.trim().split(/\s+/);  
+          twobody_parameters[atomName[0]][atomName[1]] = loadAtoms(arrayOfLines, i, i+twobody_len, "bond" );         
       }
+      count += ((parseInt(elementLen[0])+1)*twobody_len);
 
-      //C-1, H-2, O-3
-    
-      threebody_parameters[0][0][0]= ccc;
-      threebody_parameters[0][0][1]= cch;
-      threebody_parameters[1][0][1]= hch;
-      threebody_parameters[0][1][1]= chh;
-      threebody_parameters[0][1][0]= chc;
-      threebody_parameters[1][1][1]= hhh;
-      threebody_parameters[0][0][2]= cco;
-      threebody_parameters[2][0][2]= oco;
-      threebody_parameters[1][0][2]= hco;
-      threebody_parameters[0][2][0]= coc;
-      threebody_parameters[0][2][2]= coo;
-      threebody_parameters[2][2][2]= ooo;
-      threebody_parameters[0][2][1]= coh;
-      threebody_parameters[1][2][2]= hoo;
-      threebody_parameters[1][2][1]= hoh;
-      threebody_parameters[0][1][2]= cho;
-      threebody_parameters[2][1][2]= oho;
-      threebody_parameters[1][1][2]= hho;
+
+      //diagonalAtom:
+      elementLen = arrayOfLines[count].match(/[0-9][0-9]*/);
+      for(var i = count+1; i <= count+parseInt(elementLen); i++){          
+          str = arrayOfLines[i];
+          atomName = str.trim().split(/\s+/);                    
+          diagonalAtom[atomName[0]][atomName[1]] = loadAtoms(arrayOfLines, i, i+1, "diag" );        
+      }
+      count += parseInt(elementLen[0])+1;
+
+
+      //threebody
+      elementLen = arrayOfLines[count].match(/[0-9][0-9]*/);
+      for(var i = count+1; i <= count+parseInt(elementLen); i++){
+          str = arrayOfLines[i];
+          atomName = str.trim().split(/\s+/);
+          threebody_parameters[atomName[0]][atomName[1]][atomName[2]] = loadAtoms(arrayOfLines, i, i+1, "angle" );   
+      }
+      count += parseInt(elementLen[0])+1;
+
+
+      //fourbody
+      elementLen = arrayOfLines[count].match(/[0-9][0-9]*/);
+      for(var i = count+1; i < count+parseInt(elementLen); i++){
+          str = arrayOfLines[i];
+          atomName = str.trim().split(/\s+/);
+          fourbody_parameters[atomName[0]][atomName[1]][atomName[2]][atomName[3]] = loadAtoms(arrayOfLines, i, i+1, "torsions" );    
+      }
+      count += parseInt(elementLen[0])+1;
+
+
+      //hydrogenbonds:  
+      elementLen = arrayOfLines[count].match(/[0-9][0-9]*/);
+      for(var i = count+1; i < count+parseInt(elementLen); i++){
+          str = arrayOfLines[i];
+          atomName = str.trim().split(/\s+/);
+          atomName = str.trim();
+          hydrogenbonds[atomName[0]][atomName[1]][atomName[2]] = loadAtoms(arrayOfLines, i, i+1, "hbonds" );         
+      }
+      count += parseInt(elementLen[0])+1;
 
 
 
@@ -502,7 +421,7 @@ function hbonds(hydrogenBonds) {
 
 
       //Display Logic
-      window.object.getValuesFromReadFile(r_ij, param_global, onebody_parameters, twobody_parameters, threebody_parameters, fourbody_parameters);
+      window.object.getValuesFromReadFile(r_ij, param_global, onebody_parameters, twobody_parameters, threebody_parameters, fourbody_parameters );
 
       window.object.vanDerWaalsInteraction();
       window.object.coulombInteraction();
