@@ -161,7 +161,7 @@ function torsions(paramTorsions) {
     this.V2      = parseFloat(paramTorsions[5]);
     this.V3      = parseFloat(paramTorsions[6]);
     this.p_tor1  = parseFloat(paramTorsions[7]);
-    this.P_cot1  = parseFloat(paramTorsions[8]);
+    this.p_cot1  = parseFloat(paramTorsions[8]);
     this.nu      = parseFloat(paramTorsions[9]);
     this.nu      = parseFloat(paramTorsions[10]);
 }
@@ -203,9 +203,10 @@ function hbonds(hydrogenBonds) {
     if(type == "atom")  atomtype = new atomType(newArray);             // creating an atom object from an array  
     else if(type == "bond")  atomtype = new bondType(newArray);       // creating a bond object from an array 
     else if(type == "angle") atomtype = new angles(newArray);         // creating an angle object from an array 
-    else if(type == "torsions") atomtype = new torsions(newArray);   // creating a torsions object from an array 
+    else if(type == "torsions") atomtype = new torsions(newArray);    // creating a torsions object from an array 
     else if(type == "diag") atomtype = new diag(newArray);           // creating a diag object from an array 
-    else if(type == "hbonds") atomtype = new hbonds(newArray);      // creating a hbonds object from an array 
+    else if(type == "hbonds") atomtype = new hbonds(newArray);       // creating a hbonds object from an array 
+    else if(type == "torsions") atomtype = new torsions(newArray);   // creating a torsions object from an array 
 	  
     return atomtype;
 
@@ -259,11 +260,11 @@ function hbonds(hydrogenBonds) {
         var fourbody_parameters = new Array();
         var diagonalAtom = new Array();
         var hydrogenbonds = new Array();
-       // var myMap = new Map();
+        var myMap = new Map();
 		  
 
       //THIS PROGRAM DYNAMICALLY READS THE INPUT FROM A FILE AND AUTOMATICALLY RECOGNIZES 
-      //THE HEADERS AND THE BODY AND THEN STORES THE VALUES IN APPROPRIATE ARRAYS:
+      //THE HEADERS AND THE BODY, AND THEN STORES THE VALUES IN APPROPRIATE ARRAYS:
 
 
       var count = 1;    
@@ -320,24 +321,30 @@ function hbonds(hydrogenBonds) {
               }
           }
        
+      
       //Populating Arrays  
    
       //onebody
       elementLen = arrayOfLines[count].match(/[0-9][0-9]*/);
-      for(var i = count+onebody_len; i <= count+(elementLen*onebody_len); i+=onebody_len){
+      for(var i = count+onebody_len,j=1; i <= count+(elementLen*onebody_len); i+=onebody_len,j++){
          str = arrayOfLines[i];
          atomName = str.match(/[A-Z][a-z]*/);
+         myMap.set(j, atomName[0]);
          onebody_parameters[atomName] = loadAtoms(arrayOfLines, i, i+onebody_len, "atom" );  
+         onebody_parameters[atomName[1]] =  onebody_parameters[atomName[0]]; 
+         onebody_parameters.length++;
       }  
       count += ((parseInt(elementLen[0])+1)*onebody_len);
- 
+
 
       //twobody
       elementLen = arrayOfLines[count].match(/[0-9][0-9]*/);  
       for(var i = count+twobody_len; i <= count+(elementLen*twobody_len); i+=twobody_len){
           str = arrayOfLines[i];
           atomName = str.trim().split(/\s+/);  
-          twobody_parameters[atomName[0]][atomName[1]] = loadAtoms(arrayOfLines, i, i+twobody_len, "bond" );         
+          twobody_parameters[atomName[0]][atomName[1]] =  loadAtoms(arrayOfLines, i, i+twobody_len, "bond" );  
+          twobody_parameters[atomName[1]][atomName[0]] =  twobody_parameters[atomName[0]][atomName[1]];
+                           
       }
       count += ((parseInt(elementLen[0])+1)*twobody_len);
 
@@ -347,7 +354,8 @@ function hbonds(hydrogenBonds) {
       for(var i = count+1; i <= count+parseInt(elementLen); i++){          
           str = arrayOfLines[i];
           atomName = str.trim().split(/\s+/);                    
-          diagonalAtom[atomName[0]][atomName[1]] = loadAtoms(arrayOfLines, i, i+1, "diag" );        
+          diagonalAtom[atomName[0]][atomName[1]] = loadAtoms(arrayOfLines, i, i+1, "diag" );       
+          diagonalAtom[atomName[1]][atomName[0]] = diagonalAtom[atomName[0]][atomName[1]]; 
       }
       count += parseInt(elementLen[0])+1;
 
@@ -358,6 +366,7 @@ function hbonds(hydrogenBonds) {
           str = arrayOfLines[i];
           atomName = str.trim().split(/\s+/);
           threebody_parameters[atomName[0]][atomName[1]][atomName[2]] = loadAtoms(arrayOfLines, i, i+1, "angle" );   
+          threebody_parameters[atomName[2]][atomName[1]][atomName[0]] = threebody_parameters[atomName[0]][atomName[1]][atomName[2]] 
       }
       count += parseInt(elementLen[0])+1;
 
@@ -367,52 +376,56 @@ function hbonds(hydrogenBonds) {
       for(var i = count+1; i < count+parseInt(elementLen); i++){
           str = arrayOfLines[i];
           atomName = str.trim().split(/\s+/);
-          fourbody_parameters[atomName[0]][atomName[1]][atomName[2]][atomName[3]] = loadAtoms(arrayOfLines, i, i+1, "torsions" );    
+          fourbody_parameters[atomName[0]][atomName[1]][atomName[2]][atomName[3]] = loadAtoms(arrayOfLines, i, i+1, "torsions" );
+          fourbody_parameters[atomName[3]][atomName[2]][atomName[1]][atomName[0]] = fourbody_parameters[atomName[0]][atomName[1]][atomName[2]][atomName[3]]   
       }
       count += parseInt(elementLen[0])+1;
 
 
-      //hydrogenbonds:  
+      //hydrogenbonds
       elementLen = arrayOfLines[count].match(/[0-9][0-9]*/);
       for(var i = count+1; i < count+parseInt(elementLen); i++){
           str = arrayOfLines[i];
           atomName = str.trim().split(/\s+/);
           atomName = str.trim();
-          hydrogenbonds[atomName[0]][atomName[1]][atomName[2]] = loadAtoms(arrayOfLines, i, i+1, "hbonds" );         
+          hydrogenbonds[atomName[0]][atomName[1]][atomName[2]] = loadAtoms(arrayOfLines, i, i+1, "hbonds" );      
+          hydrogenbonds[atomName[2]][atomName[1]][atomName[0]] = hydrogenbonds[atomName[0]][atomName[1]][atomName[2]];
       }
       count += parseInt(elementLen[0])+1;
 
 
 
       // This nested for loop puts all the values from onebody_parameters into twobody_parameters array.
-      for (var i = 0; i < onebody_parameters.length; i++) {
-        for (var j = 0; j < onebody_parameters.length; j++) {
+      for (var i = 1; i <= onebody_parameters.length; i++) {
+            var x = myMap.get(i);
+        for (var j = 1; j <= onebody_parameters.length; j++) {
+            var y = myMap.get(j);
           
-           paramAtom1 = twobody_parameters[i][j];
+            paramAtom1 = twobody_parameters[i][j];
         
-            paramAtom1.roSigma = 0.5 * (onebody_parameters[i].roSigma + onebody_parameters[j].roSigma);
-            paramAtom1.roPi = 0.5 * (onebody_parameters[i].roPi + onebody_parameters[j].roPi);
-            paramAtom1.roPiPi = 0.5 * (onebody_parameters[i].roPiPi + onebody_parameters[j].roPiPi);
-            paramAtom1.pboc3 = 0.5 * (onebody_parameters[i].pboc3 + onebody_parameters[j].pboc3);
-            paramAtom1.pboc4 = 0.5 * (onebody_parameters[i].pboc4 + onebody_parameters[j].pboc4);
-            paramAtom1.pboc5 = 0.5 * (onebody_parameters[i].pboc5 + onebody_parameters[j].pboc5);
-            paramAtom1.rvdw = 0.5 * (onebody_parameters[i].rvdw + onebody_parameters[j].rvdw);
-            paramAtom1.gammaW = 0.5 * (onebody_parameters[i].gammaW + onebody_parameters[j].gammaW);
-            paramAtom1.gamma = 0.5 * (onebody_parameters[i].gamma + onebody_parameters[j].gamma);
-            paramAtom1.alpha = 0.5 * (onebody_parameters[i].alpha + onebody_parameters[j].alpha);
-            paramAtom1.pboc3 = Math.sqrt(onebody_parameters[i].pboc3 * onebody_parameters[j].pboc3);
-            paramAtom1.pboc4 = Math.sqrt(onebody_parameters[i].pboc4 * onebody_parameters[j].pboc4);
-            paramAtom1.pboc5 = Math.sqrt(onebody_parameters[i].pboc5 * onebody_parameters[j].pboc5);
-            paramAtom1.dij = Math.sqrt(onebody_parameters[i].dij * onebody_parameters[j].dij);
-            paramAtom1.alpha = Math.sqrt(onebody_parameters[i].alpha * onebody_parameters[j].alpha);
-            paramAtom1.rvdw = 2.0 * Math.sqrt(onebody_parameters[i].rvdw * onebody_parameters[j].rvdw);
-            paramAtom1.gammaW = Math.sqrt(onebody_parameters[i].gammaW * onebody_parameters[j].gammaW);
-            paramAtom1.gamma = Math.pow(onebody_parameters[i].gamma * onebody_parameters[j].gamma, -1.5);
-            paramAtom1.rcore = Math.sqrt(onebody_parameters[i].rcore * onebody_parameters[j].rcore);
-            paramAtom1.ecore = Math.sqrt(onebody_parameters[i].ecore * onebody_parameters[j].ecore);
-            paramAtom1.acore = Math.sqrt(onebody_parameters[i].acore * onebody_parameters[j].acore);
-            paramAtom1.lgcij = Math.sqrt(onebody_parameters[i].lgcij * onebody_parameters[j].lgcij);
-            paramAtom1.lgre = 2.0 * Math.sqrt(onebody_parameters[i].lgre * onebody_parameters[j].lgre); 
+            paramAtom1.roSigma = 0.5 * (onebody_parameters[x].roSigma + onebody_parameters[y].roSigma);
+            paramAtom1.roPi    = 0.5 * (onebody_parameters[x].roPi + onebody_parameters[y].roPi);
+            paramAtom1.roPiPi  = 0.5 * (onebody_parameters[x].roPiPi + onebody_parameters[y].roPiPi);
+            paramAtom1.pboc3   = 0.5 * (onebody_parameters[x].pboc3 + onebody_parameters[y].pboc3);
+            paramAtom1.pboc4   = 0.5 * (onebody_parameters[x].pboc4 + onebody_parameters[y].pboc4);
+            paramAtom1.pboc5   = 0.5 * (onebody_parameters[x].pboc5 + onebody_parameters[y].pboc5);
+            paramAtom1.rvdw    = 0.5 * (onebody_parameters[x].rvdw + onebody_parameters[y].rvdw);
+            paramAtom1.gammaW  = 0.5 * (onebody_parameters[x].gammaW + onebody_parameters[y].gammaW);
+            paramAtom1.gamma   = 0.5 * (onebody_parameters[x].gamma + onebody_parameters[y].gamma);
+            paramAtom1.alpha   = 0.5 * (onebody_parameters[x].alpha + onebody_parameters[y].alpha);
+            paramAtom1.pboc3   = Math.sqrt(onebody_parameters[x].pboc3 * onebody_parameters[y].pboc3);
+            paramAtom1.pboc4   = Math.sqrt(onebody_parameters[x].pboc4 * onebody_parameters[y].pboc4);
+            paramAtom1.pboc5   = Math.sqrt(onebody_parameters[x].pboc5 * onebody_parameters[y].pboc5);
+            paramAtom1.dij     = Math.sqrt(onebody_parameters[x].dij * onebody_parameters[y].dij);
+            paramAtom1.alpha   = Math.sqrt(onebody_parameters[x].alpha * onebody_parameters[y].alpha);
+            paramAtom1.rvdw    = 2.0 * Math.sqrt(onebody_parameters[x].rvdw * onebody_parameters[y].rvdw);
+            paramAtom1.gammaW  = Math.sqrt(onebody_parameters[x].gammaW * onebody_parameters[y].gammaW);
+            paramAtom1.gamma   = Math.pow(onebody_parameters[x].gamma * onebody_parameters[y].gamma, -1.5);
+            paramAtom1.rcore   = Math.sqrt(onebody_parameters[x].rcore * onebody_parameters[y].rcore);
+            paramAtom1.ecore   = Math.sqrt(onebody_parameters[x].ecore * onebody_parameters[y].ecore);
+            paramAtom1.acore   = Math.sqrt(onebody_parameters[x].acore * onebody_parameters[y].acore);
+            paramAtom1.lgcij   = Math.sqrt(onebody_parameters[x].lgcij * onebody_parameters[y].lgcij);
+            paramAtom1.lgre    = 2.0 * Math.sqrt(onebody_parameters[x].lgre * onebody_parameters[y].lgre); 
 
             twobody_parameters[i][j] = paramAtom1;
             //alert(": ", onebody_parameters[i].roPiPi );
@@ -421,14 +434,21 @@ function hbonds(hydrogenBonds) {
 
 
       //Display Logic
-      window.object.getValuesFromReadFile(r_ij, param_global, onebody_parameters, twobody_parameters, threebody_parameters, fourbody_parameters );
+      window.object.getValuesFromReadFile(r_ij, param_global, onebody_parameters, twobody_parameters, threebody_parameters, fourbody_parameters);
 
-      window.object.vanDerWaalsInteraction();
-      window.object.coulombInteraction();
+      window.object.vanDerWaalsInteraction(0,1);  
+      window.object.coulombInteraction(0,1);   
       window.object.bondOrder();
-      window.object.lonepairEnergy();
-      window.object.valenceEnergy();
-        
+      window.object.bondEnergy(0,1);  
+      window.object.lonepairEnergy(0);          
+      window.object.overCoordination(0);
+      window.object.valenceEnergy(0,1,2);  
+      window.object.coalitionEnergy(0,1,2);   
+      window.object.penaltyEnergy(0);
+     // window.object.torsionEnergy(0,1,2,3);  
+     //window.object.hydrogenBondInteraction();
+     //window.object.conjugationEnergy();   //0,1,2,3, 
+     //window.object.C2Correction();
    
         //console.log(window.testing);
        
@@ -457,5 +477,8 @@ find the value for rvdw, lgre and lgre in reaxc_ffield.cpp
               Array["x"] = loadAtoms(arrayOfLines,num+(i*n),num+((i+1)*n),"atom"); 
           }
   */
+
+
+
 
 

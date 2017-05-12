@@ -27,6 +27,7 @@ var object = (function() {
 	this.onebody_parameters = null;
 	this.twobody_parameters = null;
 	this.threebody_parameters = null;
+	this.fourbody_parameters = null;
 	this.deltap_i = null;       //used in bondOrder() Equation 5  corrected and penaltyEnergy()
 	this.deltap_boc = null;     //used in bondOrder() and valenceEnergy()  uncorrected
 	this.deltap = null;			//used in bondOrder() and valenceEnergy()
@@ -34,6 +35,8 @@ var object = (function() {
 	this.vlpex = null;			//used in lonepairEnergy() and valenceEnergy()
 	this.n_lp = null;			//used in lonepairEnergy() and valenceEnergy()
 	this.dDeltap_i_lp = null; 	//used in lonepairEnergy() and valenceEnergy()  
+	this.BOA_ij  = null;
+	this.BOA_jk  = null;
 
 	var self = this;
 	var tick = function() {
@@ -403,9 +406,11 @@ function getValuesFromReadFile(_rij, _paramGeneral, _onebody_parameters, _twobod
 	twobody_parameters = _twobody_parameters;	
 	threebody_parameters = _threebody_parameters;
 	fourbody_parameters = _fourbody_parameters;
+	//myMap = _myMap;
 }
 
-//////////////////////////////////////////////////////////VANDER WALL COULOMBIC FUNCTION/////////////////////////////////////////////////////////
+
+//////////////////////////////////////////////////////////FORCE FIELD FUNCTIONS/////////////////////////////////////////////////////////
 
 
 /// <summary>
@@ -414,17 +419,15 @@ function getValuesFromReadFile(_rij, _paramGeneral, _onebody_parameters, _twobod
 ///   By including a shielded interaction (Equation 23b) excessively high repulsions between 
 ///   bonded atoms (1-2 interactions) and atoms sharing a valence angle (1-3 interactions) are avoided.
 /// </summary>
-
-function vanDerWaalsInteraction() {    
-	
+function vanDerWaalsInteraction(i,j) {	
 	var Rcut = paramGeneral.swb;  
 	var p_vdW1 = paramGeneral.pvdW1;  
 	var p_vdW1i = 1.0/p_vdW1; 
  	 
-	//var dx = world.atoms[j].pos.x - world.atoms[i].pos.x;
-	//var dy = world.atoms[j].pos.y - world.atoms[i].pos.y;
-	//var dz = world.atoms[j].pos.z - world.atoms[i].pos.z;
-	//var r_ij = Math.sqrt(dx*dx+dy*dy+dz*dz);
+	var dx = world.atoms[j].pos.x - world.atoms[i].pos.x;
+	var dy = world.atoms[j].pos.y - world.atoms[i].pos.y;
+	var dz = world.atoms[j].pos.z - world.atoms[i].pos.z;
+	var r_ij = Math.sqrt(dx*dx+dy*dy+dz*dz);
 
 	//Tapper-term   (Equation 22)
 	var Tap7 = 20 / Math.pow(Rcut, 7);
@@ -469,8 +472,7 @@ function vanDerWaalsInteraction() {
 ///   As with the van der Waals-interactions, Coulomb interactions are taken into account between all atom pairs. 
 ///   To adjust for orbital overlap between atoms at close distances a shielded Coulomb-potential is used (Equation 24).
 /// </summary>
-function coulombInteraction(){
-
+function coulombInteraction(i,j){
 	var Rcut = paramGeneral.swb;  
 
 	//Tapper-term   (Equation 22)
@@ -500,29 +502,23 @@ function coulombInteraction(){
 	dTap = dTap * r_ij + 2 * Tap2;
 	dTap += Tap1/r_ij;
 
-	const C_ELE = 332.06371;  //Coulomb's constant
-	const q_i = 0.22472581226836;  //for CO
-	const q_j = -0.22472581226836; //for CO
+	const C_ELE = 332.06371;  	   // Coulomb's constant
+	const q_i = 0.22472581226836;  // magnitudes of the charge q1
+	const q_j = -0.22472581226836; // magnitudes of the charge q2
 
 	var E_coul = 0.0;
-	for(var i = 0; i < world.atoms.length; i++) {
-  		
-  	   for(var j = i+1; j < world.atoms.length; j++) {	
 
-  	   	   var atom_i = world.atoms[i];
-  		   var atom_j = world.atoms[j]; 
+  	var atom_i = world.atoms[i];
+  	var atom_j = world.atoms[j]; 
 
-   		   var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type];   
+   	var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type];   
  			
-           var dr3gamij_1 = ( r_ij * r_ij * r_ij + twbp.gamma);  
-           var dr3gamij_3 = Math.pow( dr3gamij_1 , 0.33333333333333 );
-           var tmp = Tap / dr3gamij_3;
+    var dr3gamij_1 = ( r_ij * r_ij * r_ij + twbp.gamma);  
+    var dr3gamij_3 = Math.pow( dr3gamij_1 , 0.33333333333333 );
+    var tmp = Tap / dr3gamij_3;
   
- 	       E_coul += C_ELE * q_i * q_j * tmp;      // (Equation 24)
-           var CEclmb = C_ELE * q_i * q_j * ( dTap -  Tap * r_ij / dr3gamij_1 ) / dr3gamij_3;
-
-		}
-	}
+ 	E_coul += C_ELE * q_i * q_j * tmp;      // (Equation 24)
+    var CEclmb = C_ELE * q_i * q_j * ( dTap -  Tap * r_ij / dr3gamij_1 ) / dr3gamij_3;
 
 	return E_coul
 }  // end of coulombInteraction function
@@ -536,7 +532,6 @@ function coulombInteraction(){
 ///   from the interatomic distance rij as given in Equation (2). In calculating the bond orders, ReaxFF distinguishes 
 ///   between contributions from sigma bonds, pi-bonds and double pi bonds.
 /// </summary>
-    
 	function bondOrder() {		
        
         var val_i = val_j;
@@ -552,7 +547,6 @@ function coulombInteraction(){
         var bond_order_uncorr_sigma = new Array(world.atoms.length);
         var bond_order_uncorr_pi = new Array(world.atoms.length);
         var bond_order_uncorr_pi2 = new Array(world.atoms.length);
-
 
         //declare and initialize the array indexes
         for (var i = 0; i < world.atoms.length; i++) { 
@@ -578,14 +572,13 @@ function coulombInteraction(){
   				var r_ij = Math.sqrt(dx*dx + dy*dy + dz*dz);
   				
 
-  				//var sbp_i = onebody_parameters[myMap.get(atom_i.type)];
-  				//var sbp_j = onebody_parameters[myMap.get(atom_j.type)];	
-  				//var twbp  = twobody_parameters[atom_i.type][atom_j.type];   
+  				var sbp_i = onebody_parameters[myMap.get(atom_i.type)];
+  				var sbp_j = onebody_parameters[myMap.get(atom_j.type)];	
+  				var twbp  = twobody_parameters[atom_i.type][atom_j.type];   
 
-  				var sbp_i = onebody_parameters[atom_i.type];
-  				var sbp_j = onebody_parameters[atom_j.type];	
-  				var twbp =  twobody_parameters[atom_i.type][atom_j.type];
-  				
+  				//var sbp_i = onebody_parameters[atom_i.type];
+  				//var sbp_j = onebody_parameters[atom_j.type];	
+  				//var twbp =  twobody_parameters[atom_i.type][atom_j.type];			
   				
   				if( sbp_i.roSigma > 0.0 && sbp_j.roSigma > 0.0 ) {
 			    	var C12 = twbp.pbo1 * Math.pow( r_ij / twbp.roSigma, twbp.pbo2 );
@@ -608,10 +601,10 @@ function coulombInteraction(){
   				// Uncorrected bond orders BO'
 				bond_order_uncorr_sigma[i][j] = BO_s;
 				bond_order_uncorr_sigma[j][i] = BO_s;
-				bond_order_uncorr_pi[i][j] = BO_pi;
-				bond_order_uncorr_pi[j][i] = BO_pi;
-				bond_order_uncorr_pi2[i][j] = BO_pi2;
-				bond_order_uncorr_pi2[j][i] = BO_pi2;
+				bond_order_uncorr_pi[i][j]    = BO_pi;
+				bond_order_uncorr_pi[j][i]    = BO_pi;
+				bond_order_uncorr_pi2[i][j]   = BO_pi2;
+				bond_order_uncorr_pi2[j][i]   = BO_pi2;
 
   				bond_order_uncorr[i][j] = BO_s + BO_pi + BO_pi2;    //(Equation 2)
   				bond_order_uncorr[j][i] = bond_order_uncorr[i][j];
@@ -626,8 +619,6 @@ function coulombInteraction(){
   			}  //end inner for loop
   		} //end outer for loop
     
-
-
   // Calculate Deltaprime, Deltaprime_boc values
   for(var i = 0; i < world.atoms.length; i++ ) {
 	var sbp_i = onebody_parameters[world.atoms[i].type];
@@ -696,9 +687,6 @@ function coulombInteraction(){
       	  	var BO_pi_corr = bond_order_uncorr_pi[i][j] *f1*f1*f4*f5;
       	  	var BO_pi2_corr = bond_order_uncorr_pi2[i][j] *f1*f1*f4*f5;
 
-      	  	var bond_energy = bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp );
-
-
         	//corrected bond order
 			world.bond_order[i][j] = BO_s_corr + BO_pi_corr + BO_pi2_corr;     //(Equation 4a)
 			world.bond_order[j][i] = world.bond_order[i][j];
@@ -711,8 +699,7 @@ function coulombInteraction(){
       	
       		world.bond_order_pi2[i][j] = BO_pi2_corr;
       		world.bond_order_pi2[j][i] = BO_pi2_corr;
-
-        
+    
     	}  // end inner for loop     
   	}  // end outer for loop
 
@@ -732,12 +719,12 @@ function coulombInteraction(){
 } // end bond order function
 
 
-function bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp) {
+//function bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp) {
+function bondEnergy(i,j) {
     var pow_BOs_be2 = Math.pow( BO_s_corr, twbp.pbe2 );
     var exp_be12 = Math.exp( twbp.pbe1 * ( 1.0 - pow_BOs_be2 ) );
     var cebo = -twbp.DeSigma * exp_be12 * ( 1.0 - twbp.pbe1 * twbp.pbe2 * pow_BOs_be2 );
         
-    //calculate the Bond Energy
     var E_bond = -twbp.DeSigma * BO_s_corr * exp_be12 - twbp.DePi * BO_pi_corr - twbp.DePipi * BO_pi2_corr;   //(Equation 6)	      
     return E_bond;	
 }
@@ -751,62 +738,39 @@ function bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp) {
 ///   and describes the difference between the total number of outer shell electrons (6 for oxygen, 4 for silicon, 1 for hydrogen) 
 ///   and the sum of bond orders around an atomic center.
 /// </summary>
-
-function lonepairEnergy() {
-    
-   var deltap_e = new Array(world.atoms.length);
-   var deltap_i_lp = new Array(world.atoms.length);
-   dDeltap_i_lp = new Array(world.atoms.length);
-   vlpex = new Array(world.atoms.length);
-   n_lp  = new Array(world.atoms.length);
-	
-   //declare and initialize the arrays
-   var bond_order = world.bond_order;
-   var bond_order_uncorr_pi = world.bond_order_pi;
-   var bond_order_uncorr_pi2 = world.bond_order_pi2;
+function lonepairEnergy(i) {
+    var bond_order = world.bond_order;
+    var bond_order_uncorr_pi = world.bond_order_pi;
+    var bond_order_uncorr_pi2 = world.bond_order_pi2;
 
     var p_lp1 = paramGeneral.plp1;  
-
     var E_lp = 0.0;
-	for(var i = 0; i < world.atoms.length; i++ ) {
-	    for(var j = i+1; j < world.atoms.length; j++) {
-			var atom_i = world.atoms[i];
-  			var atom_j = world.atoms[j];
-
-    		var sbp_i = onebody_parameters[atom_i.type];
-  			var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type]; 
-  		
-  			var sum = 0.0; 										
-  			for(var j = 0; j < world.atoms.length; j++ ) {                                                                                                        
-    			sum += world.bond_order[i][j];             	     	
-    		}
-
-    		deltap_e[i] = sum - sbp_i.valE;                    					 //(Equation 7)
-			vlpex[i] = deltap_e[i] - 2.0 * Math.trunc(deltap_e[i] / 2.0);
-
-			var explp1 = Math.exp( -p_lp1 * ( 2.0 + vlpex[i]) * ( 2.0 + vlpex[i]));
-		
-			n_lp[i] = explp1 - Math.trunc(deltap_e[i]/2.0);     
-	 
-    		deltap_i_lp[i] = sbp_i.nlp_opt - n_lp[i];                            //(Equation 9)   
-
-        	// lone-pair Energy 
-        	var p_lp2 = sbp_i.plp2;
-    		var expvd2 = Math.exp( -75 * deltap_i_lp[i] );
-    		var inv_expvd2 = 1 / (1 + expvd2 );
-    
-    		E_lp += sbp_i.plp2 * deltap_i_lp[i] * inv_expvd2;               		  //(Equation 10)
-
-       		var dElp = p_lp2 * inv_expvd2 + 75 * p_lp2 * deltap_i_lp[i] * expvd2 * (inv_expvd2 * inv_expvd2);
-
-        	dDeltap_i_lp[i] = 2.0 * p_lp1 * explp1 * (2.0 + vlpex[i]);
-        	var CElp = dElp * dDeltap_i_lp[i];
-		
-		}
+	    
+	var atom_i = world.atoms[i];
+	var sbp_i = onebody_parameters[atom_i.type];
+	
+	var sum = 0.0;
+	for(var j = 0; j < world.atoms.length; j++) {
+		sum += world.bond_order[i][j]; 
 	}
-  
-			var over  = overCoordination(sbp_i, twbp, bond_order, bond_order_uncorr_pi, bond_order_uncorr_pi2, deltap_i_lp);
 
+	var delta_e = sum - sbp_i.valE;    						//(Equation 7)
+	var vlpex = delta_e - 2.0 * Math.trunc(delta_e / 2.0);
+	world.vlpex[i] = vlpex;
+	var explp1 = Math.exp( -p_lp1 * ( 2.0 + vlpex) * ( 2.0 + vlpex));
+	world.n_lp[i]= explp1 - Math.trunc(deltap_e[i]/2.0); 
+	world.deltap_i_lp[i] = sbp_i.nlp_opt - world.n_lp[i];  //(Equation 9)
+
+    // lone-pair Energy 
+    var p_lp2 = sbp_i.plp2;
+    var expvd2 = Math.exp( -75 * world.deltap_i_lp[i] );
+    var inv_expvd2 = 1 / (1 + expvd2 );
+    
+    var E_lp = sbp_i.plp2 * deltap_i_lp[i] * inv_expvd2;               		  //(Equation 10)
+    return E_lp;
+    //var dElp = p_lp2 * inv_expvd2 + 75 * p_lp2 * deltap_i_lp[i] * expvd2 * (inv_expvd2 * inv_expvd2);
+    //dDeltap_i_lp[i] = 2.0 * p_lp1 * explp1 * (2.0 + vlpex[i]);
+    //var CElp = dElp * dDeltap_i_lp[i];
 }  //end lonepairEnergy function
 
 
@@ -817,47 +781,36 @@ function lonepairEnergy() {
 ///   This is done by calculating a corrected overcoordination (equation 11b), taking the deviation from 
 ///   the optimal number of lone pairs, as calculated in equation (9), into account.
 /// </summary>
-function overCoordination(sbp_i, twbp, bond_order, bond_order_uncorr_pi, bond_order_uncorr_pi2, deltap_i_lp) {
-	
-	var delta_i = new Array(world.atoms.length);  	    
-    var dfvl = 0.0;	
-	var sum_ovun1 = 0.0;
-	var sum_ovun2 = 0.0;
+function overCoordination(i) {
+	var sbp_i = onebody_parameters[world.atoms[i].type];
 
-    var exp_ovun2 = 0.0;
-    var delta_lpcorr = 0.0;
+    var dfvl = 0.0;
+	if( sbp_i.atmcMass > 21.00 ) dfvl = 0.0;
+	else dfvl = 1.0;   // only for 1st-row elements
     
-    var E_over = 0.0;
-    var sum = 0.0; 
-	for( var i = 0; i < world.atoms.length; i++ ) { 
-		
-		if( sbp_i.atmcMass > 21.00 ) dfvl = 0.0;
-		else dfvl = 1.0;   // only for 1st-row elements
-        
-        var count = 0;
-		for( var j = i + 1; j < world.atoms.length; j++) {  
-    		sum += world.bond_order[i][j];     
-    		delta_i[j] = sum - sbp_i.valency;           
-     	     	
-        	sum_ovun1 += twbp.povun1 * twbp.DeSigma * bond_order[i][j];    
-        	sum_ovun2 += delta_i[j] - dfvl*deltap_i_lp[i] * ( bond_order_uncorr_pi[i][j] + bond_order_uncorr_pi2[i][j] );  
-        	count++;
-    	}
-
-   		var exp_ovun1 = paramGeneral.povun3 * Math.exp( paramGeneral.povun4 * sum_ovun2 );
-        var inv_exp_ovun1 = 1.0 / (1 + exp_ovun1);
-        delta_lpcorr  =    -1.952134912303066; //delta_i[j-1] - (dfvl * deltap_i_lp[i]) * inv_exp_ovun1;    //(Equation 11b)    -1.952134912303066
-
-        exp_ovun2 = Math.exp( sbp_i.povun2 * delta_lpcorr );
-        var inv_exp_ovun2 = 1.0 / (1.0 + exp_ovun2);  
-        var dlpVi = 1.0 / (delta_lpcorr + sbp_i.valency + 1e-8);   
-      
-        E_over = (sum_ovun1 * dlpVi) * (delta_lpcorr) * (inv_exp_ovun2);        //(Equation 11a)    
+    var sum = 0.0;
+	for( var j = 0; j < world.atoms.length; j++ ) {
+        sum += (world.delta_i[j] - dfvl * world.deltap_i_lp[i]) * ( world.bond_order_uncorr_pi[i][j] + world.bond_order_uncorr_pi2[i][j] ); 
 	}
+	//(Equation 11b) 
+	var exp_ovun1 = paramGeneral.povun3 * Math.exp( paramGeneral.povun4 * sum );
+	var inv_exp_ovun1 = 1.0 / (1 + exp_ovun1);
+	var delta_lpcorr  =  world.delta_i[i] - (dfvl * world.deltap_i_lp[i]) * inv_exp_ovun1; 
+			
+	// (Equation 11a)
+	var sum_ovun1 = 0.0;
+	for( var j = 0; j < world.atoms.length; j++ ) {
+		var twbp = world.twobody_parameters[world.atoms[i].type][world.atoms[j].type];
+		sum_ovun1 += twbp.povun1 * twbp.DeSigma * world.bond_order[i][j];
+	}
+	var dlpVi = 1.0 / (delta_lpcorr + sbp_i.valency + 1e-8);
+	var exp_ovun2 = Math.exp( sbp_i.povun2 * delta_lpcorr );
+    var inv_exp_ovun2 = 1.0 / (1.0 + exp_ovun2); 
+	var E_over = sum_ovun1 * dlpVi * delta_lpcorr * inv_exp_ovun2;        //(Equation 11a)   
 
-    var under = underCoordination(sbp_i, exp_ovun2, sum_ovun2, delta_lpcorr, dfvl);
+    var E_under = underCoordination(sbp_i, exp_ovun2, sum, delta_lpcorr, dfvl);
 	
-	return E_over;	  
+	return E_over + E_under;	  
 }  //end overCoordination function
 
 
@@ -876,153 +829,298 @@ function underCoordination(sbp_i, exp_ovun2, sum_ovun2, delta_lpcorr, dfvl) {
     var inv_exp_ovun2n = 1.0 / (1.0 + exp_ovun2n);
     var inv_exp_ovun8 = 1.0 / (1.0 + exp_ovun8);
 
-    var E_under = 0.0;
-    for( var i = 0; i < world.atoms.length; i++ ) { 
-    	 E_under = -sbp_i.povun5 * (1.0 - exp_ovun6) * inv_exp_ovun2n * inv_exp_ovun8;       //(Equation 12)
-    	 var E_under1 = inv_exp_ovun2n * ( sbp_i.povun5 * paramGeneral.povun6 * exp_ovun6 * inv_exp_ovun8 + sbp_i.povun2 * E_under * exp_ovun2n );
-         var E_under2 = -E_under * exp_ovun8 * inv_exp_ovun8;
-        // var E_under3 = E_under1 * ( 1.0 - dfvl * delta_lp_temp[i] * inv_exp_ovun1);
-     	// var E_under4 = E_under1 * ( dfvl * dDelta_lp_temp[i] ) * paramGeneral.povun4 * exp_ovun1 * (inv_exp_ovun1 * inv_exp_ovun1) + E_under2;
-    }
-
+    var E_under = -sbp_i.povun5 * (1.0 - exp_ovun6) * inv_exp_ovun2n * inv_exp_ovun8;       //(Equation 12)
+   // var E_under1 = inv_exp_ovun2n * ( sbp_i.povun5 * paramGeneral.povun6 * exp_ovun6 * inv_exp_ovun8 + sbp_i.povun2 * E_under * exp_ovun2n );
+   // var E_under2 = -E_under * exp_ovun8 * inv_exp_ovun8;
+   // var E_under3 = E_under1 * ( 1.0 - dfvl * delta_lp_temp[i] * inv_exp_ovun1);
+   // var E_under4 = E_under1 * ( dfvl * dDelta_lp_temp[i] ) * paramGeneral.povun4 * exp_ovun1 * (inv_exp_ovun1 * inv_exp_ovun1) + E_under2;
+    
     return E_under;
-
 }  //end underCoordination function
 
 
-
-function valenceEnergy(){
+function valenceEnergy(i,j,k){
 
     var bond_order = world.bond_order;
     var bond_order_pi = world.bond_order_pi;
     var bond_order_pi2 = world.bond_order_pi2;
 
-	for(var j = 0; j < world.atoms.length; j++ ){
-	   for(var i = 0; i < world.atoms.length; i++) {
-		   for(var k = i + 1; k < world.atoms.length; k++) {
-				//	if (i==j || k==j) continue;
+	if (i==j || k==j) return 0.0;
 	   	
-	    var atom_i = world.atoms[i];
-    	var sbp_i = onebody_parameters[atom_i.type];
-  		var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type]; 
-  		var thbp =  threebody_parameters[world.atoms[i].type][world.atoms[j].type][world.atoms[k].type];
+	var atom_i = world.atoms[i];
+   	var sbp_i = onebody_parameters[atom_i.type];
+  	var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type]; 
+  	var thbp =  threebody_parameters[world.atoms[i].type][world.atoms[j].type][world.atoms[k].type];
   		
-		const  cut = 0.001;
-  	    var BOA_ij = bond_order[i][k] - cut;       
- 		var BOA_jk = bond_order[j][k] - cut;	    //BOA_jk is 6.92941723262061e-310 in lammps
+	const  cut = 0.001;
+  	BOA_ij = bond_order[i][k] - cut;       
+ 	BOA_jk = bond_order[j][k] - cut;	    //BOA_jk is 6.92941723262061e-310 in lammps
         
-        // ANGLE ENERGY 
-  		var expval6 = Math.exp( paramGeneral.pval7 * deltap_boc[j] ); //Note: pval7 in JS is pval6 in C++ but the value is same
+    // ANGLE ENERGY 
+  	var expval6 = Math.exp( paramGeneral.pval7 * deltap_boc[j] ); 	//Note: pval7 in JS is pval6 in C++ but the value is same
 
-  		var exp3ij = Math.exp(-sbp_i.pval3 * Math.pow( BOA_ij, thbp.pval4 ) );
-        var f7_ij = 1.0 - exp3ij; 			  											   //(Equation 13b)
-        var Cf7ij = sbp_i.pval3 * thbp.pval4 * Math.pow( BOA_ij, thbp.pval4 - 1.0 ) * exp3ij;
+  	var exp3ij = Math.exp(-sbp_i.pval3 * Math.pow( BOA_ij, thbp.pval4 ) );
+    var f7_ij = 1.0 - exp3ij; 			  											   //(Equation 13b)
+    var Cf7ij = sbp_i.pval3 * thbp.pval4 * Math.pow( BOA_ij, thbp.pval4 - 1.0 ) * exp3ij;
 
-        var exp3jk = Math.exp( -sbp_i.pval3 * Math.pow( BOA_jk, thbp.pval4 ) );
-        var f7_jk = 1.0 - exp3jk;
-        var Cf7jk = sbp_i.pval3 * thbp.pval4 * Math.pow( BOA_jk, thbp.pval4 - 1.0 ) * exp3jk;
+    var exp3jk = Math.exp( -sbp_i.pval3 * Math.pow( BOA_jk, thbp.pval4 ) );
+    var f7_jk = 1.0 - exp3jk;
+    var Cf7jk = sbp_i.pval3 * thbp.pval4 * Math.pow( BOA_jk, thbp.pval4 - 1.0 ) * exp3jk;
 
-        var expval7 = Math.exp( -thbp.pval7 * deltap_boc[j] );
-        var trm8 = 1.0 + expval6 + expval7;
-        var f8_Dj = sbp_i.pval5 - ( (sbp_i.pval5 - 1.0) * (2.0 + expval6) / trm8 );   	  //(Equation 13c)  
-     //   var Cf8j = ( (1.0 - sbp_i.pval5) / (trm8 * trm8) ) * ( sbp_i.pval6 * expval6 * trm8 - (2.0 + expval6) * ( pval6 * expval6 - pval7 * expval7 ) );
+    var expval7 = Math.exp( -thbp.pval7 * deltap_boc[j] );
+    var trm8 = 1.0 + expval6 + expval7;
+    var f8_Dj = sbp_i.pval5 - ( (sbp_i.pval5 - 1.0) * (2.0 + expval6) / trm8 );   	  //(Equation 13c)  
+    //   var Cf8j = ( (1.0 - sbp_i.pval5) / (trm8 * trm8) ) * ( sbp_i.pval6 * expval6 * trm8 - (2.0 + expval6) * ( pval6 * expval6 - pval7 * expval7 ) );
 
+    var SBOp = 0;
+    var prod_SBO = 1;
+    for( var t = 0; t < world.atoms.length; t++ ) {
+      	SBOp += (bond_order_pi[t][j] + bond_order_pi2[t][j] );
+     	var temp = (bond_order[t][j] * bond_order[t][j]);   
+      		temp *= temp;
+      		temp *= temp;
+      		prod_SBO *= Math.exp(-temp);
+    }
 
-    	var SBOp = 0;
-    	var prod_SBO = 1;
-    		for( var t = 0; t < world.atoms.length; t++ ) {
-      			SBOp += (bond_order_pi[t][j] + bond_order_pi2[t][j] );
-     			var temp = (bond_order[t][j] * bond_order[t][j]);   
-      			temp *= temp;
-      			temp *= temp;
-      			prod_SBO *= Math.exp(-temp);
-    		}
+    var vlpadj = 0;
+    var dSBO2 = 0;
+    if( world.vlpex[j] >= 0 ){
+     	vlpadj = 0;
+     	dSBO2 = prod_SBO - 1;
+    }
+   	else{
+      	vlpadj = n_lp[j];
+      	dSBO2 = (prod_SBO - 1) * (1 - paramGeneral.pval8 * dDeltap_i_lp[i]);
+    }
 
-    	var vlpadj = 0;
-    	var dSBO2 = 0;
-    	if( vlpex[j] >= 0 ){
-     		 vlpadj = 0;
-     		 dSBO2 = prod_SBO - 1;
-    	}
-   		else{
-      		vlpadj = n_lp[j];
-      		dSBO2 = (prod_SBO - 1) * (1 - paramGeneral.pval8 * dDeltap_i_lp[i]);
-    	}
+	var SBO = SBOp + (1 - prod_SBO) * (-deltap_boc[i] - paramGeneral.pval8 * vlpadj);      	  //(Equation 13d)  
+    var dSBO1 = -8 * prod_SBO * ( deltap_boc[i] + paramGeneral.pval8 * vlpadj );
 
-		var SBO = SBOp + (1 - prod_SBO) * (-deltap_boc[i] - paramGeneral.pval8 * vlpadj);      	  //(Equation 13d)  
-    	var dSBO1 = -8 * prod_SBO * ( deltap_boc[i] + paramGeneral.pval8 * vlpadj );
+    var SBO2 = 0;
+    var CSBO2 = 0; 
+   	if( SBO <= 0 ) SBO2 = 0, CSBO2 = 0;
+    else if( SBO > 0 && SBO <= 1 ) {
+       	    SBO2 = Math.pow( SBO, paramGeneral.pval9 );     								  //(Equation 13f) 
+        	CSBO2 = paramGeneral.pval9  * Math.pow( SBO, paramGeneral.pval8  - 1 );
+    }
+    else if( SBO > 1 && SBO < 2 ) {
+     		SBO2 = 2 - Math.pow( 2-SBO, paramGeneral.pval9 );
+     		CSBO2 = paramGeneral.pval9  * Math.pow( 2 - SBO, paramGeneral.pval9  - 1 );
+    }
+    else SBO2 = 2, CSBO2 = 0;
 
-
-    	var SBO2 = 0;
-    	var CSBO2 = 0; 
-   		if( SBO <= 0 ) SBO2 = 0, CSBO2 = 0;
-    	else if( SBO > 0 && SBO <= 1 ) {
-       		 SBO2 = Math.pow( SBO, paramGeneral.pval9 );     									 //(Equation 13f) 
-        	 CSBO2 = paramGeneral.pval9  * Math.pow( SBO, paramGeneral.pval8  - 1 );
-        }
-    	else if( SBO > 1 && SBO < 2 ) {
-     		 SBO2 = 2 - Math.pow( 2-SBO, paramGeneral.pval9 );
-     		 CSBO2 = paramGeneral.pval9  * Math.pow( 2 - SBO, paramGeneral.pval9  - 1 );
-    	}
-    	else SBO2 = 2, CSBO2 = 0;
-
-
-       		var theta_0 = 180.0 - thbp.thetao * (1.0 - Math.exp(-paramGeneral.pval10 * (2.0 - SBO2)));       //(Equation 13g)  
-
-        	var penalty_energy = penaltyEnergy(thbp, BOA_ij, BOA_jk);
-        	var coalition_energy = coalitionEnergy(thbp, BOA_ij, BOA_jk, bond_order);
-
-			}
-  		}
-	}	
+    var theta_0 = 180.0 - thbp.thetao * (1.0 - Math.exp(-paramGeneral.pval10 * (2.0 - SBO2)));     //(Equation 13g)  
 
 } //end valenceEnergy function
 
 
-function penaltyEnergy(thbp, BOA_ij, BOA_jk){
+function penaltyEnergy(i){
+
+	var bond_order = world.bond_order;
+    var bond_order_pi = world.bond_order_pi;
+    var bond_order_pi2 = world.bond_order_pi2;
+
+    var thbp =  threebody_parameters[world.atoms[i].type][world.atoms[j].type][world.atoms[k].type];
+	const  cut = 0.001;
+  	BOA_ij = bond_order[i][k] - cut;       
+ 	BOA_jk = bond_order[j][k] - cut;	
 
 	var E_pen = 0.0;
-	for(var i = 0; i < world.atoms.length; i++ ){
-  		  var exp_pen2ij = Math.exp( -paramGeneral.ppen2 * ( BOA_ij - 2.0 )*( BOA_ij - 2.0 ) );
-    	  var exp_pen2jk = Math.exp( -paramGeneral.ppen2 * ( BOA_jk - 2.0 )*( BOA_jk - 2.0 ) );
-          var exp_pen3   = Math.exp( -paramGeneral.ppen3 * deltap_i );    				//Note: deltap in JS is Delta in C++
-          var exp_pen4   = Math.exp(  paramGeneral.ppen4 * deltap_i );
-          var trm_pen34  = 1.0 + exp_pen3 + exp_pen4;
-          var f9_Dj = ( 2.0 + exp_pen3 ) / trm_pen34;       				    //(Equation 14b) 
-          E_pen += E_pen = thbp.pen1 * f9_Dj * exp_pen2ij * exp_pen2jk;    //(Equation 14a) 
-    }
-
+  	var exp_pen2ij = Math.exp( -paramGeneral.ppen2 * ( BOA_ij - 2.0 )*( BOA_ij - 2.0 ) );
+    var exp_pen2jk = Math.exp( -paramGeneral.ppen2 * ( BOA_jk - 2.0 )*( BOA_jk - 2.0 ) );
+    var exp_pen3   = Math.exp( -paramGeneral.ppen3 * deltap_i );    //Note: deltap in JS is Delta in C++
+    var exp_pen4   = Math.exp(  paramGeneral.ppen4 * deltap_i );
+    var trm_pen34  = 1.0 + exp_pen3 + exp_pen4;
+    var f9_Dj = ( 2.0 + exp_pen3 ) / trm_pen34;       				    //(Equation 14b) 
+    E_pen += E_pen = thbp.pen1 * f9_Dj * exp_pen2ij * exp_pen2jk;    //(Equation 14a) 
+  
     return E_pen;
-}   ////end penaltyEnergy function
+}   //end penaltyEnergy function
 
 
-function coalitionEnergy(thbp, BOA_ij, BOA_jk, bond_order){
+function coalitionEnergy(i,j,k){  
+
+	var bond_order = world.bond_order;
+    var bond_order_pi = world.bond_order_pi;
+    var bond_order_pi2 = world.bond_order_pi2;
+
+	var thbp =  threebody_parameters[world.atoms[i].type][world.atoms[j].type][world.atoms[k].type];
+	const  cut = 0.001;
+  	BOA_ij = bond_order[i][k] - cut;       
+ 	BOA_jk = bond_order[j][k] - cut;	
 
  	var E_coa = 0.0;
-	for(var i = 0; i < world.atoms.length; i++ ){
-		for(var j = i+1; j < world.atoms.length; j++ ){
-
-        	var exp_coa2 = Math.exp( paramGeneral.pcoa2 * deltap_boc[j] );   //Note: deltap_boc in JS is delta_val in C++
-
-       		E_coa += E_coa = thbp.pcoa1 / (1. + exp_coa2) *
-                 Math.exp( -paramGeneral.pcoa3 * (bond_order[i][j] -BOA_ij) *(bond_order[i][j] -BOA_ij) ) *
-                 Math.exp( -paramGeneral.pcoa3 * (bond_order[i][j] -BOA_jk) *(bond_order[i][j] -BOA_jk) ) *
-                 Math.exp( -paramGeneral.pcoa4 * (BOA_ij - 1.5)*(BOA_ij - 1.5) ) *
-                 Math.exp( -paramGeneral.pcoa4 * (BOA_jk - 1.5)*(BOA_jk - 1.5) ); 		 
-  		 }
-	}
+    var exp_coa2 = Math.exp( paramGeneral.pcoa2 * deltap_boc[j] );   //Note: deltap_boc in JS is delta_val in C++
+    E_coa += E_coa = thbp.pcoa1 / (1. + exp_coa2) *
+             Math.exp( -paramGeneral.pcoa3 * (bond_order[i][j] -BOA_ij) *(bond_order[i][j] -BOA_ij) ) *
+             Math.exp( -paramGeneral.pcoa3 * (bond_order[i][j] -BOA_jk) *(bond_order[i][j] -BOA_jk) ) *
+             Math.exp( -paramGeneral.pcoa4 * (BOA_ij - 1.5) * (BOA_ij - 1.5) ) *
+             Math.exp( -paramGeneral.pcoa4 * (BOA_jk - 1.5) * (BOA_jk - 1.5) ); 		 
 
    return E_coa;
-}   ////end coalitionEnergy function
+}   //end coalitionEnergy function
 
+/*
+function torsionEnergy(i,j,k,l){
+
+    var fbp = fourbody_parameters[world.atoms[i].type][world.atoms[j].type][world.atoms[k].type][world.atoms[l].type];
+
+	// omega and its derivative 
+    var omega = Calculate_Omega( pbond_ij.dvec, r_ij,
+                                 pbond_jk.dvec, r_jk,
+                                 pbond_kl.dvec, r_kl,
+                                 dvec_li, r_li,
+                                 p_ijk, p_jkl,
+                                 dcos_omega_di, dcos_omega_dj,
+                                 dcos_omega_dk, dcos_omega_dl,
+                                 out_control );
+
+    var cos_omega = Math.cos( omega );
+    var cos2omega = Math.cos( 2. * omega );
+    var cos3omega = Math.cos( 3. * omega );
+
+    // torsion energy 
+	var exp_cot2_jk = Math.exp( -paramGeneral.p_cot2 * (BOA_jk - 1.5) * (BOA_jk - 1.5) );
+	var exp_cot2_kl = Math.exp( -paramGeneral.p_cot2 * (BOA_kl - 1.5) * (BOA_kl - 1.5) );
+    var exp_tor2_ij = Math.exp( -paramGeneral.p_tor2 * BOA_ij );
+    var exp_cot2_ij = Math.exp( -paramGeneral.p_cot2 * (BOA_ij -1.5) * (BOA_ij -1.5));
+    var exp_tor2_jk = Math.exp( -paramGeneral.p_tor2 * BOA_jk );
+    var exp_tor2_kl = Math.exp( -paramGeneral.p_tor2 * BOA_kl );
+
+    var fn10 = (1.0 - exp_tor2_ij) * (1.0 - exp_tor2_jk) * (1.0 - exp_tor2_kl);     //(Equation 16b) 
+
+    var exp_tor3_DjDk = Math.exp( -paramGeneral.p_tor3 * (Delta_j + Delta_k) );
+    var exp_tor4_DjDk = Math.exp( paramGeneral.p_tor4  * (Delta_j + Delta_k) );
+    var exp_tor34_inv = 1.0 / (1.0 + exp_tor3_DjDk + exp_tor4_DjDk);
+    var f11_DjDk = (2.0 + exp_tor3_DjDk) * exp_tor34_inv;						    //(Equation 16c) 
+
+    var exp_tor1 = Math.exp( fbp.p_tor1 * (2.0 - bo_jk.BO_pi - f11_DjDk) * (2.0 - bo_jk.BO_pi - f11_DjDk) );
+	
+	var CV = 0.5 * ( fbp.V1 * (1.0 + cos_omega) + 
+					 fbp.V2 * exp_tor1 * (1.0 - cos2omega) +
+					 fbp.V3 * (1.0 + cos3omega) );    								//(Equation 16a)  //V1=-0.177, V2=30.0252, V3=0.4340  
+
+
+    var theta_ijk = p_ijk.theta;
+    var sin_ijk = Math.sin( theta_ijk );
+    var cos_ijk = Math.cos( theta_ijk );
+    var sin_jkl = Math.sin( theta_jkl );
+    var cos_jkl = Math.cos( theta_jkl );
+    var tan_ijk_i;
+    var MIN_SINE = 1e-10;
+    
+    if( sin_ijk >= 0 && sin_ijk <= MIN_SINE ) tan_ijk_i = cos_ijk / MIN_SINE;  
+    else if( sin_ijk <= 0 && sin_ijk >= -MIN_SINE ) tan_ijk_i = cos_ijk / -MIN_SINE;   
+    else tan_ijk_i = cos_ijk / sin_ijk;
+
+    var E_tor += E_tor = fn10 * sin_ijk * sin_jkl * CV;					  //(Equation 16a) 
+    
+
+    // 4-body conjugation energy 
+    var fn12 = exp_cot2_ij * exp_cot2_jk * exp_cot2_kl;				 											//(Equation 17b) 
+    var E_con += fbp.p_cot1 * fn12 * (1.0 + ((cos_omega) * (cos_omega) - 1.0) * sin_ijk * sin_jkl);    			//(Equation 17a) 
+    var Cconj = -2.0 * fn12 * fbp.p_cot1 * paramGeneral.pcot2 * (1.0 + ((cos_omega)*(cos_omega) - 1.0) * sin_ijk * sin_jkl); 
+
+    var CEconj1 = Cconj * (BOA_ij - 1.5e0);
+    var CEconj2 = Cconj * (BOA_jk - 1.5e0);
+    var CEconj3 = Cconj * (BOA_kl - 1.5e0);
+
+    var CEconj4 = -fbp.p_cot1 * fn12 * ((cos_omega * cos_omega) - 1.0) * sin_jkl * tan_ijk_i;
+    var CEconj5 = -fbp.p_cot1 * fn12 * ((cos_omega * cos_omega) - 1.0) * sin_ijk * tan_jkl_i;
+    var CEconj6 = 2.0 * fbp.p_cot1 * fn12 * cos_omega * sin_ijk * sin_jkl;
+
+}
+
+function Calculate_Omega( 
+					  rvec dvec_ij, double r_ij,
+                      rvec dvec_jk, double r_jk,
+                      rvec dvec_kl, double r_kl,
+                      rvec dvec_li, double r_li,
+                      three_body_interaction_data *p_ijk,
+                      three_body_interaction_data *p_jkl,
+                      rvec dcos_omega_di, rvec dcos_omega_dj,
+                      rvec dcos_omega_dk, rvec dcos_omega_dl,
+                      output_controls * out_control ){
+
+  	var sin_ijk = Math.sin( p_ijk.theta );
+  	var cos_ijk = Math.cos( p_ijk.theta );
+  	var sin_jkl = Math.sin( p_jkl.theta );
+  	var cos_jkl = Math.cos( p_jkl.theta );
+
+ 	var unnorm_cos_omega = -rvec_Dot(dvec_ij, dvec_jk) * rvec_Dot(dvec_jk, dvec_kl) + ( r_jk * r_jk) *  rvec_Dot( dvec_ij, dvec_kl );
+  	var unnorm_sin_omega = -r_jk * rvec_Dot( dvec_ij, cross_jk_kl );
+
+  	var omega = Math.atan2( unnorm_sin_omega, unnorm_cos_omega );
+
+  return omega;
+}
+
+function hydrogenBondInteraction(){
+
+    var sin_theta2 = Math.sin( theta /2.0 );
+    var sin_xhz4 = (sin_theta2 * sin_theta2);
+    var sin_xhz4 *= sin_xhz4;
+    var cos_xhz1 = ( 1.0 - cos_theta );
+    var exp_hb2 = Math.exp( -hbp.p_hb2 * bo_ij.BO );
+    var exp_hb3 = Math.exp( -hbp.p_hb3 * ( hbp.r_hb / r_jk + r_jk / hbp.r_hb - 2.0 ) );
+
+    var E_hb = 0;
+    E_hb += hbp.p_hb1 * (1.0 - exp_hb2) * exp_hb3 * sin_xhz4;		  //(Equation 18) 
+
+    var CEhb1 = hbp.p_hb1 * hbp.p_hb2 * exp_hb2 * exp_hb3 * sin_xhz4;
+    var CEhb2 = -hbp.p_hb1/2.0 * (1.0 - exp_hb2) * exp_hb3 * cos_xhz1;
+    var CEhb3 = -hbp.p_hb3 * (-hbp.r0_hb / (r_jk * r_jk) + 1.0 / hbp.r_hb) * E_hb;
+}
+*/
+/*
+function C2Correction(i,j){
+
+    if( paramGeneral.kc2 > 0.001 && !strcmp(system->reax_param.sbp[type_i].name, "C") )
+      for( j = Start_Index(i, bonds); j < End_Index(i, bonds); j++ ) {
+        j = bonds->select.bond_list[pj].nbr;
+        var type_j = system->my_atoms[j].type;
+        
+        if (type_j < 0) return 0.0;
+
+        if( !strcmp( system->reax_param.sbp[type_j].name, "C" ) ) {
+          var twbp = twobody_parameters[world.atoms[0].type][world.atoms[1].type];
+          bo_ij = &( bonds->select.bond_list[j].bo_data );
+          var Di = Delta[i];
+          var vov3 = bo_ij->BO - Di - 0.040 * Math.pow(Di, 4.0);
+
+          var E_lp = 0;
+          if( vov3 > 3.0 ) {
+            E_lp += e_lph = paramGeneral.kc2 * (vov3-3.0) * (vov3-3.0);
+
+            var deahu2dbo  = 2.0 * paramGeneral.kc2 * (vov3 - 3.0);
+            var deahu2dsbo = 2.0 * paramGeneral.kc2 * (vov3 - 3.0) * (-1. - 0.16 * Math.pow(Di, 3.0));
+
+            bo_ij->Cdbo += deahu2dbo;
+            workspace->CdDelta[i] += deahu2dsbo;
+
+            // tally into per-atom energy 
+            if( system->pair_ptr->evflag)
+              system->pair_ptr->ev_tally(i,j,system->n,1,e_lph,0.0,0.0,0.0,0.0,0.0);
+          }
+        }
+      }
+}
+*/
 
 
 
 return { vanDerWaalsInteraction: vanDerWaalsInteraction, 
 		 coulombInteraction: coulombInteraction, 
-	     bondOrder: bondOrder,  
+	     bondOrder: bondOrder,
+	     bondEnergy: bondEnergy,  
 	     lonepairEnergy: lonepairEnergy,  
+	     overCoordination: overCoordination,
 	     valenceEnergy: valenceEnergy,  
+	     coalitionEnergy: coalitionEnergy,
+	     penaltyEnergy: penaltyEnergy,
+	     //torsionEnergy: torsionEnergy,
+	     //HydrogenBondInteraction: HydrogenBondInteraction,
+	     //C2Correction(): C2Correction();
 	     getValuesFromReadFile: getValuesFromReadFile };
 
 
