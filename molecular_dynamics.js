@@ -35,8 +35,12 @@ var object = (function() {
 	this.vlpex = null;			//used in lonepairEnergy() and valenceEnergy()
 	this.n_lp = null;			//used in lonepairEnergy() and valenceEnergy()
 	this.dDeltap_i_lp = null; 	//used in lonepairEnergy() and valenceEnergy()  
+	this.delta_i = null;
 	this.BOA_ij  = null;
 	this.BOA_jk  = null;
+	this.BO_s_corr = null;
+	this.BO_pi_corr = null;
+	this.BO_pi2_corr = null;
 
 	var self = this;
 	var tick = function() {
@@ -121,7 +125,7 @@ World.prototype = {
 
 	    // Add the player.
 	    //Ozone:
-	    this.addAtom(0.0, 0.0, 0.0, 2);
+	    this.addAtom(0.0, 0.0, 0.0, 2);  
 	    this.player = this.atoms[this.atoms.length-1];
 	    this.player.jump = 0;
 	    this.id++;
@@ -399,14 +403,14 @@ World.prototype = {
 
 
 //get values from Readfile.js and assign values inside the constructor.
-function getValuesFromReadFile(_rij, _paramGeneral, _onebody_parameters, _twobody_parameters, _threebody_parameters, _fourbody_parameters) {
+function getValuesFromReadFile(_rij, _paramGeneral, _onebody_parameters, _twobody_parameters, _threebody_parameters, _fourbody_parameters, _myMap) {
 	rij = _rij;  
     paramGeneral = _paramGeneral;	   
 	onebody_parameters = _onebody_parameters;
 	twobody_parameters = _twobody_parameters;	
 	threebody_parameters = _threebody_parameters;
 	fourbody_parameters = _fourbody_parameters;
-	//myMap = _myMap;
+	myMap = _myMap;
 }
 
 
@@ -543,6 +547,12 @@ function coulombInteraction(i,j){
         var p_boc2 = paramGeneral.pboc2; 
         
         //declare and initialize the arrays 
+        world.vlpex = new Array(world.atoms.length);  		 // the array  vlpex is used in lonepairEnergy function
+        world.n_lp  = new Array(world.atoms.length);  		 // the array  n_lp  is used in lonepairEnergy function	
+        world.deltap_i_lp = new Array(world.atoms.length);	 // the array  deltap_i_lp  is used in lonepairEnergy function
+        world.delta_i = new Array(world.atoms.length);		 // the array  delta_i  is used in overCoordination function
+        world.dDeltap_i_lp = new Array(world.atoms.length);	 // the array  dDeltap_i_lp is used in valenceEnergy function
+
         var bond_order_uncorr = new Array(world.atoms.length);
         var bond_order_uncorr_sigma = new Array(world.atoms.length);
         var bond_order_uncorr_pi = new Array(world.atoms.length);
@@ -621,7 +631,7 @@ function coulombInteraction(i,j){
     
   // Calculate Deltaprime, Deltaprime_boc values
   for(var i = 0; i < world.atoms.length; i++ ) {
-	var sbp_i = onebody_parameters[world.atoms[i].type];
+	var sbp_i = onebody_parameters[myMap.get(atom_i.type)];
 
   	var sum = 0.0; 
   	for(var j = 0; j < world.atoms.length; j++ ) {                                                                                                        
@@ -683,9 +693,9 @@ function coulombInteraction(i,j){
           	var f4 = 1.0 / (1.0 + exp_f4);   //(Equation 4e)
           	var f5 = 1.0 / (1.0 + exp_f5);   //(Equation 4f)
       	
-      	  	var BO_s_corr = bond_order_uncorr_sigma[i][j] *f1*f4*f5;
-      	  	var BO_pi_corr = bond_order_uncorr_pi[i][j] *f1*f1*f4*f5;
-      	  	var BO_pi2_corr = bond_order_uncorr_pi2[i][j] *f1*f1*f4*f5;
+      	  	BO_s_corr = bond_order_uncorr_sigma[i][j] *f1*f4*f5;
+      	  	BO_pi_corr = bond_order_uncorr_pi[i][j] *f1*f1*f4*f5;
+      	  	BO_pi2_corr = bond_order_uncorr_pi2[i][j] *f1*f1*f4*f5;
 
         	//corrected bond order
 			world.bond_order[i][j] = BO_s_corr + BO_pi_corr + BO_pi2_corr;     //(Equation 4a)
@@ -706,7 +716,7 @@ function coulombInteraction(i,j){
 
    // Corrected overcoordination (deltap_i):
   	for(var i = 0; i < world.atoms.length; i++ ) {
-		var sbp_i = onebody_parameters[world.atoms[i].type];
+		var sbp_i = onebody_parameters[myMap.get(atom_i.type)];
 
   		var sum = 0.0; 
   		for(var j = 0; j < world.atoms.length; j++ ) {                                                                                                        
@@ -719,13 +729,14 @@ function coulombInteraction(i,j){
 } // end bond order function
 
 
-//function bondEnergy(BO_s_corr, BO_pi_corr, BO_pi2_corr, twbp) {
 function bondEnergy(i,j) {
-    var pow_BOs_be2 = Math.pow( BO_s_corr, twbp.pbe2 );
+	var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type];  
+
+    var pow_BOs_be2 = Math.pow( world.bond_order_sigma[i][j], twbp.pbe2 );  
     var exp_be12 = Math.exp( twbp.pbe1 * ( 1.0 - pow_BOs_be2 ) );
     var cebo = -twbp.DeSigma * exp_be12 * ( 1.0 - twbp.pbe1 * twbp.pbe2 * pow_BOs_be2 );
         
-    var E_bond = -twbp.DeSigma * BO_s_corr * exp_be12 - twbp.DePi * BO_pi_corr - twbp.DePipi * BO_pi2_corr;   //(Equation 6)	      
+    var E_bond = -twbp.DeSigma * world.bond_order_sigma[i][j] * exp_be12 - twbp.DePi * BO_pi_corr - twbp.DePipi * world.bond_order_pi2[i][j];   //(Equation 6)	      
     return E_bond;	
 }
 
@@ -734,20 +745,19 @@ function bondEnergy(i,j) {
 
 /// <summary>
 ///   Lone pair energy:
-///   Equation (8) is used to determine the number of lone pairs around an atom. Δ e is determined iin Equation (7) 
+///   Equation (8) is used to determine the number of lone pairs around an atom. Δ e is determined in Equation (7) 
 ///   and describes the difference between the total number of outer shell electrons (6 for oxygen, 4 for silicon, 1 for hydrogen) 
 ///   and the sum of bond orders around an atomic center.
 /// </summary>
 function lonepairEnergy(i) {
     var bond_order = world.bond_order;
-    var bond_order_uncorr_pi = world.bond_order_pi;
-    var bond_order_uncorr_pi2 = world.bond_order_pi2;
 
     var p_lp1 = paramGeneral.plp1;  
     var E_lp = 0.0;
 	    
 	var atom_i = world.atoms[i];
-	var sbp_i = onebody_parameters[atom_i.type];
+	//var sbp_i = onebody_parameters[atom_i.type];
+	var sbp_i = onebody_parameters[myMap.get(atom_i.type)];
 	
 	var sum = 0.0;
 	for(var j = 0; j < world.atoms.length; j++) {
@@ -757,19 +767,18 @@ function lonepairEnergy(i) {
 	var delta_e = sum - sbp_i.valE;    						//(Equation 7)
 	var vlpex = delta_e - 2.0 * Math.trunc(delta_e / 2.0);
 	world.vlpex[i] = vlpex;
-	var explp1 = Math.exp( -p_lp1 * ( 2.0 + vlpex) * ( 2.0 + vlpex));
-	world.n_lp[i]= explp1 - Math.trunc(deltap_e[i]/2.0); 
-	world.deltap_i_lp[i] = sbp_i.nlp_opt - world.n_lp[i];  //(Equation 9)
+	var explp1 = Math.exp( -p_lp1 * ( 2.0 + vlpex) * ( 2.0 + vlpex) );
+	world.n_lp[i] = explp1 - Math.trunc( delta_e / 2.0 ); 
+	world.deltap_i_lp[i] = sbp_i.nlp_opt - world.n_lp[i];  //(Equation 9)  
 
     // lone-pair Energy 
-    var p_lp2 = sbp_i.plp2;
     var expvd2 = Math.exp( -75 * world.deltap_i_lp[i] );
     var inv_expvd2 = 1 / (1 + expvd2 );
     
-    var E_lp = sbp_i.plp2 * deltap_i_lp[i] * inv_expvd2;               		  //(Equation 10)
+    var E_lp = sbp_i.plp2 * world.deltap_i_lp[i] * inv_expvd2;               		  //(Equation 10)
     return E_lp;
-    //var dElp = p_lp2 * inv_expvd2 + 75 * p_lp2 * deltap_i_lp[i] * expvd2 * (inv_expvd2 * inv_expvd2);
-    //dDeltap_i_lp[i] = 2.0 * p_lp1 * explp1 * (2.0 + vlpex[i]);
+    //var dElp = sbp_i.plp2  * inv_expvd2 + 75 * sbp_i.plp2  * world.deltap_i_lp[i] * expvd2 * (inv_expvd2 * inv_expvd2);
+    world.dDeltap_i_lp[i] = 2.0 * p_lp1 * explp1 * (2.0 + vlpex[i]);
     //var CElp = dElp * dDeltap_i_lp[i];
 }  //end lonepairEnergy function
 
@@ -782,7 +791,11 @@ function lonepairEnergy(i) {
 ///   the optimal number of lone pairs, as calculated in equation (9), into account.
 /// </summary>
 function overCoordination(i) {
-	var sbp_i = onebody_parameters[world.atoms[i].type];
+    var bond_order_uncorr_pi = world.bond_order_pi;
+    var bond_order_uncorr_pi2 = world.bond_order_pi2;
+
+	var atom_i = world.atoms[i];
+	var sbp_i = onebody_parameters[myMap.get(atom_i.type)];
 
     var dfvl = 0.0;
 	if( sbp_i.atmcMass > 21.00 ) dfvl = 0.0;
@@ -790,7 +803,7 @@ function overCoordination(i) {
     
     var sum = 0.0;
 	for( var j = 0; j < world.atoms.length; j++ ) {
-        sum += (world.delta_i[j] - dfvl * world.deltap_i_lp[i]) * ( world.bond_order_uncorr_pi[i][j] + world.bond_order_uncorr_pi2[i][j] ); 
+        sum += (world.delta_i[j] - dfvl * world.deltap_i_lp[i]) * ( bond_order_uncorr_pi[i][j] + bond_order_uncorr_pi2[i][j] ); 
 	}
 	//(Equation 11b) 
 	var exp_ovun1 = paramGeneral.povun3 * Math.exp( paramGeneral.povun4 * sum );
@@ -800,7 +813,7 @@ function overCoordination(i) {
 	// (Equation 11a)
 	var sum_ovun1 = 0.0;
 	for( var j = 0; j < world.atoms.length; j++ ) {
-		var twbp = world.twobody_parameters[world.atoms[i].type][world.atoms[j].type];
+		var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type];
 		sum_ovun1 += twbp.povun1 * twbp.DeSigma * world.bond_order[i][j];
 	}
 	var dlpVi = 1.0 / (delta_lpcorr + sbp_i.valency + 1e-8);
@@ -848,8 +861,8 @@ function valenceEnergy(i,j,k){
 	if (i==j || k==j) return 0.0;
 	   	
 	var atom_i = world.atoms[i];
-   	var sbp_i = onebody_parameters[atom_i.type];
-  	var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type]; 
+   	var sbp_i = onebody_parameters[myMap.get(atom_i.type)];
+  	var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type];
   	var thbp =  threebody_parameters[world.atoms[i].type][world.atoms[j].type][world.atoms[k].type];
   		
 	const  cut = 0.001;
@@ -889,8 +902,8 @@ function valenceEnergy(i,j,k){
      	dSBO2 = prod_SBO - 1;
     }
    	else{
-      	vlpadj = n_lp[j];
-      	dSBO2 = (prod_SBO - 1) * (1 - paramGeneral.pval8 * dDeltap_i_lp[i]);
+      	vlpadj = world.n_lp[j];
+      	dSBO2 = (prod_SBO - 1) * (1 - paramGeneral.pval8 * world.dDeltap_i_lp[i]);
     }
 
 	var SBO = SBOp + (1 - prod_SBO) * (-deltap_boc[i] - paramGeneral.pval8 * vlpadj);      	  //(Equation 13d)  
@@ -914,13 +927,14 @@ function valenceEnergy(i,j,k){
 } //end valenceEnergy function
 
 
-function penaltyEnergy(i){
+function penaltyEnergy(i,j,k){
 
 	var bond_order = world.bond_order;
     var bond_order_pi = world.bond_order_pi;
     var bond_order_pi2 = world.bond_order_pi2;
 
     var thbp =  threebody_parameters[world.atoms[i].type][world.atoms[j].type][world.atoms[k].type];
+
 	const  cut = 0.001;
   	BOA_ij = bond_order[i][k] - cut;       
  	BOA_jk = bond_order[j][k] - cut;	
@@ -932,7 +946,7 @@ function penaltyEnergy(i){
     var exp_pen4   = Math.exp(  paramGeneral.ppen4 * deltap_i );
     var trm_pen34  = 1.0 + exp_pen3 + exp_pen4;
     var f9_Dj = ( 2.0 + exp_pen3 ) / trm_pen34;       				    //(Equation 14b) 
-    E_pen += E_pen = thbp.pen1 * f9_Dj * exp_pen2ij * exp_pen2jk;    //(Equation 14a) 
+    E_pen += thbp.pen1 * f9_Dj * exp_pen2ij * exp_pen2jk;    //(Equation 14a) 
   
     return E_pen;
 }   //end penaltyEnergy function
@@ -1140,6 +1154,9 @@ return { vanDerWaalsInteraction: vanDerWaalsInteraction,
 //4. is sbp_i.valency 4 or 2?
 //5. fix the values of sum_ovun1 and sum_ovun2 
 //6  delta_lpcorr is showing NaN in Equation 11b it supposed to show -1.952134912303066
+
+//Note:
+//world.n_lp[i] in lonepair energy is showing NaN  
 
 
 

@@ -434,7 +434,7 @@ function hbonds(hydrogenBonds) {
 
 
       //Display Logic
-      window.object.getValuesFromReadFile(r_ij, param_global, onebody_parameters, twobody_parameters, threebody_parameters, fourbody_parameters);
+      window.object.getValuesFromReadFile(r_ij, param_global, onebody_parameters, twobody_parameters, threebody_parameters, fourbody_parameters, myMap);
 
       window.object.vanDerWaalsInteraction(0,1);  
       window.object.coulombInteraction(0,1);   
@@ -444,7 +444,7 @@ function hbonds(hydrogenBonds) {
       window.object.overCoordination(0);
       window.object.valenceEnergy(0,1,2);  
       window.object.coalitionEnergy(0,1,2);   
-      window.object.penaltyEnergy(0);
+      window.object.penaltyEnergy(0,1,2);
      // window.object.torsionEnergy(0,1,2,3);  
      //window.object.hydrogenBondInteraction();
      //window.object.conjugationEnergy();   //0,1,2,3, 
