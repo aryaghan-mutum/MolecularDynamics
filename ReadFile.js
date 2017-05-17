@@ -285,7 +285,7 @@ function hbonds(hydrogenBonds) {
       var num_of_atoms = parseInt(arrayOfLines[count].match(/[0-9][0-9]*/));
 
       //twobody:
-      for(var k = 0; k <= num_of_atoms; k++) { 
+      for(var k = 1; k <= num_of_atoms; k++) { 
         twobody_parameters[k] = new Array(num_of_atoms); 
       }
 
@@ -295,9 +295,9 @@ function hbonds(hydrogenBonds) {
       } 
 
       //threebody:
-      for(var k = 0; k <= num_of_atoms; k++) { 
+      for(var k = 1; k <= num_of_atoms; k++) { 
          threebody_parameters[k] = new Array(); 
-          for(var l = 0; l <= num_of_atoms; l++) { 
+          for(var l = 1; l <= num_of_atoms; l++) { 
             threebody_parameters[k][l] = new Array(); 
           }
       }

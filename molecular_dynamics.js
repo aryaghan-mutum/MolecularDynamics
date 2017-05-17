@@ -130,16 +130,21 @@ World.prototype = {
 	    this.player.jump = 0;
 	    this.id++;
 	    this.addAtom(1.2, 0.0, 0.0, 2);
-	    this.addAtom(2.0, 0.8, 0.0, 2);
-	    this.fireballs = [];   
+	    this.addAtom(2.0, 0.8, 0.0, 2);  
+	    this.fireballs = [];    
+
+		//Carbon   : 1
+		//Hydrogen : 2
+		//Oxygen   : 3
 
 	    //CO or O
-	 /*   this.addAtom(1.2, 0.0, 0.0, 0);
+	  /*  this.addAtom(1.2, 0.0, 0.0, 3);
 		this.player = this.atoms[this.atoms.length-1];
 		this.player.jump = 0;
 		this.id++;
-		this.addAtom(0.0, 0.0, 0.0, 2);
+		this.addAtom(0.0, 0.0, 0.0, 3);
 		this.fireballs = [];  */
+
 	},
 
 	draw: function(screen) {
@@ -148,8 +153,8 @@ World.prototype = {
 	    screen.strokeRect(0, 0, this.size.x*this.scale, this.size.y*this.scale);
 
 	    for (var i = 0; i < this.atoms.length; i++) {
-		if (this.atoms[i].draw !== undefined)
-		    this.atoms[i].draw(screen);
+			if (this.atoms[i].draw !== undefined)
+		  	   this.atoms[i].draw(screen);
 	    }
 
 	    for (var i = 0; i < this.fireballs.length; i++) {
@@ -181,13 +186,13 @@ World.prototype = {
 	removeAtom: function(atom) {
 	    var atomIndex = this.atoms.indexOf(atom);
 	    if (atomIndex !== -1) {
-		this.atoms.splice(atomIndex, 1);
+			this.atoms.splice(atomIndex, 1);
 	    }
 	},
 
 	deleteAtom: function(atomIndex) {
 	    if (atomIndex >= 0 && atomIndex < this.atoms.length) {
-		this.atoms.splice(atomIndex, 1);
+			this.atoms.splice(atomIndex, 1);
 	    }
 	},   
 };  // end World.prototype
@@ -217,7 +222,7 @@ World.prototype = {
 	    var dz = this.pos.z - atom.pos.z;
 	    var distance = Math.sqrt(dx*dx+dy*dy+dz*dz);
 
-	    valenceEnergy(distance);
+	   // valenceEnergy(distance);
      
 	    // Lennard-Jones interaction
 	    //var force1 = -1e-4*(distance-4)*(distance-4)*(distance-4);
@@ -809,7 +814,7 @@ function overCoordination(i) {
 	var exp_ovun1 = paramGeneral.povun3 * Math.exp( paramGeneral.povun4 * sum );
 	var inv_exp_ovun1 = 1.0 / (1 + exp_ovun1);
 	var delta_lpcorr  =  world.delta_i[i] - (dfvl * world.deltap_i_lp[i]) * inv_exp_ovun1; 
-			
+
 	// (Equation 11a)
 	var sum_ovun1 = 0.0;
 	for( var j = 0; j < world.atoms.length; j++ ) {
@@ -1130,8 +1135,9 @@ return { vanDerWaalsInteraction: vanDerWaalsInteraction,
 	     lonepairEnergy: lonepairEnergy,  
 	     overCoordination: overCoordination,
 	     valenceEnergy: valenceEnergy,  
-	     coalitionEnergy: coalitionEnergy,
 	     penaltyEnergy: penaltyEnergy,
+	     coalitionEnergy: coalitionEnergy,
+
 	     //torsionEnergy: torsionEnergy,
 	     //HydrogenBondInteraction: HydrogenBondInteraction,
 	     //C2Correction(): C2Correction();
