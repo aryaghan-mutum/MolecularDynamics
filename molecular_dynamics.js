@@ -408,14 +408,13 @@ World.prototype = {
 
 
 //get values from Readfile.js and assign values inside the constructor.
-function getValuesFromReadFile(_rij, _paramGeneral, _onebody_parameters, _twobody_parameters, _threebody_parameters, _fourbody_parameters, _myMap) {
+function getValuesFromReadFile(_rij, _paramGeneral, _onebody_parameters, _twobody_parameters, _threebody_parameters, _fourbody_parameters) {
 	rij = _rij;  
     paramGeneral = _paramGeneral;	   
 	onebody_parameters = _onebody_parameters;
 	twobody_parameters = _twobody_parameters;	
 	threebody_parameters = _threebody_parameters;
 	fourbody_parameters = _fourbody_parameters;
-	myMap = _myMap;
 }
 
 
@@ -585,15 +584,10 @@ function coulombInteraction(i,j){
   				var dy = atom_i.pos.y - atom_j.pos.y;
   				var dz = atom_i.pos.z - atom_j.pos.z;
   				var r_ij = Math.sqrt(dx*dx + dy*dy + dz*dz);
-  				
-
-  				var sbp_i = onebody_parameters[myMap.get(atom_i.type)];
-  				var sbp_j = onebody_parameters[myMap.get(atom_j.type)];	
-  				var twbp  = twobody_parameters[atom_i.type][atom_j.type];   
-
-  				//var sbp_i = onebody_parameters[atom_i.type];
-  				//var sbp_j = onebody_parameters[atom_j.type];	
-  				//var twbp =  twobody_parameters[atom_i.type][atom_j.type];			
+  				 
+  				var sbp_i = onebody_parameters[atom_i.type];
+  				var sbp_j = onebody_parameters[atom_j.type];	
+  				var twbp =  twobody_parameters[atom_i.type][atom_j.type];			
   				
   				if( sbp_i.roSigma > 0.0 && sbp_j.roSigma > 0.0 ) {
 			    	var C12 = twbp.pbo1 * Math.pow( r_ij / twbp.roSigma, twbp.pbo2 );
@@ -636,7 +630,7 @@ function coulombInteraction(i,j){
     
   // Calculate Deltaprime, Deltaprime_boc values
   for(var i = 0; i < world.atoms.length; i++ ) {
-	var sbp_i = onebody_parameters[myMap.get(atom_i.type)];
+	var sbp_i = onebody_parameters[atom_i.type];
 
   	var sum = 0.0; 
   	for(var j = 0; j < world.atoms.length; j++ ) {                                                                                                        
@@ -721,7 +715,7 @@ function coulombInteraction(i,j){
 
    // Corrected overcoordination (deltap_i):
   	for(var i = 0; i < world.atoms.length; i++ ) {
-		var sbp_i = onebody_parameters[myMap.get(atom_i.type)];
+		var sbp_i = onebody_parameters[atom_i.type];
 
   		var sum = 0.0; 
   		for(var j = 0; j < world.atoms.length; j++ ) {                                                                                                        
@@ -762,7 +756,7 @@ function lonepairEnergy(i) {
 	    
 	var atom_i = world.atoms[i];
 	//var sbp_i = onebody_parameters[atom_i.type];
-	var sbp_i = onebody_parameters[myMap.get(atom_i.type)];
+	var sbp_i = onebody_parameters[atom_i.type];
 	
 	var sum = 0.0;
 	for(var j = 0; j < world.atoms.length; j++) {
@@ -800,7 +794,7 @@ function overCoordination(i) {
     var bond_order_uncorr_pi2 = world.bond_order_pi2;
 
 	var atom_i = world.atoms[i];
-	var sbp_i = onebody_parameters[myMap.get(atom_i.type)];
+	var sbp_i = onebody_parameters[atom_i.type];
 
     var dfvl = 0.0;
 	if( sbp_i.atmcMass > 21.00 ) dfvl = 0.0;
@@ -866,7 +860,7 @@ function valenceEnergy(i,j,k){
 	if (i==j || k==j) return 0.0;
 	   	
 	var atom_i = world.atoms[i];
-   	var sbp_i = onebody_parameters[myMap.get(atom_i.type)];
+   	var sbp_i = onebody_parameters[atom_i.type];
   	var twbp =  twobody_parameters[world.atoms[i].type][world.atoms[j].type];
   	var thbp =  threebody_parameters[world.atoms[i].type][world.atoms[j].type][world.atoms[k].type];
   		
@@ -888,7 +882,9 @@ function valenceEnergy(i,j,k){
     var expval7 = Math.exp( -thbp.pval7 * deltap_boc[j] );
     var trm8 = 1.0 + expval6 + expval7;
     var f8_Dj = sbp_i.pval5 - ( (sbp_i.pval5 - 1.0) * (2.0 + expval6) / trm8 );   	  //(Equation 13c)  
-    //   var Cf8j = ( (1.0 - sbp_i.pval5) / (trm8 * trm8) ) * ( sbp_i.pval6 * expval6 * trm8 - (2.0 + expval6) * ( pval6 * expval6 - pval7 * expval7 ) );
+    var Cf8j = ( (1.0 - sbp_i.pval5) / (trm8 * trm8) ) * 
+    		   ( paramGeneral.pval7 * expval6 * trm8 - 
+    		   (2.0 + expval6) * ( paramGeneral.pval7*expval6 - thbp.pval7*expval7 ) );
 
     var SBOp = 0;
     var prod_SBO = 1;
@@ -928,8 +924,34 @@ function valenceEnergy(i,j,k){
     else SBO2 = 2, CSBO2 = 0;
 
     var theta_0 = 180.0 - thbp.thetao * (1.0 - Math.exp(-paramGeneral.pval10 * (2.0 - SBO2)));     //(Equation 13g)  
+    theta_0 = DegreesToRadians( theta_0 );
+
+    var expval2theta = 0.0;
+    var expval12theta = 0.0;
+    if( thbp.pval1 >= 0 )
+       expval12theta =  thbp.pval1  * (1.0 - expval2theta);
+    else 
+       expval12theta = thbp.pval1 * (-expval2theta);
+
+   	var E_ang = 0.0;
+    var CEval1 = Cf7ij * f7_jk * f8_Dj * expval12theta;
+    var CEval2 = Cf7jk * f7_ij * f8_Dj * expval12theta;
+    var CEval3 = Cf8j  * f7_ij * f7_jk * expval12theta;
+    //var CEval4 = -2.0 * thbp.pval1 * thbp.pval2 * f7_ij * f7_jk * f8_Dj * expval2theta * (theta_0 - theta);
+    var Ctheta_0 = paramGeneral.pval10 * DegreesToRadians(thbp.thetao) * Math.exp( -paramGeneral.pval10 * (2.0 - SBO2) );
+    //var CEval5 = -CEval4 * Ctheta_0 * CSBO2;
+    //var CEval6 = CEval5 * dSBO1;
+    //var CEval7 = CEval5 * dSBO2;
+    //var CEval8 = -CEval4 / sin_theta;
+
+    E_ang += f7_ij * f7_jk * f8_Dj * expval12theta;
 
 } //end valenceEnergy function
+
+function DegreesToRadians(degrees) {
+  var pi = Math.PI;
+  return degrees * (pi/180);
+}
 
 
 function penaltyEnergy(i,j,k){
@@ -1032,7 +1054,7 @@ function torsionEnergy(i,j,k,l){
     else if( sin_ijk <= 0 && sin_ijk >= -MIN_SINE ) tan_ijk_i = cos_ijk / -MIN_SINE;   
     else tan_ijk_i = cos_ijk / sin_ijk;
 
-    var E_tor += E_tor = fn10 * sin_ijk * sin_jkl * CV;					  //(Equation 16a) 
+    var E_tor = fn10 * sin_ijk * sin_jkl * CV;					  //(Equation 16a) 
     
 
     // 4-body conjugation energy 
@@ -1073,7 +1095,8 @@ function Calculate_Omega(
 
   return omega;
 }
-
+*/
+/*
 function hydrogenBondInteraction(){
 
     var sin_theta2 = Math.sin( theta /2.0 );

@@ -7,39 +7,39 @@
 
           
  function atomType(paramAtom) {
-   this.atomID   =  "atom ID";
-   this.roSigma  = parseFloat(paramAtom[0]);    //ro(sigma) single bond covalent radius in A = 1.3817
-   this.valency  = parseFloat(paramAtom[1]);    //valency of atom
-   this.atmcMass = parseFloat(paramAtom[2]);    //atomic mass in daltons
-   this.rvdw     = parseFloat(paramAtom[3]);    // van der Waals radius in Amstrongs = 0.18903
-   this.dij      = parseFloat(paramAtom[4]);    //epsilon  
-   this.gamma    = parseFloat(paramAtom[5]);    //gammaEEM (charge equilibration parameter) = 0.6544
-   this.roPi     = parseFloat(paramAtom[6]);    //covalent radius 2 = 1.1341
-   this.valE     = parseFloat(paramAtom[7]);    //val(e) (an additional valence, see atoms O and N) = 4 
-   this.alpha    = parseFloat(paramAtom[8]); 
-   this.gammaW   = parseFloat(paramAtom[9]);     //gamma(w) (van der Waals screening distance in Å) 
-   this.valAngle = parseFloat(paramAtom[10]); 
-   this.povun5   = parseFloat(paramAtom[11]);  
-   this.nu       = parseFloat(paramAtom[12]);  
-   this.chiEEM   = parseFloat(paramAtom[13]);     //charge equilibration parameter 
-   this.etaEEM   = parseFloat(2 * paramAtom[14]); //charge equilibration parameter    
-   this.nlp_opt  = parseFloat(paramAtom[15]);    
-   this.roPiPi   = parseFloat(paramAtom[16]);  //(covalent radius 3) = 1.2114
-   this.plp2     = parseFloat(paramAtom[17]);  // elp (lone pair energy—carbon has no lone pairs, see O and N ) = 0.0
-   this.heatInc  = parseFloat(paramAtom[18]); 
-   this.pboc4    = parseFloat(paramAtom[19]);
-   this.pboc3    = parseFloat(paramAtom[20]);
-   this.pboc5    = parseFloat(paramAtom[21]);   
-   this.nu       = parseFloat(paramAtom[22]);
-   this.nu 	     = parseFloat(paramAtom[23]);
-   this.povun2   = parseFloat(paramAtom[24]);     
-   this.pval3    = parseFloat(paramAtom[25]);
-   this.nu       = parseFloat(paramAtom[26]);   
-   this.valBoc   = parseFloat(paramAtom[27]);    //valency_val
-   this.pval5    = parseFloat(paramAtom[28]);    
-   this.rcore 	 = parseFloat(paramAtom[29]);   //rcore2
-   this.ecore 	 = parseFloat(paramAtom[30]);   //ecore2
-   this.acore 	 = parseFloat(paramAtom[31]);   //acore2  
+   this.atomID   = paramAtom[0];
+   this.roSigma  = parseFloat(paramAtom[1]);    //ro(sigma) single bond covalent radius in A = 1.3817
+   this.valency  = parseFloat(paramAtom[2]);    //valency of atom
+   this.atmcMass = parseFloat(paramAtom[3]);    //atomic mass in daltons
+   this.rvdw     = parseFloat(paramAtom[4]);    // van der Waals radius in Amstrongs = 0.18903
+   this.dij      = parseFloat(paramAtom[5]);    //epsilon  
+   this.gamma    = parseFloat(paramAtom[6]);    //gammaEEM (charge equilibration parameter) = 0.6544
+   this.roPi     = parseFloat(paramAtom[7]);    //covalent radius 2 = 1.1341
+   this.valE     = parseFloat(paramAtom[8]);    //val(e) (an additional valence, see atoms O and N) = 4 
+   this.alpha    = parseFloat(paramAtom[9]); 
+   this.gammaW   = parseFloat(paramAtom[10]);     //gamma(w) (van der Waals screening distance in Å) 
+   this.valAngle = parseFloat(paramAtom[11]); 
+   this.povun5   = parseFloat(paramAtom[12]);  
+   this.nu       = parseFloat(paramAtom[13]);  
+   this.chiEEM   = parseFloat(paramAtom[14]);     //charge equilibration parameter 
+   this.etaEEM   = parseFloat(2 * paramAtom[15]); //charge equilibration parameter    
+   this.nlp_opt  = parseFloat(paramAtom[16]);    
+   this.roPiPi   = parseFloat(paramAtom[17]);  //(covalent radius 3) = 1.2114
+   this.plp2     = parseFloat(paramAtom[18]);  // elp (lone pair energy—carbon has no lone pairs, see O and N ) = 0.0
+   this.heatInc  = parseFloat(paramAtom[19]); 
+   this.pboc4    = parseFloat(paramAtom[20]);
+   this.pboc3    = parseFloat(paramAtom[21]);
+   this.pboc5    = parseFloat(paramAtom[22]);   
+   this.nu       = parseFloat(paramAtom[23]);
+   this.nu 	     = parseFloat(paramAtom[24]);
+   this.povun2   = parseFloat(paramAtom[25]);     
+   this.pval3    = parseFloat(paramAtom[26]);
+   this.nu       = parseFloat(paramAtom[27]);   
+   this.valBoc   = parseFloat(paramAtom[28]);    //valency_val
+   this.pval5    = parseFloat(paramAtom[29]);    
+   this.rcore 	 = parseFloat(paramAtom[30]);   //rcore2
+   this.ecore 	 = parseFloat(paramAtom[31]);   //ecore2
+   this.acore 	 = parseFloat(paramAtom[32]);   //acore2  
 }
 
 function paramGlobal(paramGeneral) {
@@ -193,7 +193,7 @@ function hbonds(hydrogenBonds) {
 	  var newArray = new Array();
 	  
     for (var i = 0; i < actual.length; i++) {
-		  if (actual[i] && actual[i].search(/[a-zA-Z]+/) == -1 ) newArray.push(actual[i]);	  
+		  if (actual[i]) newArray.push(actual[i]);	  
 	  }
 
 	  for( var i = 0; i < newArray.length; i++) { console.log(newArray[i]); }
@@ -284,40 +284,47 @@ function hbonds(hydrogenBonds) {
       //Allocation of Arrays 
       var num_of_atoms = parseInt(arrayOfLines[count].match(/[0-9][0-9]*/));
 
+      onebody_parameters = new Array(num_of_atoms);
+
       //twobody:
-      for(var k = 1; k <= num_of_atoms; k++) { 
+      twobody_parameters = new Array(num_of_atoms);
+      for(var k = 0; k < num_of_atoms; k++) { 
         twobody_parameters[k] = new Array(num_of_atoms); 
       }
 
       //diagonalAtom:
-      for(var k = 0; k <= num_of_atoms; k++) { 
-        diagonalAtom[k] = new Array(); 
+      diagonalAtom = new Array(num_of_atoms);
+      for(var k = 0; k < num_of_atoms; k++) { 
+        diagonalAtom[k] = new Array(num_of_atoms); 
       } 
 
       //threebody:
-      for(var k = 1; k <= num_of_atoms; k++) { 
-         threebody_parameters[k] = new Array(); 
-          for(var l = 1; l <= num_of_atoms; l++) { 
-            threebody_parameters[k][l] = new Array(); 
+      threebody_parameters = new Array(num_of_atoms);
+      for(var k = 0; k < num_of_atoms; k++) { 
+         threebody_parameters[k] = new Array(num_of_atoms); 
+          for(var l = 0; l < num_of_atoms; l++) { 
+            threebody_parameters[k][l] = new Array(num_of_atoms); 
           }
       }
 
       //fourbody:
-          for(var k = 0; k <= num_of_atoms; k++) { 
-            fourbody_parameters[k] = new Array(); 
-              for(var l = 0; l <= num_of_atoms; l++) { 
-                fourbody_parameters[k][l] = new Array(); 
-                 for(var m = 0; m <= num_of_atoms; m++) {
-                   fourbody_parameters[k][l][m] = new Array(); 
+      fourbody_parameters = new Array(num_of_atoms);
+          for(var k = 0; k < num_of_atoms; k++) { 
+            fourbody_parameters[k] = new Array(num_of_atoms); 
+              for(var l = 0; l < num_of_atoms; l++) { 
+                fourbody_parameters[k][l] = new Array(num_of_atoms); 
+                 for(var m = 0; m < num_of_atoms; m++) {
+                   fourbody_parameters[k][l][m] = new Array(num_of_atoms); 
                  }
               }
           }
 
-      //hydrogenbonds:     
-          for(var k = 0; k <= num_of_atoms; k++) { 
-            hydrogenbonds[k] = new Array(); 
-              for(var l = 0; l <= num_of_atoms; l++) { 
-                hydrogenbonds[k][l] = new Array(); 
+      //hydrogenbonds:
+      hydrogenbonds = new Array(num_of_atoms);
+          for(var k = 0; k < num_of_atoms; k++) { 
+            hydrogenbonds[k] = new Array(num_of_atoms); 
+              for(var l = 0; l < num_of_atoms; l++) { 
+                hydrogenbonds[k][l] = new Array(num_of_atoms); 
               }
           }
        
@@ -326,13 +333,13 @@ function hbonds(hydrogenBonds) {
    
       //onebody
       elementLen = arrayOfLines[count].match(/[0-9][0-9]*/);
+      var onebody_count = 0;
       for(var i = count+onebody_len,j=1; i <= count+(elementLen*onebody_len); i+=onebody_len,j++){
          str = arrayOfLines[i];
          atomName = str.match(/[A-Z][a-z]*/);
-         myMap.set(j, atomName[0]);
-         onebody_parameters[atomName] = loadAtoms(arrayOfLines, i, i+onebody_len, "atom" );  
-         onebody_parameters[atomName[1]] =  onebody_parameters[atomName[0]]; 
-         onebody_parameters.length++;
+         //myMap.set(j, atomName[0]);
+         onebody_parameters[onebody_count] = loadAtoms(arrayOfLines, i, i+onebody_len, "atom" );
+         onebody_count++;  
       }  
       count += ((parseInt(elementLen[0])+1)*onebody_len);
 
@@ -341,10 +348,11 @@ function hbonds(hydrogenBonds) {
       elementLen = arrayOfLines[count].match(/[0-9][0-9]*/);  
       for(var i = count+twobody_len; i <= count+(elementLen*twobody_len); i+=twobody_len){
           str = arrayOfLines[i];
-          atomName = str.trim().split(/\s+/);  
-          twobody_parameters[atomName[0]][atomName[1]] =  loadAtoms(arrayOfLines, i, i+twobody_len, "bond" );  
-          twobody_parameters[atomName[1]][atomName[0]] =  twobody_parameters[atomName[0]][atomName[1]];
-                           
+          atomName = str.trim().split(/\s+/);
+          var type0 = parseInt(atomName[0])-1;
+          var type1 = parseInt(atomName[1])-1;
+          twobody_parameters[type0][type1] = loadAtoms(arrayOfLines, i, i+twobody_len, "bond" );  
+          twobody_parameters[type1][type0] = twobody_parameters[type0][type1];
       }
       count += ((parseInt(elementLen[0])+1)*twobody_len);
 
@@ -353,9 +361,11 @@ function hbonds(hydrogenBonds) {
       elementLen = arrayOfLines[count].match(/[0-9][0-9]*/);
       for(var i = count+1; i <= count+parseInt(elementLen); i++){          
           str = arrayOfLines[i];
-          atomName = str.trim().split(/\s+/);                    
-          diagonalAtom[atomName[0]][atomName[1]] = loadAtoms(arrayOfLines, i, i+1, "diag" );       
-          diagonalAtom[atomName[1]][atomName[0]] = diagonalAtom[atomName[0]][atomName[1]]; 
+          atomName = str.trim().split(/\s+/);
+          var type0 = parseInt(atomName[0])-1;
+          var type1 = parseInt(atomName[1])-1;
+          diagonalAtom[type0][type1] = loadAtoms(arrayOfLines, i, i+1, "diag" );       
+          diagonalAtom[type1][type0] = diagonalAtom[type0][type1]; 
       }
       count += parseInt(elementLen[0])+1;
 
@@ -365,8 +375,11 @@ function hbonds(hydrogenBonds) {
       for(var i = count+1; i <= count+parseInt(elementLen); i++){
           str = arrayOfLines[i];
           atomName = str.trim().split(/\s+/);
-          threebody_parameters[atomName[0]][atomName[1]][atomName[2]] = loadAtoms(arrayOfLines, i, i+1, "angle" );   
-          threebody_parameters[atomName[2]][atomName[1]][atomName[0]] = threebody_parameters[atomName[0]][atomName[1]][atomName[2]] 
+          var type0 = parseInt(atomName[0])-1;
+          var type1 = parseInt(atomName[1])-1;
+          var type2 = parseInt(atomName[2])-1;
+          threebody_parameters[type0][type1][type2] = loadAtoms(arrayOfLines, i, i+1, "angle" );   
+          threebody_parameters[type2][type1][type0] = threebody_parameters[type0][type1][type2];
       }
       count += parseInt(elementLen[0])+1;
 
@@ -376,8 +389,15 @@ function hbonds(hydrogenBonds) {
       for(var i = count+1; i < count+parseInt(elementLen); i++){
           str = arrayOfLines[i];
           atomName = str.trim().split(/\s+/);
-          fourbody_parameters[atomName[0]][atomName[1]][atomName[2]][atomName[3]] = loadAtoms(arrayOfLines, i, i+1, "torsions" );
-          fourbody_parameters[atomName[3]][atomName[2]][atomName[1]][atomName[0]] = fourbody_parameters[atomName[0]][atomName[1]][atomName[2]][atomName[3]]   
+          var type0 = parseInt(atomName[0])-1;
+          var type1 = parseInt(atomName[1])-1;
+          var type2 = parseInt(atomName[2])-1;
+          var type3 = parseInt(atomName[3])-1;
+
+          if (!(type0 < 0 || type1 < 0 || type2 < 0 || type3 < 0)) {
+            fourbody_parameters[type0][type1][type2][type3] = loadAtoms(arrayOfLines, i, i+1, "torsions" );
+            fourbody_parameters[type3][type2][type1][type0] = fourbody_parameters[type0][type1][type2][type3];
+          }
       }
       count += parseInt(elementLen[0])+1;
 
@@ -388,44 +408,44 @@ function hbonds(hydrogenBonds) {
           str = arrayOfLines[i];
           atomName = str.trim().split(/\s+/);
           atomName = str.trim();
-          hydrogenbonds[atomName[0]][atomName[1]][atomName[2]] = loadAtoms(arrayOfLines, i, i+1, "hbonds" );      
-          hydrogenbonds[atomName[2]][atomName[1]][atomName[0]] = hydrogenbonds[atomName[0]][atomName[1]][atomName[2]];
+          var type0 = parseInt(atomName[0])-1;
+          var type1 = parseInt(atomName[1])-1;
+          var type2 = parseInt(atomName[2])-1;
+          hydrogenbonds[type0][type1][type2] = loadAtoms(arrayOfLines, i, i+1, "hbonds" );      
+          hydrogenbonds[type2][type1][type0] = hydrogenbonds[type0][type1][type2];
       }
       count += parseInt(elementLen[0])+1;
 
 
 
       // This nested for loop puts all the values from onebody_parameters into twobody_parameters array.
-      for (var i = 1; i <= onebody_parameters.length; i++) {
-            var x = myMap.get(i);
-        for (var j = 1; j <= onebody_parameters.length; j++) {
-            var y = myMap.get(j);
-          
+      for (var i = 0; i < onebody_parameters.length; i++) {
+        for (var j = 0; j < onebody_parameters.length; j++) {
             paramAtom1 = twobody_parameters[i][j];
         
-            paramAtom1.roSigma = 0.5 * (onebody_parameters[x].roSigma + onebody_parameters[y].roSigma);
-            paramAtom1.roPi    = 0.5 * (onebody_parameters[x].roPi + onebody_parameters[y].roPi);
-            paramAtom1.roPiPi  = 0.5 * (onebody_parameters[x].roPiPi + onebody_parameters[y].roPiPi);
-            paramAtom1.pboc3   = 0.5 * (onebody_parameters[x].pboc3 + onebody_parameters[y].pboc3);
-            paramAtom1.pboc4   = 0.5 * (onebody_parameters[x].pboc4 + onebody_parameters[y].pboc4);
-            paramAtom1.pboc5   = 0.5 * (onebody_parameters[x].pboc5 + onebody_parameters[y].pboc5);
-            paramAtom1.rvdw    = 0.5 * (onebody_parameters[x].rvdw + onebody_parameters[y].rvdw);
-            paramAtom1.gammaW  = 0.5 * (onebody_parameters[x].gammaW + onebody_parameters[y].gammaW);
-            paramAtom1.gamma   = 0.5 * (onebody_parameters[x].gamma + onebody_parameters[y].gamma);
-            paramAtom1.alpha   = 0.5 * (onebody_parameters[x].alpha + onebody_parameters[y].alpha);
-            paramAtom1.pboc3   = Math.sqrt(onebody_parameters[x].pboc3 * onebody_parameters[y].pboc3);
-            paramAtom1.pboc4   = Math.sqrt(onebody_parameters[x].pboc4 * onebody_parameters[y].pboc4);
-            paramAtom1.pboc5   = Math.sqrt(onebody_parameters[x].pboc5 * onebody_parameters[y].pboc5);
-            paramAtom1.dij     = Math.sqrt(onebody_parameters[x].dij * onebody_parameters[y].dij);
-            paramAtom1.alpha   = Math.sqrt(onebody_parameters[x].alpha * onebody_parameters[y].alpha);
-            paramAtom1.rvdw    = 2.0 * Math.sqrt(onebody_parameters[x].rvdw * onebody_parameters[y].rvdw);
-            paramAtom1.gammaW  = Math.sqrt(onebody_parameters[x].gammaW * onebody_parameters[y].gammaW);
-            paramAtom1.gamma   = Math.pow(onebody_parameters[x].gamma * onebody_parameters[y].gamma, -1.5);
-            paramAtom1.rcore   = Math.sqrt(onebody_parameters[x].rcore * onebody_parameters[y].rcore);
-            paramAtom1.ecore   = Math.sqrt(onebody_parameters[x].ecore * onebody_parameters[y].ecore);
-            paramAtom1.acore   = Math.sqrt(onebody_parameters[x].acore * onebody_parameters[y].acore);
-            paramAtom1.lgcij   = Math.sqrt(onebody_parameters[x].lgcij * onebody_parameters[y].lgcij);
-            paramAtom1.lgre    = 2.0 * Math.sqrt(onebody_parameters[x].lgre * onebody_parameters[y].lgre); 
+            paramAtom1.roSigma = 0.5 * (onebody_parameters[i].roSigma + onebody_parameters[j].roSigma);
+            paramAtom1.roPi    = 0.5 * (onebody_parameters[i].roPi + onebody_parameters[j].roPi);
+            paramAtom1.roPiPi  = 0.5 * (onebody_parameters[i].roPiPi + onebody_parameters[j].roPiPi);
+            paramAtom1.pboc3   = 0.5 * (onebody_parameters[i].pboc3 + onebody_parameters[j].pboc3);
+            paramAtom1.pboc4   = 0.5 * (onebody_parameters[i].pboc4 + onebody_parameters[j].pboc4);
+            paramAtom1.pboc5   = 0.5 * (onebody_parameters[i].pboc5 + onebody_parameters[j].pboc5);
+            paramAtom1.rvdw    = 0.5 * (onebody_parameters[i].rvdw + onebody_parameters[j].rvdw);
+            paramAtom1.gammaW  = 0.5 * (onebody_parameters[i].gammaW + onebody_parameters[j].gammaW);
+            paramAtom1.gamma   = 0.5 * (onebody_parameters[i].gamma + onebody_parameters[j].gamma);
+            paramAtom1.alpha   = 0.5 * (onebody_parameters[i].alpha + onebody_parameters[j].alpha);
+            paramAtom1.pboc3   = Math.sqrt(onebody_parameters[i].pboc3 * onebody_parameters[j].pboc3);
+            paramAtom1.pboc4   = Math.sqrt(onebody_parameters[i].pboc4 * onebody_parameters[j].pboc4);
+            paramAtom1.pboc5   = Math.sqrt(onebody_parameters[i].pboc5 * onebody_parameters[j].pboc5);
+            paramAtom1.dij     = Math.sqrt(onebody_parameters[i].dij * onebody_parameters[j].dij);
+            paramAtom1.alpha   = Math.sqrt(onebody_parameters[i].alpha * onebody_parameters[j].alpha);
+            paramAtom1.rvdw    = 2.0 * Math.sqrt(onebody_parameters[i].rvdw * onebody_parameters[j].rvdw);
+            paramAtom1.gammaW  = Math.sqrt(onebody_parameters[i].gammaW * onebody_parameters[j].gammaW);
+            paramAtom1.gamma   = Math.pow(onebody_parameters[i].gamma * onebody_parameters[j].gamma, -1.5);
+            paramAtom1.rcore   = Math.sqrt(onebody_parameters[i].rcore * onebody_parameters[j].rcore);
+            paramAtom1.ecore   = Math.sqrt(onebody_parameters[i].ecore * onebody_parameters[j].ecore);
+            paramAtom1.acore   = Math.sqrt(onebody_parameters[i].acore * onebody_parameters[j].acore);
+            paramAtom1.lgcij   = Math.sqrt(onebody_parameters[i].lgcij * onebody_parameters[j].lgcij);
+            paramAtom1.lgre    = 2.0 * Math.sqrt(onebody_parameters[i].lgre * onebody_parameters[j].lgre); 
 
             twobody_parameters[i][j] = paramAtom1;
             //alert(": ", onebody_parameters[i].roPiPi );
@@ -434,7 +454,7 @@ function hbonds(hydrogenBonds) {
 
 
       //Display Logic
-      window.object.getValuesFromReadFile(r_ij, param_global, onebody_parameters, twobody_parameters, threebody_parameters, fourbody_parameters, myMap);
+      window.object.getValuesFromReadFile(r_ij, param_global, onebody_parameters, twobody_parameters, threebody_parameters, fourbody_parameters);
 
       window.object.vanDerWaalsInteraction(0,1);  
       window.object.coulombInteraction(0,1);   
