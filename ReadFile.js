@@ -482,23 +482,4 @@ function hbonds(hydrogenBonds) {
 
 
 
-//NOTE:
-/*
-
-find the value for rvdw, lgre and lgre in reaxc_ffield.cpp
--> why is their no array in getValuesFromReadFile(_onebody_parameters);
-
-   /*
-          read Line " 39       ! Number of general parameters "
-          n =  the total number of lines in header
-          extract number in header "39" to len variable
-          for(i=0;i<39;i++){
-              x = extract Atoms/Bond type
-              Array["x"] = loadAtoms(arrayOfLines,num+(i*n),num+((i+1)*n),"atom"); 
-          }
-  */
-
-
-
-
 

@@ -125,25 +125,25 @@ World.prototype = {
 
 	    // Add the player.
 	    //Ozone:
-	    this.addAtom(0.0, 0.0, 0.0, 2);  
+	  /*  this.addAtom(0.0, 0.0, 0.0, 2);  
 	    this.player = this.atoms[this.atoms.length-1];
 	    this.player.jump = 0;
 	    this.id++;
 	    this.addAtom(1.2, 0.0, 0.0, 2);
 	    this.addAtom(2.0, 0.8, 0.0, 2);  
-	    this.fireballs = [];    
+	    this.fireballs = [];    */
 
 		//Carbon   : 1
 		//Hydrogen : 2
 		//Oxygen   : 3
 
 	    //CO or O
-	  /*  this.addAtom(1.2, 0.0, 0.0, 3);
+	    this.addAtom(1.2, 0.0, 0.0, 2);
 		this.player = this.atoms[this.atoms.length-1];
 		this.player.jump = 0;
 		this.id++;
-		this.addAtom(0.0, 0.0, 0.0, 3);
-		this.fireballs = [];  */
+		this.addAtom(0.0, 0.0, 0.0, 2);
+		this.fireballs = [];  
 
 	},
 
@@ -638,8 +638,13 @@ function coulombInteraction(i,j){
     }
     deltap[i] = sum - sbp_i.valency;              //(Equation 3a)
     deltap_boc[i] = sum - sbp_i.valBoc;           //(Equation 3b) 
-  }
 
+    world.delta_i[i] = sum - sbp_i.valency;    //setting delta_i for the overCoordination()
+ 
+  }
+ 
+
+	
 	world.bond_order = new Array(world.atoms.length);
 	world.bond_order_sigma =  new Array(world.atoms.length);
 	world.bond_order_pi = new Array(world.atoms.length);
@@ -802,8 +807,9 @@ function overCoordination(i) {
     
     var sum = 0.0;
 	for( var j = 0; j < world.atoms.length; j++ ) {
-        sum += (world.delta_i[j] - dfvl * world.deltap_i_lp[i]) * ( bond_order_uncorr_pi[i][j] + bond_order_uncorr_pi2[i][j] ); 
+        sum += (world.delta_i[i] - dfvl * world.deltap_i_lp[i]) * ( bond_order_uncorr_pi[i][j] + bond_order_uncorr_pi2[i][j] ); 
 	}
+
 	//(Equation 11b) 
 	var exp_ovun1 = paramGeneral.povun3 * Math.exp( paramGeneral.povun4 * sum );
 	var inv_exp_ovun1 = 1.0 / (1 + exp_ovun1);
@@ -1170,22 +1176,7 @@ return { vanDerWaalsInteraction: vanDerWaalsInteraction,
 })();  //END
 
 
-//lammp values
-//bond_order  1.670016101713679
-//BOA_ij = 1.669016101713679, 
-//BOA_jk = 1.9455576873351772e-312  
 
-
-//Need to Fix:
-//1. the array values for delta_i[j](workspace->Delta[j]) and deltap_i_lp[j](workspace->Delta_lp_temp[j]) are different in multi_body.cpp and bond_orders.cpp
-//2. why do we need count inside the for loop of overCoordination()
-//3. is it sbp_i.valency or sbp_j.valency in delta_i[j] = sum - sbp_i.valency in overCoordination().
-//4. is sbp_i.valency 4 or 2?
-//5. fix the values of sum_ovun1 and sum_ovun2 
-//6  delta_lpcorr is showing NaN in Equation 11b it supposed to show -1.952134912303066
-
-//Note:
-//world.n_lp[i] in lonepair energy is showing NaN  
 
 
 
