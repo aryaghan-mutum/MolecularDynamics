@@ -807,7 +807,7 @@ function overCoordination(i) {
     
     var sum = 0.0;
 	for( var j = 0; j < world.atoms.length; j++ ) {
-        sum += (world.delta_i[i] - dfvl * world.deltap_i_lp[i]) * ( bond_order_uncorr_pi[i][j] + bond_order_uncorr_pi2[i][j] ); 
+        sum += (world.delta_i[j] - dfvl * world.deltap_i_lp[i]) * ( bond_order_uncorr_pi[i][j] + bond_order_uncorr_pi2[i][j] ); 
 	}
 
 	//(Equation 11b) 
@@ -830,7 +830,6 @@ function overCoordination(i) {
 	
 	return E_over + E_under;	  
 }  //end overCoordination function
-
 
 
 /// <summary>

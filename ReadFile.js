@@ -386,7 +386,7 @@ function hbonds(hydrogenBonds) {
 
       //fourbody
       elementLen = arrayOfLines[count].match(/[0-9][0-9]*/);
-      for(var i = count+1; i < count+parseInt(elementLen); i++){
+      for(var i = count+1; i <= count+parseInt(elementLen); i++){
           str = arrayOfLines[i];
           atomName = str.trim().split(/\s+/);
           var type0 = parseInt(atomName[0])-1;
@@ -404,10 +404,10 @@ function hbonds(hydrogenBonds) {
 
       //hydrogenbonds
       elementLen = arrayOfLines[count].match(/[0-9][0-9]*/);
-      for(var i = count+1; i < count+parseInt(elementLen); i++){
+      for(var i = count+1; i <= count+parseInt(elementLen); i++){
           str = arrayOfLines[i];
           atomName = str.trim().split(/\s+/);
-          atomName = str.trim();
+         // atomName = str.trim();
           var type0 = parseInt(atomName[0])-1;
           var type1 = parseInt(atomName[1])-1;
           var type2 = parseInt(atomName[2])-1;
