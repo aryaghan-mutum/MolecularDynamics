@@ -24,8 +24,8 @@
    this.chiEEM   = parseFloat(paramAtom[14]);     //charge equilibration parameter 
    this.etaEEM   = parseFloat(2 * paramAtom[15]); //charge equilibration parameter    
    this.nlp_opt  = parseFloat(paramAtom[16]);    
-   this.roPiPi   = parseFloat(paramAtom[17]);  //(covalent radius 3) = 1.2114
-   this.plp2     = parseFloat(paramAtom[18]);  // elp (lone pair energy—carbon has no lone pairs, see O and N ) = 0.0
+   this.roPiPi   = parseFloat(paramAtom[17]);   //(covalent radius 3) = 1.2114
+   this.plp2     = parseFloat(paramAtom[18]);   // elp (lone pair energy—carbon has no lone pairs, see O and N ) = 0.0
    this.heatInc  = parseFloat(paramAtom[19]); 
    this.pboc4    = parseFloat(paramAtom[20]);
    this.pboc3    = parseFloat(paramAtom[21]);
@@ -35,7 +35,7 @@
    this.povun2   = parseFloat(paramAtom[25]);     
    this.pval3    = parseFloat(paramAtom[26]);
    this.nu       = parseFloat(paramAtom[27]);   
-   this.valBoc   = parseFloat(paramAtom[28]);    //valency_val
+   this.valBoc   = parseFloat(paramAtom[28]);   //valency_val
    this.pval5    = parseFloat(paramAtom[29]);    
    this.rcore 	 = parseFloat(paramAtom[30]);   //rcore2
    this.ecore 	 = parseFloat(paramAtom[31]);   //ecore2
@@ -407,7 +407,6 @@ function hbonds(hydrogenBonds) {
       for(var i = count+1; i <= count+parseInt(elementLen); i++){
           str = arrayOfLines[i];
           atomName = str.trim().split(/\s+/);
-         // atomName = str.trim();
           var type0 = parseInt(atomName[0])-1;
           var type1 = parseInt(atomName[1])-1;
           var type2 = parseInt(atomName[2])-1;
@@ -415,7 +414,6 @@ function hbonds(hydrogenBonds) {
           hydrogenbonds[type2][type1][type0] = hydrogenbonds[type0][type1][type2];
       }
       count += parseInt(elementLen[0])+1;
-
 
 
       // This nested for loop puts all the values from onebody_parameters into twobody_parameters array.
@@ -466,17 +464,14 @@ function hbonds(hydrogenBonds) {
       window.object.coalitionEnergy(0,1,2);   
       window.object.penaltyEnergy(0,1,2);
      // window.object.torsionEnergy(0,1,2,3);  
-     //window.object.hydrogenBondInteraction();
-     //window.object.conjugationEnergy();   //0,1,2,3, 
-     //window.object.C2Correction();
+     // window.object.hydrogenBondInteraction();
+     // window.object.conjugationEnergy();   //0,1,2,3, 
+     // window.object.C2Correction();
    
-        //console.log(window.testing);
-       
-      
-		  
+        //console.log(window.testing); 
       };  // end onload function 
 
-        reader.readAsText(input.files[0]);
+      reader.readAsText(input.files[0]);
 
     }   // end openFile function 
 

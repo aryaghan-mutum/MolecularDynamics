@@ -125,25 +125,25 @@ World.prototype = {
 
 	    // Add the player.
 	    //Ozone:
-	  /*  this.addAtom(0.0, 0.0, 0.0, 2);  
+	    this.addAtom(0.0, 0.0, 0.0, 2);  
 	    this.player = this.atoms[this.atoms.length-1];
 	    this.player.jump = 0;
 	    this.id++;
 	    this.addAtom(1.2, 0.0, 0.0, 2);
 	    this.addAtom(2.0, 0.8, 0.0, 2);  
-	    this.fireballs = [];    */
+	    this.fireballs = [];    
 
 		//Carbon   : 1
 		//Hydrogen : 2
 		//Oxygen   : 3
 
 	    //CO or O
-	    this.addAtom(1.2, 0.0, 0.0, 2);
+	 /*   this.addAtom(1.2, 0.0, 0.0, 2);
 		this.player = this.atoms[this.atoms.length-1];
 		this.player.jump = 0;
 		this.id++;
 		this.addAtom(0.0, 0.0, 0.0, 2);
-		this.fireballs = [];  
+		this.fireballs = [];  */
 
 	},
 
