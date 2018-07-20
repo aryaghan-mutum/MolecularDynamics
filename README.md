@@ -6,17 +6,18 @@ It is a project to implemet **ReaxFF Reactive Force Field potential functions** 
 
 This project comprises of all the general ReaxFF-potential functions. They are as follows:
 
-1. Bond Order and Bond Energy
-2. Lone pair energy 
-3. Overcoordination
-4. Undercoordination
-5. Valence angle terms
+1. Bond Order
+2. Bond Energy
+3. Lone pair energy 
+4. Overcoordination
+5. Undercoordination
+5. Valence energy 
 6. Penalty energy
-7. Three-body conjugation term
-8. Torison angle terms
+7. Coalition energy
+8. Torison energy 
 9. Four-body conjugation term
 10. Hydrogen body interaction
-11. Correction for C2
+11. C2 Correction
 12. Triple bond energy correction
 13. Nonbonded interactions
 14. Taper correction
