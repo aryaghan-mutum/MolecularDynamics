@@ -984,24 +984,24 @@ var object = function () {
 
     function coalitionEnergy(i, j, k) {
 
-        var bond_order = world.bond_order;
-        var bond_order_pi = world.bond_order_pi;
-        var bond_order_pi2 = world.bond_order_pi2;
+        let bondOrder = world.bond_order
+        let bondOrder_pi = world.bond_order_pi
+        let bond_order_pi2 = world.bond_order_pi2
 
-        var thbp = threebody_parameters[world.atoms[i].type][world.atoms[j].type][world.atoms[k].type];
-        const cut = 0.001;
-        BOA_ij = bond_order[i][k] - cut;
-        BOA_jk = bond_order[j][k] - cut;
+        let thbp = threebody_parameters[world.atoms[i].type][world.atoms[j].type][world.atoms[k].type]
+        const cut = 0.001
+        BOA_ij = bondOrder[i][k] - cut
+        BOA_jk = bondOrder[j][k] - cut
 
-        var E_coa = 0.0;
-        var exp_coa2 = Math.exp(paramGeneral.pcoa2 * deltap_boc[j]);   //Note: deltap_boc in JS is delta_val in C++
-        E_coa += E_coa = thbp.pcoa1 / (1. + exp_coa2) *
-            Math.exp(-paramGeneral.pcoa3 * (bond_order[i][j] - BOA_ij) * (bond_order[i][j] - BOA_ij)) *
-            Math.exp(-paramGeneral.pcoa3 * (bond_order[i][j] - BOA_jk) * (bond_order[i][j] - BOA_jk)) *
+        let eCoa = 0.0
+        let expCoa2 = Math.exp(paramGeneral.pcoa2 * deltap_boc[j])   //Note: deltap_boc in JS is delta_val in C++
+        eCoa += eCoa = thbp.pcoa1 / (1. + expCoa2) *
+            Math.exp(-paramGeneral.pcoa3 * (bondOrder[i][j] - BOA_ij) * (bondOrder[i][j] - BOA_ij)) *
+            Math.exp(-paramGeneral.pcoa3 * (bondOrder[i][j] - BOA_jk) * (bondOrder[i][j] - BOA_jk)) *
             Math.exp(-paramGeneral.pcoa4 * (BOA_ij - 1.5) * (BOA_ij - 1.5)) *
-            Math.exp(-paramGeneral.pcoa4 * (BOA_jk - 1.5) * (BOA_jk - 1.5));
+            Math.exp(-paramGeneral.pcoa4 * (BOA_jk - 1.5) * (BOA_jk - 1.5))
 
-        return E_coa;
+        return eCoa
     }   //end coalitionEnergy function
 
     /*
