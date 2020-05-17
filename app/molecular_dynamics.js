@@ -1,60 +1,72 @@
 // const coulombEnergy = require('../src/energy/coulomb_interaction_energy')
 
-var object = (function () {
+const TIMESTAMP_IN_FEMPTO_SEC = 0.99
+const TIMESTEP_IN_SIMULATION_UNIT = 0.020454828 // sqrt(u*angstroms^2/kcal_mol)
+const THRUST = 100.0
+const WALL_SPRING = 200.0
+const EPS = 1e6
+const MAX_VEL = 10.0
+const EMPTY_STRING = ''
+const ID = 0
+
+var object = function () {
+
     var World = function () {
 
-        var screen = document.getElementById("screen").getContext("2d");
-        this.scale = 20.0;
+        var screen = document.getElementById("screen").getContext("2d")
+
+        this.scale = 20.0
         this.size = {
             x: screen.canvas.width / this.scale,
             y: screen.canvas.height / this.scale,
             z: screen.canvas.height / this.scale
-        };
+        }
 
-        this.timestep = 0.99; // Timestep in femtoseconds
-        this.dt = 0.020454828 * this.timestep; // timestep in simulation units; sqrt(u*angstroms^2/kcal_mol)
-        this.dt2 = this.dt * this.dt;
-        this.thrust = 100.0;
-        this.wallSpring = 200.0;
-        this.eps = 1e6;
-        this.maxVel = 10.0;
-        this.statusText = "";
-        this.id = 0;
-        this.clear = true;
-        this.setup();
-        this.keyboarder = new Keyboarder();
-        this.bond_order = null;
-        this.bond_order_sigma = null;
-        this.bond_order_pi = null;
-        this.bond_order_pi2 = null;
-        this.rij = null;
-        this.paramGeneral = null;
-        this.onebody_parameters = null;
-        this.twobody_parameters = null;
-        this.threebody_parameters = null;
-        this.fourbody_parameters = null;
-        this.deltap_i = null;       //used in bondOrder() Equation 5  corrected and penaltyEnergy()
-        this.deltap_boc = null;     //used in bondOrder() and valenceEnergy()  uncorrected
-        this.deltap = null;			//used in bondOrder() and valenceEnergy()
-        this.deltap_i_lp = null;    //used in lonepairEnergy() Equation 9
-        this.vlpex = null;			//used in lonepairEnergy() and valenceEnergy()
-        this.n_lp = null;			//used in lonepairEnergy() and valenceEnergy()
-        this.dDeltap_i_lp = null; 	//used in lonepairEnergy() and valenceEnergy()
-        this.delta_i = null;
-        this.BOA_ij = null;
-        this.BOA_jk = null;
-        this.BO_s_corr = null;
-        this.BO_pi_corr = null;
-        this.BO_pi2_corr = null;
+        this.timestep = TIMESTAMP_IN_FEMPTO_SEC
+        this.dt = TIMESTEP_IN_SIMULATION_UNIT * this.timestep
+        this.dt2 = this.dt * this.dt
+        this.thrust = THRUST
+        this.wallSpring = WALL_SPRING
+        this.eps = EPS
+        this.maxVel = MAX_VEL
+        this.statusText = EMPTY_STRING
+        this.id = ID
+        this.clear = true
+        this.setup()
+        this.keyboarder = new Keyboarder()
+        this.bond_order = null
+        this.bond_order_sigma = null
+        this.bond_order_pi = null
+        this.bond_order_pi2 = null
+        this.rij = null
+        this.paramGeneral = null
+        this.onebody_parameters = null
+        this.twobody_parameters = null
+        this.threebody_parameters = null
+        this.fourbody_parameters = null
+        this.deltap_i = null       //used in bondOrder() Equation 5  corrected and penaltyEnergy()
+        this.deltap_boc = null     //used in bondOrder() and valenceEnergy()  uncorrected
+        this.deltap = null		   //used in bondOrder() and valenceEnergy()
+        this.deltap_i_lp = null    //used in lonepairEnergy() Equation 9
+        this.vlpex = null			//used in lonepairEnergy() and valenceEnergy()
+        this.n_lp = null			//used in lonepairEnergy() and valenceEnergy()
+        this.dDeltap_i_lp = null 	//used in lonepairEnergy() and valenceEnergy()
+        this.delta_i = null
+        this.BOA_ij = null
+        this.BOA_jk = null
+        this.BO_s_corr = null
+        this.BO_pi_corr = null
+        this.BO_pi2_corr = null
 
-        var self = this;
+        var self = this
+
         var tick = function () {
             self.update();
-            self.draw(screen);
-            requestAnimationFrame(tick);
-        };
-        tick();
-    };   //end World
+            self.draw(screen)
+            requestAnimationFrame(tick)
+        }
+        tick()
+    }
 
     World.prototype = {
         update: function () {
@@ -1158,7 +1170,7 @@ var object = (function () {
     };
 
 
-})();  //END
+}();  //END
 
 
 
