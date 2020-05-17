@@ -1,7 +1,7 @@
-### Molecular Dynamics Simulation 
+#### Molecular Dynamics Simulation 
 MD is an atomistic simulation technique used to study broad set of biomolecules in diverse conditions.
 
-#### Description 
+##### Description 
 It is a project to implemet **ReaxFF Reactive Force Field potential functions** for Molecular Dynamics Simulations of Hydrocarbon Oxidation in JavaScript. 
 
 This project comprises of all the general ReaxFF-potential functions. They are as follows:
