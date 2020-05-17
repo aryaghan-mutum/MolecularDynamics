@@ -1,0 +1,24 @@
+{
+  "name": "moleculardynamics",
+  "version": "1.0.0",
+  "description": "MD is an atomistic simulation technique used to study broad set of biomolecules in diverse conditions.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aryaghan-mutum/MolecularDynamics.git"
+  },
+  "author": "jeffrey comer and anurag muthyam",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/aryaghan-mutum/MolecularDynamics/issues"
+  },
+  "homepage": "https://github.com/aryaghan-mutum/MolecularDynamics#readme",
+  "dependencies": {
+    "array-range": "^1.0.1",
+    "faker": "^4.1.0",
+    "sequency": "^0.19.2"
+  }
+}
