@@ -1,7 +1,7 @@
-### Molecular Dynamics Simulation 
+#### Molecular Dynamics Simulation 
 MD is an atomistic simulation technique used to study broad set of biomolecules in diverse conditions.
 
-#### Description 
+##### Description 
 It is a project to implemet **ReaxFF Reactive Force Field potential functions** for Molecular Dynamics Simulations of Hydrocarbon Oxidation in JavaScript. 
 
 This project comprises of all the general ReaxFF-potential functions. They are as follows:
@@ -25,6 +25,13 @@ This project comprises of all the general ReaxFF-potential functions. They are a
 16. Coulomb interactions
 17. Overall system energy
 
-#### Programming Language
-- JavaScript, HTML, CSS
+##### Download `node.js` and `npm`
+- Download the `node.js` `.pkg` installer from: `https://nodejs.org/en/download/`
+- Verify version: `node --version`
+- Run `node.js` installer
+- Verify version: `node -v` or `node --version`
+- Update npm version: `sudo npm install npm --global`
 
+##### Contributors 
+- Jeffrey Comer (jeffcomer@ksu.edu )
+- Anurag Muthyam (anu.drumcoder@gmail.com)
