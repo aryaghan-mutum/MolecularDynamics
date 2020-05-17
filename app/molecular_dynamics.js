@@ -824,7 +824,6 @@ var object = (function () {
         return E_over + E_under;
     }  //end overCoordination function
 
-
 /// <summary>
 ///   Under Coordination:
 ///   For an undercoordinated atom (Δi<0), we want to take into account the energy contribution for the resonance 
