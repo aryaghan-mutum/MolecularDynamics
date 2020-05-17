@@ -25,6 +25,13 @@ This project comprises of all the general ReaxFF-potential functions. They are a
 16. Coulomb interactions
 17. Overall system energy
 
-#### Programming Language
-- JavaScript, HTML, CSS
+##### Download `node.js` and `npm`
+- Download the `node.js` `.pkg` installer from: `https://nodejs.org/en/download/`
+- Verify version: `node --version`
+- Run `node.js` installer
+- Verify version: `node -v` or `node --version`
+- Update npm version: `sudo npm install npm --global`
 
+##### Contributors 
+- Jeffrey Comer (jeffcomer@ksu.edu )
+- Anurag Muthyam (anu.drumcoder@gmail.com)
