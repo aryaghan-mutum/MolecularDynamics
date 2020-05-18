@@ -1170,7 +1170,7 @@ var object = function () {
     };
 
 
-}();  //END
+}()
 
 
 

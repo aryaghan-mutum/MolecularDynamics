@@ -1,53 +1,33 @@
 <!doctype html>
 <html>
-  <head>
+<head>
     <title>Molecular Dynamics</title>
-    <script type="text/javascript"  src="molecular_dynamics.js"></script>
-    <script type="text/javascript"  src="filereader/file_reader.js"></script>
+    <script type="text/javascript" src="molecular_dynamics.js"></script>
+    <script type="text/javascript" src="filereader/file_reader.js"></script>
 
-    <style>
-      body {
-      background-color: black;
-      color: white;
-      font-size: 11;
-      line-height: 0.9
-      }
-      p {
-      font-size: 11;
-      line-height: 0.9
-      }
-      .gallery {
-      width: 100%;
-      /*border: 1px solid red;*/
-      display: block;
-      clear: both;
-      }
-      .gallery-el {
-      display: block;
-      float: left;
-      }
-    </style>
+    <link rel="stylesheet" type="text/css" href="md_home.css">
 
-  </head>
-  <body>
-    <h4>Molecular Dynamics</h4>
-      <canvas id="screen" width="800px" height="600px"></canvas>
-      <!--<canvas id="screen" style="width: 100%; height: 100%;" ></canvas>-->
-      <p id="status">STATUS</p>
+</head>
+<body>
+<h4>Molecular Dynamics</h4>
+<canvas id="screen" width="800px" height="600px"></canvas>
+<!--<canvas id="screen" style="width: 100%; height: 100%;" ></canvas>-->
+<p id="status">STATUS</p>
 
-      <button onclick="window.world.setup()">Start</button>
-      <button onclick="window.world.toggleClear()">Clear</button>
-      <button onclick="window.world.addBody()">Add</button>
+<button onclick="window.world.setup()">Start</button>
+<button onclick="window.world.toggleClear()">Clear</button>
+<button onclick="window.world.addBody()">Add</button>
 
- <input type='file' accept='text/plain' onchange='openFile(event);'><br>
+<input type='file' accept='text/plain' onchange='openFile(event);'><br>
 
-    <script> 
-       console.log("INPUT FILE");
-       function func (){
-       console.log(globalParams); 
-     }
-    </script>
+<script>
+    console.log("INPUT FILE")
+
+    function func() {
+        console.log(globalParams)
+    }
+</script>
 
 
-  </body>
+</body>
 </html>
