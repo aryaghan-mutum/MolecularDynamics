@@ -6,24 +6,26 @@ It is a project to implemet **ReaxFF Reactive Force Field potential functions** 
 
 This project comprises the general ReaxFF-potential functions. They are as follows:
 
+```console
 1. Bond Order
 2. Bond Energy
 3. Lone pair energy 
 4. Over Coordination
 5. Under Coordination
-5. Valence energy 
-6. Penalty energy
-7. Coalition energy
-8. Torison energy 
-9. Four-body conjugation term
-10. Hydrogen body interaction
-11. C2 Correction
-12. Triple bond energy correction
-13. Non bonded interactions
-14. Taper correction
-15. Van der Waals interactions
-16. Coulomb interactions
-17. Overall system energy
+6. Valence energy 
+7. Penalty energy
+8. Coalition energy
+9. Torison energy 
+10. Four-body conjugation term
+11. Hydrogen body interaction
+12. C2 Correction
+13. Triple bond energy correction
+14. Non bonded interactions
+15. Taper correction
+16. Van der Waals interactions
+17. Coulomb interactions
+18. Overall system energy
+```
 
 ##### Download `node.js` and `npm`
 - Download the `node.js` `.pkg` installer from: `https://nodejs.org/en/download/`
