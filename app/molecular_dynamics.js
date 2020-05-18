@@ -422,14 +422,22 @@ var object = function () {
     });
 
 
-//get values from Readfile.js and assign values inside the constructor.
+    /**
+     * Get values from Readfile.js and assign values inside the constructor.
+     * @param _rij
+     * @param _paramGeneral
+     * @param _onebody_parameters
+     * @param _twobody_parameters
+     * @param _threebody_parameters
+     * @param _fourbody_parameters
+     */
     function getValuesFromReadFile(_rij, _paramGeneral, _onebody_parameters, _twobody_parameters, _threebody_parameters, _fourbody_parameters) {
-        rij = _rij;
-        paramGeneral = _paramGeneral;
-        onebody_parameters = _onebody_parameters;
-        twobody_parameters = _twobody_parameters;
-        threebody_parameters = _threebody_parameters;
-        fourbody_parameters = _fourbody_parameters;
+        rij = _rij
+        paramGeneral = _paramGeneral
+        onebody_parameters = _onebody_parameters
+        twobody_parameters = _twobody_parameters
+        threebody_parameters = _threebody_parameters
+        fourbody_parameters = _fourbody_parameters
     }
 
 
