@@ -19,6 +19,11 @@
   "dependencies": {
     "array-range": "^1.0.1",
     "faker": "^4.1.0",
-    "sequency": "^0.19.2"
+    "sequency": "^0.19.2",
+    "uniq": "^1.0.1"
+  },
+  "devDependencies": {
+    "npm-install-webpack-plugin": "^4.0.5",
+    "webpack": "^4.43.0"
   }
 }

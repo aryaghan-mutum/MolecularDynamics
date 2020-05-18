@@ -1,5 +1,3 @@
-// const coulombEnergy = require('../src/energy/coulomb_interaction_energy')
-
 const TIMESTAMP_IN_FEMPTO_SEC = 0.99
 const TIMESTEP_IN_SIMULATION_UNIT = 0.020454828 // sqrt(u*angstroms^2/kcal_mol)
 const THRUST = 100.0
@@ -8,12 +6,19 @@ const EPS = 1e6
 const MAX_VEL = 10.0
 const EMPTY_STRING = ''
 const ID = 0
+const CONTEXT_ID = '2d'
+
+const COULOMB_CONSTANT = 332.06371
+const COULOMB_CHARGE_QI = 0.22472581226836  // magnitudes of the charge q1
+const COULOMB_CHARGE_QJ = -0.22472581226836 // magnitudes of the charge q2
+
 
 var object = function () {
 
+    debugger
     var World = function () {
 
-        var screen = document.getElementById("screen").getContext("2d")
+        var screen = document.getElementById("screen").getContext(CONTEXT_ID)
 
         this.scale = 20.0
         this.size = {
@@ -417,14 +422,22 @@ var object = function () {
     });
 
 
-//get values from Readfile.js and assign values inside the constructor.
+    /**
+     * Get values from Readfile.js and assign values inside the constructor.
+     * @param _rij
+     * @param _paramGeneral
+     * @param _onebody_parameters
+     * @param _twobody_parameters
+     * @param _threebody_parameters
+     * @param _fourbody_parameters
+     */
     function getValuesFromReadFile(_rij, _paramGeneral, _onebody_parameters, _twobody_parameters, _threebody_parameters, _fourbody_parameters) {
-        rij = _rij;
-        paramGeneral = _paramGeneral;
-        onebody_parameters = _onebody_parameters;
-        twobody_parameters = _twobody_parameters;
-        threebody_parameters = _threebody_parameters;
-        fourbody_parameters = _fourbody_parameters;
+        rij = _rij
+        paramGeneral = _paramGeneral
+        onebody_parameters = _onebody_parameters
+        twobody_parameters = _twobody_parameters
+        threebody_parameters = _threebody_parameters
+        fourbody_parameters = _fourbody_parameters
     }
 
 
@@ -485,71 +498,68 @@ var object = function () {
     } // end of vanDerWaalsInteraction function
 
 
-/// <summary>
-///   Coulomb Constant aka Marino's Constant/Electrostatic Constant :
-///   As with the van der Waals-interactions, Coulomb interactions are taken into account between all atom pairs. 
-///   To adjust for orbital overlap between atoms at close distances a shielded Coulomb-potential is used (Equation 24).
-/// </summary>
+    /**
+     * Coulomb Constant aka Marino's Constant/Electrostatic Constant :
+     * As with the van der Waals-interactions, Coulomb interactions are taken into account between all atom pairs.
+     * To adjust for orbital overlap between atoms at close distances a shielded Coulomb-potential is used (Equation 24).
+     * @param i
+     * @param j
+     * @returns {number}
+     */
     function coulombInteraction(i, j) {
-        var Rcut = paramGeneral.swb;
+        let rCut = paramGeneral.swb
 
         //Tapper-term   (Equation 22)
-        var Tap7 = 20 / Math.pow(Rcut, 7);
-        var Tap6 = -70 / Math.pow(Rcut, 6);
-        var Tap5 = 84 / Math.pow(Rcut, 5);
-        var Tap4 = -35 / Math.pow(Rcut, 4);
-        var Tap3 = 0;
-        var Tap2 = 0;
-        var Tap1 = 0;
-        var Tap0 = 1;
+        let tap7 = 20 / Math.pow(rCut, 7)
+        let tap6 = -70 / Math.pow(rCut, 6)
+        let tap5 = 84 / Math.pow(rCut, 5)
+        let tap4 = -35 / Math.pow(rCut, 4)
+        let tap3 = 0
+        let tap2 = 0
+        let tap1 = 0
+        let tap0 = 1
 
         //Taper correction  (Equation 21)
-        var Tap = (Tap7 * Math.pow(r_ij, 7)) +
-            (Tap6 * Math.pow(r_ij, 6)) +
-            (Tap5 * Math.pow(r_ij, 5)) +
-            (Tap4 * Math.pow(r_ij, 4)) +
-            (Tap3 * Math.pow(r_ij, 3)) +
-            (Tap2 * Math.pow(r_ij, 2)) +
-            (Tap1 * Math.pow(r_ij, 1)) + Tap0;
+        let tap = (tap7 * Math.pow(r_ij, 7)) +
+            (tap6 * Math.pow(r_ij, 6)) +
+            (tap5 * Math.pow(r_ij, 5)) +
+            (tap4 * Math.pow(r_ij, 4)) +
+            (tap3 * Math.pow(r_ij, 3)) +
+            (tap2 * Math.pow(r_ij, 2)) +
+            (tap1 * Math.pow(r_ij, 1)) + tap0
 
         //Derivative of Tapper correction
-        var dTap = 7 * Tap7 * r_ij + 6 * Tap6;
-        dTap = dTap * r_ij + 5 * Tap5;
-        dTap = dTap * r_ij + 4 * Tap;
-        dTap = dTap * r_ij + 3 * Tap3;
-        dTap = dTap * r_ij + 2 * Tap2;
-        dTap += Tap1 / r_ij;
+        let dTap = 7 * tap7 * r_ij + 6 * tap6
+        dTap = dTap * r_ij + 5 * tap5
+        dTap = dTap * r_ij + 4 * tap
+        dTap = dTap * r_ij + 3 * tap3
+        dTap = dTap * r_ij + 2 * tap2
+        dTap += tap1 / r_ij
 
-        const C_ELE = 332.06371;  	   // Coulomb's constant
-        const q_i = 0.22472581226836;  // magnitudes of the charge q1
-        const q_j = -0.22472581226836; // magnitudes of the charge q2
+        let eCoul = 0.0
+        let atomI = world.atoms[i]
+        let atomJ = world.atoms[j]
 
-        var E_coul = 0.0;
+        let twbp = twobody_parameters[world.atoms[i].type][world.atoms[j].type]
 
-        var atom_i = world.atoms[i];
-        var atom_j = world.atoms[j];
+        let dr3gamij1 = (r_ij * r_ij * r_ij + twbp.gamma)
+        let dr3gamij3 = Math.pow(dr3gamij1, 0.33333333333333)
+        let tmp = tap / dr3gamij3
 
-        var twbp = twobody_parameters[world.atoms[i].type][world.atoms[j].type];
+        eCoul += COULOMB_CONSTANT * COULOMB_CHARGE_QI * COULOMB_CHARGE_QJ * tmp      // (Equation 24)
+        let ceClmb = COULOMB_CONSTANT * COULOMB_CHARGE_QI * COULOMB_CHARGE_QJ * (dTap - tap * r_ij / dr3gamij1) / dr3gamij3
 
-        var dr3gamij_1 = (r_ij * r_ij * r_ij + twbp.gamma);
-        var dr3gamij_3 = Math.pow(dr3gamij_1, 0.33333333333333);
-        var tmp = Tap / dr3gamij_3;
-
-        E_coul += C_ELE * q_i * q_j * tmp;      // (Equation 24)
-        var CEclmb = C_ELE * q_i * q_j * (dTap - Tap * r_ij / dr3gamij_1) / dr3gamij_3;
-
-        return E_coul
-    }  // end of coulombInteraction function
+        return eCoul
+    }
 
 
 //////////////////////////////////////////////////////////BOND ORDER/////////////////////////////////////////////////////////
-
-/// <summary>
-///   Bond Order and Bond Energy:
-///   A fundamental assumption of ReaxFF is that the bond order BO’ij between a pair of atoms can be obtained directly 
-///   from the interatomic distance rij as given in Equation (2). In calculating the bond orders, ReaxFF distinguishes 
-///   between contributions from sigma bonds, pi-bonds and double pi bonds.
-/// </summary>
+    /**
+     * Bond Order and Bond Energy:
+     * A fundamental assumption of ReaxFF is that the bond order BO’ij between a pair of atoms can be obtained directly
+     * from the interatomic distance rij as given in Equation (2). In calculating the bond orders, ReaxFF distinguishes
+     * between contributions from sigma bonds, pi-bonds and double pi bonds.
+     */
     function bondOrder() {
 
         var val_i = val_j;
@@ -739,57 +749,55 @@ var object = function () {
     } // end bond order function
 
     function bondEnergy(i, j) {
-        var twbp = twobody_parameters[world.atoms[i].type][world.atoms[j].type];
-
-        var pow_BOs_be2 = Math.pow(world.bond_order_sigma[i][j], twbp.pbe2);
-        var exp_be12 = Math.exp(twbp.pbe1 * (1.0 - pow_BOs_be2));
-        var cebo = -twbp.DeSigma * exp_be12 * (1.0 - twbp.pbe1 * twbp.pbe2 * pow_BOs_be2);
-
-        var E_bond = -twbp.DeSigma * world.bond_order_sigma[i][j] * exp_be12 - twbp.DePi * BO_pi_corr - twbp.DePipi * world.bond_order_pi2[i][j];   //(Equation 6)
-        return E_bond;
+        let twbp = twobody_parameters[world.atoms[i].type][world.atoms[j].type]
+        let powBoSbe2 = Math.pow(world.bond_order_sigma[i][j], twbp.pbe2)
+        let expBe12 = Math.exp(twbp.pbe1 * (1.0 - powBoSbe2))
+        let cebo = -twbp.DeSigma * expBe12 * (1.0 - twbp.pbe1 * twbp.pbe2 * powBoSbe2)
+        let ebond = -twbp.DeSigma * world.bond_order_sigma[i][j] * expBe12 - twbp.DePi * BO_pi_corr - twbp.DePipi * world.bond_order_pi2[i][j]   //(Equation 6)
+        return ebond
     }
 
 
 //////////////////////////////////////////////////////////Lone pair energy/////////////////////////////////////////////////////////
 
-/// <summary>
-///   Lone pair energy:
-///   Equation (8) is used to determine the number of lone pairs around an atom. Δ e is determined in Equation (7) 
-///   and describes the difference between the total number of outer shell electrons (6 for oxygen, 4 for silicon, 1 for hydrogen) 
-///   and the sum of bond orders around an atomic center.
-/// </summary>
+    /**
+     * Lone pair energy:
+     * Equation (8) is used to determine the number of lone pairs around an atom. Δ e is determined in Equation (7)
+     * and describes the difference between the total number of outer shell electrons (6 for oxygen, 4 for silicon, 1 for hydrogen)
+     * and the sum of bond orders around an atomic center.
+     * @param i
+     * @returns {number}
+     */
     function lonepairEnergy(i) {
-        var bond_order = world.bond_order;
+        let bond_order = world.bond_order
 
-        var p_lp1 = paramGeneral.plp1;
-        var E_lp = 0.0;
+        let pLp1 = paramGeneral.plp1
+        let atomI = world.atoms[i]
+        //var sbp_i = onebody_parameters[atomI.type]
+        let sbpI = onebody_parameters[atomI.type]
 
-        var atom_i = world.atoms[i];
-        //var sbp_i = onebody_parameters[atom_i.type];
-        var sbp_i = onebody_parameters[atom_i.type];
-
-        var sum = 0.0;
+        var sum = 0.0
         for (var j = 0; j < world.atoms.length; j++) {
-            sum += world.bond_order[i][j];
+            sum += world.bond_order[i][j]
         }
 
-        var delta_e = sum - sbp_i.valE;    						//(Equation 7)
-        var vlpex = delta_e - 2.0 * Math.trunc(delta_e / 2.0);
-        world.vlpex[i] = vlpex;
-        var explp1 = Math.exp(-p_lp1 * (2.0 + vlpex) * (2.0 + vlpex));
-        world.n_lp[i] = explp1 - Math.trunc(delta_e / 2.0);
-        world.deltap_i_lp[i] = sbp_i.nlp_opt - world.n_lp[i];  //(Equation 9)
+        let delta_e = sum - sbpI.valE    						//(Equation 7)
+        let vlpex = delta_e - 2.0 * Math.trunc(delta_e / 2.0)
+        world.vlpex[i] = vlpex
+        let explp1 = Math.exp(-pLp1 * (2.0 + vlpex) * (2.0 + vlpex))
+        world.n_lp[i] = explp1 - Math.trunc(delta_e / 2.0)
+        world.deltap_i_lp[i] = sbpI.nlp_opt - world.n_lp[i]  //(Equation 9)
 
         // lone-pair Energy
-        var expvd2 = Math.exp(-75 * world.deltap_i_lp[i]);
-        var inv_expvd2 = 1 / (1 + expvd2);
+        let expvd2 = Math.exp(-75 * world.deltap_i_lp[i])
+        let inv_expvd2 = 1 / (1 + expvd2)
 
-        var E_lp = sbp_i.plp2 * world.deltap_i_lp[i] * inv_expvd2;               		  //(Equation 10)
-        return E_lp;
-        //var dElp = sbp_i.plp2  * inv_expvd2 + 75 * sbp_i.plp2  * world.deltap_i_lp[i] * expvd2 * (inv_expvd2 * inv_expvd2);
-        world.dDeltap_i_lp[i] = 2.0 * p_lp1 * explp1 * (2.0 + vlpex[i]);
-        //var CElp = dElp * dDeltap_i_lp[i];
-    }  //end lonepairEnergy function
+        let elp = sbpI.plp2 * world.deltap_i_lp[i] * inv_expvd2               		  //(Equation 10)
+        return sbpI
+        //var dElp = sbpI.plp2  * inv_expvd2 + 75 * sbpI.plp2  * world.deltap_i_lp[i] * expvd2 * (inv_expvd2 * inv_expvd2);
+        world.dDeltap_i_lp[i] = 2.0 * p_lp1 * explp1 * (2.0 + vlpex[i])
+        //var CElp = dElp * dDeltap_i_lp[i]
+    }
 
 
 /// <summary>
@@ -929,7 +937,7 @@ var object = function () {
         } else SBO2 = 2, CSBO2 = 0;
 
         var theta_0 = 180.0 - thbp.thetao * (1.0 - Math.exp(-paramGeneral.pval10 * (2.0 - SBO2)));     //(Equation 13g)
-        theta_0 = DegreesToRadians(theta_0);
+        theta_0 = degreesToRadians(theta_0);
 
         var expval2theta = 0.0;
         var expval12theta = 0.0;
@@ -943,7 +951,7 @@ var object = function () {
         var CEval2 = Cf7jk * f7_ij * f8_Dj * expval12theta;
         var CEval3 = Cf8j * f7_ij * f7_jk * expval12theta;
         //var CEval4 = -2.0 * thbp.pval1 * thbp.pval2 * f7_ij * f7_jk * f8_Dj * expval2theta * (theta_0 - theta);
-        var Ctheta_0 = paramGeneral.pval10 * DegreesToRadians(thbp.thetao) * Math.exp(-paramGeneral.pval10 * (2.0 - SBO2));
+        var Ctheta_0 = paramGeneral.pval10 * degreesToRadians(thbp.thetao) * Math.exp(-paramGeneral.pval10 * (2.0 - SBO2));
         //var CEval5 = -CEval4 * Ctheta_0 * CSBO2;
         //var CEval6 = CEval5 * dSBO1;
         //var CEval7 = CEval5 * dSBO2;
@@ -953,33 +961,33 @@ var object = function () {
 
     } //end valenceEnergy function
 
-    function DegreesToRadians(degrees) {
-        var pi = Math.PI;
-        return degrees * (pi / 180);
+    const degreesToRadians = (degrees) => {
+        debugger
+        return degrees * (Math.PI / 180)
     }
 
-    function penaltyEnergy(i, j, k) {
+    const penaltyEnergy = (i, j, k) => {
 
-        var bond_order = world.bond_order;
-        var bond_order_pi = world.bond_order_pi;
-        var bond_order_pi2 = world.bond_order_pi2;
+        let bond_order = world.bond_order
+        let bond_order_pi = world.bond_order_pi
+        let bond_order_pi2 = world.bond_order_pi2
 
-        var thbp = threebody_parameters[world.atoms[i].type][world.atoms[j].type][world.atoms[k].type];
+        let thbp = threebody_parameters[world.atoms[i].type][world.atoms[j].type][world.atoms[k].type]
 
-        const cut = 0.001;
-        BOA_ij = bond_order[i][k] - cut;
-        BOA_jk = bond_order[j][k] - cut;
+        const cut = 0.001
+        BOA_ij = bond_order[i][k] - cut
+        BOA_jk = bond_order[j][k] - cut
 
-        var E_pen = 0.0;
-        var exp_pen2ij = Math.exp(-paramGeneral.ppen2 * (BOA_ij - 2.0) * (BOA_ij - 2.0));
-        var exp_pen2jk = Math.exp(-paramGeneral.ppen2 * (BOA_jk - 2.0) * (BOA_jk - 2.0));
-        var exp_pen3 = Math.exp(-paramGeneral.ppen3 * deltap_i);    //Note: deltap in JS is Delta in C++
-        var exp_pen4 = Math.exp(paramGeneral.ppen4 * deltap_i);
-        var trm_pen34 = 1.0 + exp_pen3 + exp_pen4;
-        var f9_Dj = (2.0 + exp_pen3) / trm_pen34;       				    //(Equation 14b)
-        E_pen += thbp.pen1 * f9_Dj * exp_pen2ij * exp_pen2jk;    //(Equation 14a)
+        let epen = 0.0
+        let expPen2ij = Math.exp(-paramGeneral.ppen2 * (BOA_ij - 2.0) * (BOA_ij - 2.0))
+        let expPen2jk = Math.exp(-paramGeneral.ppen2 * (BOA_jk - 2.0) * (BOA_jk - 2.0))
+        let expPen3 = Math.exp(-paramGeneral.ppen3 * deltap_i)    //Note: deltap in JS is Delta in C++
+        let expPen4 = Math.exp(paramGeneral.ppen4 * deltap_i)
+        let trmPen34 = 1.0 + expPen3 + expPen4
+        let f9_Dj = (2.0 + expPen3) / trmPen34      			    //(Equation 14b)
+        epen += thbp.pen1 * f9_Dj * expPen2ij * expPen2jk           //(Equation 14a)
 
-        return E_pen;
+        return epen
     }   //end penaltyEnergy function
 
     function coalitionEnergy(i, j, k) {
@@ -1170,7 +1178,7 @@ var object = function () {
     };
 
 
-}();  //END
+}()
 
 
 

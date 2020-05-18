@@ -1,9 +1,5 @@
 var r_ij = 1.2;
 var globalParams = [];
-var carbon = [];
-var oxygen = [];
-var hydrogen = [];
-
 
 function atomType(paramAtom) {
     this.atomID = paramAtom[0];
