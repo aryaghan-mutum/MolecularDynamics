@@ -1,0 +1,103 @@
+.control-panel {
+  background: rgba(30, 30, 40, 0.9);
+  border-radius: 8px;
+  padding: 1.5rem;
+  min-width: 250px;
+}
+
+.control-panel h3 {
+  margin: 0 0 1rem 0;
+  color: #a78bfa;
+  font-size: 1.25rem;
+  border-bottom: 1px solid #4c4c5c;
+  padding-bottom: 0.5rem;
+}
+
+.control-panel h4 {
+  margin: 1rem 0 0.5rem 0;
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.control-button {
+  padding: 0.75rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background: #3b3b4f;
+  color: #e2e8f0;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.control-button:hover {
+  background: #4c4c5c;
+  transform: translateY(-1px);
+}
+
+.control-button:active {
+  transform: translateY(0);
+}
+
+.control-button.primary {
+  background: #7c3aed;
+}
+
+.control-button.primary:hover {
+  background: #8b5cf6;
+}
+
+.control-button.active {
+  background: #059669;
+}
+
+.control-button.active:hover {
+  background: #10b981;
+}
+
+.info-group {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #3b3b4f;
+}
+
+.info-group p {
+  margin: 0.25rem 0;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.info-group strong {
+  color: #e2e8f0;
+}
+
+.instructions {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #3b3b4f;
+}
+
+.instructions ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+.instructions li {
+  margin: 0.25rem 0;
+}
+
+.instructions kbd {
+  background: #4c4c5c;
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  font-family: monospace;
+}

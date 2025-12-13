@@ -29,7 +29,7 @@ export const ID = 0;
 export const ATOM_TYPES = {
   CARBON: 1,
   HYDROGEN: 2,
-  OXYGEN: 3
+  OXYGEN: 3,
 };
 
 // Default atom properties
@@ -39,3 +39,8 @@ export const DEFAULT_ATOM_MASS = 12.0;
 // Lennard-Jones parameters
 export const LJ_SIGMA = 1.9133;
 export const LJ_EPSILON = 0.1853;
+
+// Canvas defaults
+export const DEFAULT_CANVAS_WIDTH = 800;
+export const DEFAULT_CANVAS_HEIGHT = 600;
+export const DEFAULT_SCALE = 20.0;
