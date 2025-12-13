@@ -1,121 +1,83 @@
 # Molecular Dynamics Simulation
 
-MD is an atomistic simulation technique used to study a broad set of biomolecules in diverse conditions.
+ReaxFF Reactive Force Field implementation for Molecular Dynamics Simulations of Hydrocarbon Oxidation in JavaScript.
 
-## Description
+## ReaxFF Potential Functions
 
-This project implements **ReaxFF Reactive Force Field potential functions** for Molecular Dynamics Simulations of Hydrocarbon Oxidation in JavaScript.
+Bond Order, Bond Energy, Lone pair, Over/Under Coordination, Valence, Penalty, Coalition, Torsion, Four-body conjugation, Hydrogen bond, C2 Correction, Triple bond correction, Van der Waals, Coulomb interactions, Taper correction.
 
-### ReaxFF Potential Functions
-
-The following general ReaxFF potential functions are implemented:
-
-1. Bond Order
-2. Bond Energy
-3. Lone pair energy
-4. Over Coordination
-5. Under Coordination
-6. Valence energy
-7. Penalty energy
-8. Coalition energy
-9. Torsion energy
-10. Four-body conjugation term
-11. Hydrogen body interaction
-12. C2 Correction
-13. Triple bond energy correction
-14. Non-bonded interactions
-15. Taper correction
-16. Van der Waals interactions
-17. Coulomb interactions
-18. Overall system energy
-
-## Getting Started
-
-### Prerequisites
-
-- Node.js >= 18.0.0
-- npm >= 9.0.0
-
-### Installation
+## Quick Start
 
 ```bash
-# Clone the repository
-git clone https://github.com/aryaghan-mutum/MolecularDynamics.git
-cd MolecularDynamics
-
-# Install dependencies
-npm install
+npm install     # Install dependencies
+npm start       # Start dev server at http://localhost:3000
+npm run build   # Production build to dist/
 ```
 
-### Development
+## Testing & Coverage
 
 ```bash
-# Start the development server
-npm start
+npm test              # Run all tests
+npm run test:watch    # Watch mode
+npm run test:coverage # Coverage report (thresholds: 80% statements/lines/functions, 70% branches)
 ```
 
-This will open the simulation in your browser at `http://localhost:3000`.
-
-### Production Build
+## Documentation
 
 ```bash
-# Create a production build
-npm run build
+npm run docs          # Generate JSDoc to docs/
+npm run docs:watch    # Generate with live reload
+start docs/index.html # Open docs in browser (Windows)
+open docs/index.html  # Open docs in browser (Mac/Linux)
 ```
 
-The production files will be generated in the `dist/` directory.
+## ReaxFF Parameter Files
+
+Located in `resources/reaxffparameters/`:
+
+| File | System |
+|------|--------|
+| `ffield.reax.cho` | C-H-O |
+| `BaeAiken2013.ff` | Hydrocarbons |
+| `van_duin_zno.ff` | ZnO |
+| `reaxff_aluminum_oxygen_carbon.txt` | Al-O-C |
+| `reaxff_biomolecules_param1.txt` | Biomolecules |
+| `reaxff_glycine_force_field1.txt` | Glycine |
 
 ## Project Structure
 
 ```
-MolecularDynamics/
-├── app/
-│   ├── components/       # Core simulation components
-│   │   ├── atom.js       # Atom class
-│   │   ├── fireball.js   # Visual effects
-│   │   └── world.js      # Simulation world
-│   ├── config/           # Configuration constants
-│   │   ├── constants.js  # Physical constants
-│   │   └── world_config.js
-│   ├── energy/           # Energy calculations
-│   │   ├── bond_order.js # Bond order calculations
-│   │   └── energy_calculations.js
-│   ├── filereader/       # ReaxFF parameter file reader
-│   │   └── reaxff_file_reader.js
-│   ├── utils/            # Utility functions
-│   │   └── util.js
-│   ├── index.js          # Application entry point
-│   ├── md.html           # Main HTML file
-│   └── md_home.css       # Styles
-├── resources/            # Resource files
-│   └── reaxffparameters/ # ReaxFF parameter files
-├── package.json
-├── webpack.config.js
-└── README.md
+src/                    # React app (components, context, hooks, simulation, utils)
+tests/                  # Unit tests (mirrors src structure)
+app/                    # Legacy vanilla JS
+resources/              # ReaxFF parameter files
+docs/                   # Generated JSDoc
 ```
 
-## Usage
+## Controls
 
-### Controls
+- **Arrow keys**: Move player atom
+- **Load Parameters**: Select `.ff` or `.txt` ReaxFF file
 
-- **Arrow keys**: Move the player atom
-- **Restart**: Reset the simulation
-- **Toggle Clear**: Enable/disable screen clearing
+## Scripts
 
-### Loading Parameters
+| Command | Description |
+|---------|-------------|
+| `npm start` | Dev server |
+| `npm run build` | Production build |
+| `npm test` | Run tests |
+| `npm run test:coverage` | Coverage report |
+| `npm run docs` | Generate JSDoc |
+| `npm run lint` | ESLint |
+| `npm run format` | Prettier |
 
-Click the file input to load a ReaxFF parameter file (`.ff` or `.txt`). Several parameter files are included in the `resources/reaxffparameters/` directory.
+## Tech Stack
 
-## Technologies
-
-- JavaScript (ES6+)
-- Webpack 5
-- HTML5 Canvas
+React 18, Webpack 5, HTML5 Canvas, Jest, JSDoc
 
 ## Contributors
 
-- Jeffrey Comer (jeffcomer@ksu.edu)
-- Anurag Muthyam (anu.drumcoder@gmail.com)
+Jeffrey Comer (jeffcomer@ksu.edu), Anurag Muthyam (anu.drumcoder@gmail.com)
 
 ## License
 

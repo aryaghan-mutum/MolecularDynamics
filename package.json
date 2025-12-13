@@ -1,16 +1,20 @@
 {
   "name": "molecular-dynamics",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "MD is an atomistic simulation technique used to study broad set of biomolecules in diverse conditions.",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "webpack serve --mode development --open",
     "build": "webpack --mode production",
-    "test": "jest",
+    "test": "jest --config jest.config.cjs",
+    "test:watch": "jest --config jest.config.cjs --watch",
+    "test:coverage": "jest --config jest.config.cjs --coverage",
     "lint": "eslint src/**/*.{js,jsx,ts,tsx}",
     "lint:fix": "eslint src/**/*.{js,jsx,ts,tsx} --fix",
-    "format": "prettier --write src/**/*.{js,jsx,ts,tsx,css,json}"
+    "format": "prettier --write src/**/*.{js,jsx,ts,tsx,css,json}",
+    "docs": "jsdoc -c jsdoc.config.json",
+    "docs:watch": "jsdoc -c jsdoc.config.json && npx live-server docs"
   },
   "repository": {
     "type": "git",
@@ -23,6 +27,7 @@
   },
   "homepage": "https://github.com/aryaghan-mutum/MolecularDynamics#readme",
   "dependencies": {
+    "loglevel": "^1.9.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -30,11 +35,19 @@
     "@babel/core": "^7.26.0",
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-react": "^7.26.3",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
+    "@types/jest": "^29.5.14",
     "@types/react": "^18.3.18",
     "@types/react-dom": "^18.3.5",
     "babel-loader": "^9.2.1",
     "css-loader": "^7.1.2",
     "html-webpack-plugin": "^5.6.3",
+    "identity-obj-proxy": "^3.0.0",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "jsdoc": "^4.0.4",
+    "docdash": "^2.0.2",
     "style-loader": "^4.0.0",
     "webpack": "^5.97.1",
     "webpack-cli": "^6.0.1",

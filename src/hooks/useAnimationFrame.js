@@ -23,17 +23,17 @@ export function useAnimationFrame(callback, isActive = true) {
       callbackRef.current(deltaTime);
     }
     previousTimeRef.current = time;
-    requestRef.current = requestAnimationFrame(animate);
+    requestRef.current = window.requestAnimationFrame(animate);
   }, []);
 
   useEffect(() => {
     if (isActive) {
-      requestRef.current = requestAnimationFrame(animate);
+      requestRef.current = window.requestAnimationFrame(animate);
     }
     
     return () => {
       if (requestRef.current) {
-        cancelAnimationFrame(requestRef.current);
+        window.cancelAnimationFrame(requestRef.current);
       }
     };
   }, [isActive, animate]);

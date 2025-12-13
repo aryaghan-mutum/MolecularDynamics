@@ -1,0 +1,59 @@
+{
+  "tags": {
+    "allowUnknownTags": true,
+    "dictionaries": ["jsdoc", "closure"]
+  },
+  "source": {
+    "include": ["src/", "README.md"],
+    "exclude": [
+      "src/**/*.test.js",
+      "src/**/*.spec.js",
+      "src/**/__tests__",
+      "src/**/__mocks__",
+      "src/setupTests.js"
+    ],
+    "includePattern": "\\.(jsx?|md)$"
+  },
+  "plugins": ["plugins/markdown"],
+  "opts": {
+    "template": "node_modules/docdash",
+    "destination": "./docs",
+    "recurse": true,
+    "readme": "./README.md"
+  },
+  "templates": {
+    "cleverLinks": true,
+    "monospaceLinks": true,
+    "default": {
+      "outputSourceFiles": true,
+      "includeDate": true
+    }
+  },
+  "docdash": {
+    "static": true,
+    "sort": true,
+    "sectionOrder": [
+      "Classes",
+      "Modules",
+      "Namespaces",
+      "Global",
+      "Tutorials",
+      "Externals"
+    ],
+    "search": true,
+    "commonNav": true,
+    "collapse": true,
+    "wrap": true,
+    "typedefs": true,
+    "removeQuotes": "none",
+    "scripts": [],
+    "menu": {
+      "GitHub": {
+        "href": "https://github.com/aryaghan-mutum/MolecularDynamics",
+        "target": "_blank",
+        "class": "menu-item",
+        "id": "github_link"
+      }
+    }
+  }
+}

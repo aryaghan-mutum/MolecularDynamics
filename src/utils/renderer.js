@@ -1,128 +1,324 @@
 /**
- * Canvas Rendering Utilities
- * Functions for drawing atoms and particles on the canvas
+ * Canvas Rendering Utilities - Functional Style
+ * Pure functions for drawing atoms, bonds, and particles on the canvas
  */
 
+// ============================================================================
+// CONSTANTS
+// ============================================================================
+
+/** Atom colors by type - CPK (Corey-Pauling-Koltun) coloring scheme */
+const ATOM_COLORS = Object.freeze({
+  1: Object.freeze({ main: '#222222', light: '#555555' }),  // Carbon - dark charcoal gray
+  2: Object.freeze({ main: '#FFFFFF', light: '#FFFFFF' }),  // Hydrogen - white
+  3: Object.freeze({ main: '#FF0D0D', light: '#FF6666' }),  // Oxygen - bright red
+  4: Object.freeze({ main: '#3050F8', light: '#7090FF' }),  // Nitrogen - deep blue
+  5: Object.freeze({ main: '#FFFF30', light: '#FFFF80' }),  // Sulfur - yellow
+  6: Object.freeze({ main: '#FF8000', light: '#FFAA55' }),  // Phosphorus - orange
+  7: Object.freeze({ main: '#1FF01F', light: '#80FF80' }),  // Chlorine - bright green
+  8: Object.freeze({ main: '#A62929', light: '#CC5555' }),  // Bromine - dark red
+  9: Object.freeze({ main: '#940094', light: '#CC55CC' }),  // Iodine - purple
+  10: Object.freeze({ main: '#B6B6B6', light: '#E0E0E0' }), // Silicon - light gray
+  11: Object.freeze({ main: '#8F40D4', light: '#B080E0' }), // Boron - peach/purple
+  12: Object.freeze({ main: '#2194D6', light: '#66BBEE' }), // Fluorine - cyan
+});
+
+/** Default color for unknown atom types */
+const DEFAULT_COLOR = Object.freeze({ main: '#ffffff', light: '#ffffff' });
+
+// ============================================================================
+// PURE HELPER FUNCTIONS - Color Manipulation
+// ============================================================================
+
 /**
- * Draw an atom on the canvas
+ * Parse hex color to RGB components - Pure function
+ * @param {string} color - Hex color string (#RRGGBB)
+ * @returns {Object} RGB components
+ */
+const parseHexColor = (color) => {
+  const hex = color.replace('#', '');
+  return {
+    r: parseInt(hex.substr(0, 2), 16),
+    g: parseInt(hex.substr(2, 2), 16),
+    b: parseInt(hex.substr(4, 2), 16),
+  };
+};
+
+/**
+ * Clamp a value between 0 and 255 - Pure function
+ */
+const clampColor = (value) => Math.max(0, Math.min(255, Math.round(value)));
+
+/**
+ * Format RGB values as CSS string - Pure function
+ */
+const toRgbString = (r, g, b) => `rgb(${clampColor(r)}, ${clampColor(g)}, ${clampColor(b)})`;
+
+/**
+ * Lighten a color by a given amount - Pure function
+ * @param {string} color - Hex color string
+ * @param {number} amount - Amount to lighten (0-1)
+ * @returns {string} RGB color string
+ */
+const lightenColor = (color, amount) => {
+  const { r, g, b } = parseHexColor(color);
+  return toRgbString(
+    r + 255 * amount,
+    g + 255 * amount,
+    b + 255 * amount
+  );
+};
+
+/**
+ * Darken a color by a given amount - Pure function
+ * @param {string} color - Hex color string
+ * @param {number} amount - Amount to darken (0-1)
+ * @returns {string} RGB color string
+ */
+const darkenColor = (color, amount) => {
+  const { r, g, b } = parseHexColor(color);
+  const factor = 1 - amount;
+  return toRgbString(r * factor, g * factor, b * factor);
+};
+
+// ============================================================================
+// PURE HELPER FUNCTIONS - Geometry
+// ============================================================================
+
+/**
+ * Calculate screen position from simulation position - Pure function
+ */
+const toScreenPos = (pos, scale) => ({
+  x: scale * pos.x,
+  y: scale * pos.y,
+});
+
+/**
+ * Calculate gradient offset position - Pure function
+ */
+const gradientOffset = (pos, radius, offsetFactor = 0.3) => ({
+  x: pos.x - offsetFactor * radius,
+  y: pos.y - offsetFactor * radius,
+});
+
+// ============================================================================
+// DRAWING FUNCTIONS - Side effects contained
+// ============================================================================
+
+/**
+ * Draw a bond between two atoms - Pure function with side effect
+ * @param {CanvasRenderingContext2D} ctx - Canvas context
+ * @param {Object} atom1 - First atom
+ * @param {Object} atom2 - Second atom
+ * @param {number} bondOrder - Bond order (0-1)
+ * @param {number} scale - Scale factor
+ */
+export const drawBond = (ctx, atom1, atom2, bondOrder, scale) => {
+  const pos1 = toScreenPos(atom1.pos, scale);
+  const pos2 = toScreenPos(atom2.pos, scale);
+  
+  const alpha = Math.min(1, bondOrder * 1.5);
+  const lineWidth = 2 + bondOrder * 4;
+  
+  // Create gradient for bond coloring
+  const gradient = ctx.createLinearGradient(pos1.x, pos1.y, pos2.x, pos2.y);
+  const color1 = atom1.color || DEFAULT_COLOR.main;
+  const color2 = atom2.color || DEFAULT_COLOR.main;
+  
+  gradient.addColorStop(0, color1);
+  gradient.addColorStop(1, color2);
+  
+  // Draw bond line
+  ctx.save();
+  ctx.strokeStyle = gradient;
+  ctx.lineWidth = lineWidth;
+  ctx.globalAlpha = alpha;
+  ctx.lineCap = 'round';
+  
+  ctx.beginPath();
+  ctx.moveTo(pos1.x, pos1.y);
+  ctx.lineTo(pos2.x, pos2.y);
+  ctx.stroke();
+  ctx.restore();
+};
+
+/**
+ * Create radial gradient for atom - Pure function
+ */
+const createAtomGradient = (ctx, screenPos, radius, mainColor, isPlayer, isFixed) => {
+  const offset = gradientOffset(screenPos, radius);
+  const gradient = ctx.createRadialGradient(
+    offset.x, offset.y, 0.1 * radius,
+    offset.x, offset.y, 0.95 * radius
+  );
+  
+  if (isFixed) {
+    gradient.addColorStop(0, 'rgb(245,245,245)');
+    gradient.addColorStop(1, 'rgb(40,40,40)');
+  } else if (isPlayer) {
+    gradient.addColorStop(0, '#ffffcc');
+    gradient.addColorStop(0.5, mainColor);
+    gradient.addColorStop(1, darkenColor(mainColor, 0.5));
+  } else {
+    gradient.addColorStop(0, lightenColor(mainColor, 0.4));
+    gradient.addColorStop(1, darkenColor(mainColor, 0.3));
+  }
+  
+  return gradient;
+};
+
+/**
+ * Draw atom circle - Side effect function
+ */
+const drawAtomCircle = (ctx, screenPos, radius, gradient) => {
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(screenPos.x, screenPos.y, radius, 0, Math.PI * 2, true);
+  ctx.closePath();
+  ctx.fill();
+};
+
+/**
+ * Draw player highlight ring - Side effect function
+ */
+const drawPlayerHighlight = (ctx, screenPos, radius) => {
+  ctx.strokeStyle = 'rgba(255, 255, 100, 0.7)';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(screenPos.x, screenPos.y, radius + 4, 0, Math.PI * 2, true);
+  ctx.stroke();
+};
+
+/**
+ * Draw atom symbol text - Side effect function
+ */
+const drawAtomSymbol = (ctx, screenPos, radius, symbol, atomType) => {
+  ctx.fillStyle = atomType === 2 ? '#333' : '#fff';
+  ctx.font = `bold ${Math.max(10, radius * 0.7)}px Arial`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(symbol, screenPos.x, screenPos.y);
+};
+
+/**
+ * Draw an atom on the canvas - Composed function
  * @param {CanvasRenderingContext2D} ctx - Canvas context
  * @param {Object} atom - Atom object
  * @param {number} scale - Scale factor
  * @param {boolean} isPlayer - Whether this is the player atom
  */
-export function drawAtom(ctx, atom, scale, isPlayer = false) {
-  const x = scale * atom.pos.x;
-  const y = scale * atom.pos.y;
-  const rad = scale * atom.radius;
-
-  // Create gradient for 3D effect
-  const grX0 = x - 0.3 * rad;
-  const grY0 = y - 0.3 * rad;
-  const gr = ctx.createRadialGradient(grX0, grY0, 0.1 * rad, grX0, grY0, 0.95 * rad);
-
-  if (atom.mass <= 0) {
-    // Fixed atom - gray
-    gr.addColorStop(0, 'rgb(245,245,245)');
-    gr.addColorStop(1, 'rgb(40,40,40)');
-  } else if (isPlayer) {
-    // Player atom - highlighted
-    gr.addColorStop(0, 'rgb(255,220,100)');
-    gr.addColorStop(1, 'rgb(200,100,50)');
-  } else {
-    // Normal atom - purple
-    gr.addColorStop(0, 'rgb(245,200,255)');
-    gr.addColorStop(1, 'rgb(100,20,140)');
-  }
-
-  ctx.fillStyle = gr;
-  ctx.beginPath();
-  ctx.arc(x, y, rad, 0, Math.PI * 2, true);
-  ctx.closePath();
-  ctx.fill();
-
-  // Draw highlight ring for player
+export const drawAtom = (ctx, atom, scale, isPlayer = false) => {
+  const screenPos = toScreenPos(atom.pos, scale);
+  const radius = scale * atom.radius;
+  
+  // Get colors based on atom type
+  const colors = ATOM_COLORS[atom.type] || DEFAULT_COLOR;
+  const mainColor = atom.color || colors.main;
+  
+  // Create gradient and draw atom
+  const isFixed = atom.mass <= 0;
+  const gradient = createAtomGradient(ctx, screenPos, radius, mainColor, isPlayer, isFixed);
+  
+  drawAtomCircle(ctx, screenPos, radius, gradient);
+  
+  // Draw player highlight
   if (isPlayer) {
-    ctx.strokeStyle = 'rgba(255, 255, 100, 0.5)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(x, y, rad + 3, 0, Math.PI * 2, true);
-    ctx.stroke();
+    drawPlayerHighlight(ctx, screenPos, radius);
   }
-}
+  
+  // Draw atom symbol
+  if (atom.symbol && radius > 15) {
+    drawAtomSymbol(ctx, screenPos, radius, atom.symbol, atom.type);
+  }
+};
 
 /**
- * Draw a fireball particle on the canvas
- * @param {CanvasRenderingContext2D} ctx - Canvas context
- * @param {Object} fireball - Fireball object
- * @param {number} scale - Scale factor
+ * Calculate fireball color based on lifetime - Pure function
  */
-export function drawFireball(ctx, fireball, scale) {
-  const x = scale * fireball.pos.x;
-  const y = scale * fireball.pos.y;
-  const rad = scale * fireball.radius;
-
-  const tau = fireball.time / fireball.lifetime;
-  if (tau > 1.0) return;
-
+const calculateFireballColor = (tau) => {
   const tau1 = 0.25;
   const tau2 = 0.625;
-
-  let fillStyle;
-
+  
   if (tau < tau1) {
     // White to yellow
     const a = tau / tau1;
     const cb = Math.floor(255 * (1.0 - a));
-    fillStyle = `rgb(255,255,${cb})`;
-  } else if (tau < tau2) {
+    return `rgb(255,255,${cb})`;
+  }
+  
+  if (tau < tau2) {
     // Yellow to orange with fade
     const a = (tau - tau1) / (tau2 - tau1);
     const cr = Math.floor(255 + (238 - 255) * a);
     const cg = Math.floor(255 + (80 - 255) * a);
     const ca = 1.0 - 0.5 * a;
-    fillStyle = `rgba(${cr},${cg},0,${ca})`;
-  } else {
-    // Orange to gray/smoke with fade
-    const a = (tau - tau2) / (1.0 - tau2);
-    const cr = Math.floor(238 + (128 - 238) * a);
-    const cg = Math.floor(80 + (128 - 80) * a);
-    const cb = Math.floor(0 + (140 - 0) * a);
-    const ca = 0.5 - 0.5 * a;
-    fillStyle = `rgba(${cr},${cg},${cb},${ca})`;
+    return `rgba(${cr},${cg},0,${ca})`;
   }
-
-  ctx.fillStyle = fillStyle;
-  ctx.beginPath();
-  ctx.arc(x, y, rad, 0, Math.PI * 2, true);
-  ctx.closePath();
-  ctx.fill();
-}
+  
+  // Orange to gray/smoke with fade
+  const a = (tau - tau2) / (1.0 - tau2);
+  const cr = Math.floor(238 + (128 - 238) * a);
+  const cg = Math.floor(80 + (128 - 80) * a);
+  const cb = Math.floor(0 + (140 - 0) * a);
+  const ca = 0.5 - 0.5 * a;
+  return `rgba(${cr},${cg},${cb},${ca})`;
+};
 
 /**
- * Draw bond between two atoms
+ * Draw a fireball particle on the canvas - Composed function
  * @param {CanvasRenderingContext2D} ctx - Canvas context
- * @param {Object} atom1 - First atom
- * @param {Object} atom2 - Second atom
+ * @param {Object} fireball - Fireball object
  * @param {number} scale - Scale factor
- * @param {number} bondOrder - Bond order (1-3)
  */
-export function drawBond(ctx, atom1, atom2, scale, bondOrder = 1) {
-  const x1 = scale * atom1.pos.x;
-  const y1 = scale * atom1.pos.y;
-  const x2 = scale * atom2.pos.x;
-  const y2 = scale * atom2.pos.y;
-
-  ctx.strokeStyle = 'rgba(200, 200, 200, 0.6)';
-  ctx.lineWidth = bondOrder * 2;
-
+export const drawFireball = (ctx, fireball, scale) => {
+  const tau = fireball.time / fireball.lifetime;
+  
+  // Don't draw if lifetime exceeded
+  if (tau > 1.0) return;
+  
+  const screenPos = toScreenPos(fireball.pos, scale);
+  const radius = scale * fireball.radius;
+  const fillStyle = calculateFireballColor(tau);
+  
+  ctx.fillStyle = fillStyle;
   ctx.beginPath();
-  ctx.moveTo(x1, y1);
-  ctx.lineTo(x2, y2);
-  ctx.stroke();
-}
+  ctx.arc(screenPos.x, screenPos.y, radius, 0, Math.PI * 2, true);
+  ctx.closePath();
+  ctx.fill();
+};
+
+/**
+ * Clear the canvas - Side effect function
+ * @param {CanvasRenderingContext2D} ctx - Canvas context
+ * @param {number} width - Canvas width
+ * @param {number} height - Canvas height
+ * @param {string} color - Background color
+ */
+export const clearCanvas = (ctx, width, height, color = '#1a1a2e') => {
+  ctx.fillStyle = color;
+  ctx.fillRect(0, 0, width, height);
+};
+
+/**
+ * Draw simulation border - Side effect function
+ * @param {CanvasRenderingContext2D} ctx - Canvas context
+ * @param {Object} size - Simulation size
+ * @param {number} scale - Scale factor
+ */
+export const drawBorder = (ctx, size, scale) => {
+  ctx.strokeStyle = 'rgba(100, 100, 150, 0.5)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(0, 0, size.x * scale, size.y * scale);
+};
+
+// ============================================================================
+// EXPORTS
+// ============================================================================
 
 export default {
   drawAtom,
   drawFireball,
   drawBond,
+  clearCanvas,
+  drawBorder,
 };

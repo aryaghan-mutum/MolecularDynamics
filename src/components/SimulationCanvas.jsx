@@ -1,8 +1,9 @@
 import { useRef, useEffect, useCallback } from 'react';
 import { useSimulation, useSimulationDispatch } from '../context/SimulationContext';
+import { useParameters } from '../context/ParametersContext';
 import { useAnimationFrame } from '../hooks/useAnimationFrame';
 import { useKeyboard } from '../hooks/useKeyboard';
-import { drawAtom, drawFireball } from '../utils/renderer';
+import { drawAtom, drawFireball, drawBond } from '../utils/renderer';
 import './SimulationCanvas.css';
 
 /**
@@ -12,6 +13,7 @@ import './SimulationCanvas.css';
 function SimulationCanvas() {
   const canvasRef = useRef(null);
   const simulation = useSimulation();
+  const parameters = useParameters();
   const dispatch = useSimulationDispatch();
   const keys = useKeyboard();
 
@@ -99,17 +101,29 @@ function SimulationCanvas() {
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
-    const { atoms, fireballs, clearScreen, scale, size } = simulation;
+    const { atoms, bonds, fireballs, clearScreen, scale, size, showBonds } = simulation;
 
     // Clear canvas
     if (clearScreen) {
-      ctx.fillStyle = '#000';
+      ctx.fillStyle = '#0a0a12';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
     // Draw boundary
-    ctx.strokeStyle = 'white';
-    ctx.strokeRect(0, 0, size.x * scale, size.y * scale);
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(2, 2, size.x * scale - 4, size.y * scale - 4);
+
+    // Draw bonds first (behind atoms)
+    if (showBonds && bonds) {
+      bonds.forEach(bond => {
+        const atom1 = atoms.find(a => a.id === bond.atom1Id);
+        const atom2 = atoms.find(a => a.id === bond.atom2Id);
+        if (atom1 && atom2) {
+          drawBond(ctx, atom1, atom2, bond.order, scale);
+        }
+      });
+    }
 
     // Draw atoms
     atoms.forEach(atom => {
@@ -121,21 +135,31 @@ function SimulationCanvas() {
       drawFireball(ctx, fireball, scale);
     });
 
+    // Draw info overlay
+    if (parameters.isLoaded) {
+      ctx.fillStyle = 'rgba(0, 255, 100, 0.8)';
+      ctx.font = '12px monospace';
+      ctx.fillText('ReaxFF Parameters Loaded ✓', 10, 20);
+    }
+
     // Update status
     if (atoms.length > 0) {
       const player = atoms.find(a => a.id === simulation.playerId);
       if (player) {
         dispatch({
           type: 'SET_STATUS',
-          payload: `Position: (${player.pos.x.toFixed(2)}, ${player.pos.y.toFixed(2)}, ${player.pos.z.toFixed(2)})`,
+          payload: `${player.symbol || 'H'} @ (${player.pos.x.toFixed(1)}, ${player.pos.y.toFixed(1)})`,
         });
       }
     }
-  }, [simulation, dispatch]);
+  }, [simulation, parameters.isLoaded, dispatch]);
 
   // Update simulation state
   const update = useCallback(() => {
     if (simulation.isPaused) return;
+
+    // Run physics simulation step
+    dispatch({ type: 'PHYSICS_STEP' });
 
     // Update fireballs
     const updatedFireballs = simulation.fireballs
@@ -151,7 +175,6 @@ function SimulationCanvas() {
       .filter(fb => fb.time < fb.lifetime);
 
     dispatch({ type: 'UPDATE_FIREBALLS', payload: updatedFireballs });
-    dispatch({ type: 'INCREMENT_TIME' });
   }, [simulation.isPaused, simulation.fireballs, dispatch]);
 
   // Animation loop
