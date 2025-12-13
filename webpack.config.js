@@ -6,13 +6,17 @@ import CopyWebpackPlugin from 'copy-webpack-plugin';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+// Determine if we're in production and the public path for GitHub Pages
+const isProduction = process.env.NODE_ENV === 'production';
+const publicPath = process.env.PUBLIC_URL ? `${process.env.PUBLIC_URL}/` : '/';
+
 export default {
   entry: './src/index.jsx',
   output: {
     filename: 'bundle.[contenthash].js',
     path: path.resolve(__dirname, 'dist'),
     clean: true,
-    publicPath: '/',
+    publicPath: publicPath,
   },
   module: {
     rules: [

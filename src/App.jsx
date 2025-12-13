@@ -19,6 +19,12 @@ import KeyboardShortcuts from './components/KeyboardShortcuts';
 import LoadingSpinner from './components/LoadingSpinner';
 import './styles/App.css';
 
+// Get base URL for assets (works with GitHub Pages subdirectory deployment)
+const getAssetUrl = (assetPath) => {
+  const base = document.querySelector('base')?.href || window.location.origin + '/';
+  return new URL(assetPath, base).href;
+};
+
 /**
  * Main Application Component
  * Molecular Dynamics Simulation with ReaxFF Force Field
@@ -55,7 +61,7 @@ function App({ skipLoading = false }) {
                     </div>
                     <div className="header-title">
                       <h1>
-                        <img src="/app-icon.png" alt="" className="app-title-icon" />
+                        <img src={getAssetUrl('app-icon.png')} alt="" className="app-title-icon" />
                         Molecular Dynamics Simulation
                       </h1>
                       <p className="subtitle">ReaxFF Reactive Force Field</p>
