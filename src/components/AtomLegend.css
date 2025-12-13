@@ -1,0 +1,68 @@
+/* Atom Legend Styles */
+
+.atom-legend {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 10px 12px;
+  min-width: 80px;
+  z-index: 100;
+}
+
+.legend-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #666;
+  margin-bottom: 8px;
+  font-weight: 600;
+}
+
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  box-shadow: 
+    inset -2px -2px 4px rgba(0, 0, 0, 0.3),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.2);
+}
+
+.legend-symbol {
+  font-size: 12px;
+  font-weight: 600;
+  color: #e2e8f0;
+  min-width: 20px;
+}
+
+.legend-count {
+  font-size: 11px;
+  color: #666;
+  font-family: 'SF Mono', Monaco, monospace;
+  margin-left: auto;
+}
+
+/* Light mode */
+[data-theme="light"] .atom-legend {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .legend-symbol {
+  color: #1a1a2e;
+}

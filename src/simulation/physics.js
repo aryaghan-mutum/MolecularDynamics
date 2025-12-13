@@ -559,11 +559,32 @@ export function calculateTemperature(atoms) {
 }
 
 /**
- * Preset molecule configurations
+ * Molecule preset atom definition
+ * @typedef {Object} MoleculeAtom
+ * @property {number} x - X coordinate in Angstroms
+ * @property {number} y - Y coordinate in Angstroms  
+ * @property {number} z - Z coordinate in Angstroms
+ * @property {number} type - Atom type ID from ATOM_TYPES
+ */
+
+/**
+ * Molecule preset configuration
+ * @typedef {Object} MoleculePreset
+ * @property {string} name - Display name with chemical formula
+ * @property {('common'|'metals')} category - Category for UI grouping
+ * @property {MoleculeAtom[]} atoms - Array of atom positions and types
+ */
+
+/**
+ * Preset molecule configurations for quick loading
+ * Organized by category: common organic molecules and metal-containing molecules
+ * @type {Object<string, MoleculePreset>}
  */
 export const MOLECULE_PRESETS = {
+  // Common organic molecules
   water: {
     name: 'Water (H₂O)',
+    category: 'common',
     atoms: [
       { x: 0, y: 0, z: 0, type: 3 },     // Oxygen
       { x: 0.96, y: 0, z: 0, type: 2 },   // Hydrogen
@@ -572,6 +593,7 @@ export const MOLECULE_PRESETS = {
   },
   methane: {
     name: 'Methane (CH₄)',
+    category: 'common',
     atoms: [
       { x: 0, y: 0, z: 0, type: 1 },        // Carbon
       { x: 0.63, y: 0.63, z: 0.63, type: 2 }, // H
@@ -582,6 +604,7 @@ export const MOLECULE_PRESETS = {
   },
   carbonDioxide: {
     name: 'Carbon Dioxide (CO₂)',
+    category: 'common',
     atoms: [
       { x: 0, y: 0, z: 0, type: 1 },      // Carbon
       { x: 1.16, y: 0, z: 0, type: 3 },   // Oxygen
@@ -590,6 +613,7 @@ export const MOLECULE_PRESETS = {
   },
   ammonia: {
     name: 'Ammonia (NH₃)',
+    category: 'common',
     atoms: [
       { x: 0, y: 0, z: 0, type: 4 },       // Nitrogen
       { x: 0.94, y: 0.38, z: 0, type: 2 }, // H
@@ -599,6 +623,7 @@ export const MOLECULE_PRESETS = {
   },
   ozone: {
     name: 'Ozone (O₃)',
+    category: 'common',
     atoms: [
       { x: 0, y: 0, z: 0, type: 3 },
       { x: 1.28, y: 0, z: 0, type: 3 },
@@ -607,6 +632,7 @@ export const MOLECULE_PRESETS = {
   },
   ethane: {
     name: 'Ethane (C₂H₆)',
+    category: 'common',
     atoms: [
       { x: 0, y: 0, z: 0, type: 1 },        // C
       { x: 1.54, y: 0, z: 0, type: 1 },     // C
@@ -620,6 +646,7 @@ export const MOLECULE_PRESETS = {
   },
   hydrogen: {
     name: 'Hydrogen (H₂)',
+    category: 'common',
     atoms: [
       { x: 0, y: 0, z: 0, type: 2 },
       { x: 0.74, y: 0, z: 0, type: 2 },
@@ -627,6 +654,7 @@ export const MOLECULE_PRESETS = {
   },
   oxygen: {
     name: 'Oxygen (O₂)',
+    category: 'common',
     atoms: [
       { x: 0, y: 0, z: 0, type: 3 },
       { x: 1.21, y: 0, z: 0, type: 3 },
@@ -634,9 +662,47 @@ export const MOLECULE_PRESETS = {
   },
   nitrogen: {
     name: 'Nitrogen (N₂)',
+    category: 'common',
     atoms: [
       { x: 0, y: 0, z: 0, type: 4 },
       { x: 1.1, y: 0, z: 0, type: 4 },
+    ],
+  },
+  // Metal-containing molecules
+  silane: {
+    name: 'Silane (SiH₄)',
+    category: 'metals',
+    atoms: [
+      { x: 0, y: 0, z: 0, type: 7 },       // Silicon
+      { x: 0.85, y: 0.85, z: 0, type: 2 }, // H
+      { x: -0.85, y: -0.85, z: 0, type: 2 }, // H
+      { x: 0.85, y: -0.85, z: 0, type: 2 }, // H
+      { x: -0.85, y: 0.85, z: 0, type: 2 }, // H
+    ],
+  },
+  zincOxide: {
+    name: 'Zinc Oxide (ZnO)',
+    category: 'metals',
+    atoms: [
+      { x: 0, y: 0, z: 0, type: 10 },   // Zinc
+      { x: 1.0, y: 0, z: 0, type: 3 },  // Oxygen
+    ],
+  },
+  goldCluster: {
+    name: 'Gold Cluster (Au₃)',
+    category: 'metals',
+    atoms: [
+      { x: 0, y: 0, z: 0, type: 8 },    // Gold
+      { x: 1.4, y: 0, z: 0, type: 8 },  // Gold
+      { x: 0.7, y: 1.2, z: 0, type: 8 }, // Gold
+    ],
+  },
+  copperSulfide: {
+    name: 'Copper Sulfide (CuS)',
+    category: 'metals',
+    atoms: [
+      { x: 0, y: 0, z: 0, type: 11 },  // Copper
+      { x: 1.2, y: 0, z: 0, type: 5 }, // Sulfur
     ],
   },
 };

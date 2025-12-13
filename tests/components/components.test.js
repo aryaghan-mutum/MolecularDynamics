@@ -21,6 +21,38 @@ const mockSimulation = {
   time: 0,
   energy: { kinetic: 0, potential: 0, total: 0 },
   temperature: 300,
+  // New properties
+  targetTemperature: 300,
+  zoom: 1,
+  pan: { x: 0, y: 0 },
+  selectedAtomId: null,
+  selectedAtomIds: [],
+  draggingAtomId: null,
+  showVelocityVectors: false,
+  showAtomLabels: true,
+  showBondLengths: false,
+  boundaryCondition: 'reflective',
+  timeStepMultiplier: 1,
+  theme: 'dark',
+  isFullscreen: false,
+  undoStack: [],
+  redoStack: [],
+  rdfData: [],
+  thermostatEnabled: false,
+  thermostatTau: 0.1,
+  enableCoulomb: false,
+  coulombConstant: 332.06,
+  show3DDepth: false,
+  clipboard: [],
+  measurementMode: null,
+  measurementAtoms: [],
+  isRecording: false,
+  recordedFrames: [],
+  energyHistory: [],
+  msdData: [],
+  initialPositions: [],
+  customAtomColors: {},
+  atomCountWarning: 100,
 };
 
 const mockParameters = {
@@ -49,144 +81,116 @@ describe('ControlPanel Component', () => {
   it('should render without crashing', () => {
     render(<ControlPanel />);
     
-    expect(screen.getByText('Simulation Controls')).toBeInTheDocument();
-  });
-
-  it('should display restart button', () => {
-    render(<ControlPanel />);
-    
-    expect(screen.getByText(/Restart/)).toBeInTheDocument();
-  });
-
-  it('should display play/pause button', () => {
-    render(<ControlPanel />);
-    
-    // Since isPaused is false, should show Pause
-    expect(screen.getByText(/Pause/)).toBeInTheDocument();
-  });
-
-  it('should display clear all button', () => {
-    render(<ControlPanel />);
-    
-    expect(screen.getByText(/Clear All/)).toBeInTheDocument();
-  });
-
-  it('should dispatch RESET_SIMULATION on restart click', () => {
-    render(<ControlPanel />);
-    
-    fireEvent.click(screen.getByText(/Restart/));
-    
-    expect(mockDispatch).toHaveBeenCalledWith({ type: 'RESET_SIMULATION' });
-  });
-
-  it('should dispatch TOGGLE_PAUSE on play/pause click', () => {
-    render(<ControlPanel />);
-    
-    fireEvent.click(screen.getByText(/Pause/));
-    
-    expect(mockDispatch).toHaveBeenCalledWith({ type: 'TOGGLE_PAUSE' });
-  });
-
-  it('should dispatch CLEAR_ATOMS on clear all click', () => {
-    render(<ControlPanel />);
-    
-    fireEvent.click(screen.getByText(/Clear All/));
-    
-    expect(mockDispatch).toHaveBeenCalledWith({ type: 'CLEAR_ATOMS' });
+    // Title is now "⚙️ Controls" (compact design)
+    expect(screen.getByText(/Controls/)).toBeInTheDocument();
   });
 
   it('should display atom type selector', () => {
     render(<ControlPanel />);
     
-    expect(screen.getByText('Add Atom')).toBeInTheDocument();
-    expect(screen.getByLabelText('Elements')).toBeInTheDocument();
-    expect(screen.getByLabelText('Metals & Others')).toBeInTheDocument();
+    // Quick select dropdowns now have title attributes instead of labels
+    expect(screen.getByTitle('Add atom')).toBeInTheDocument();
   });
 
-  it('should display molecule presets section', () => {
+  it('should display molecule quick-select dropdown', () => {
     render(<ControlPanel />);
     
-    expect(screen.getByText('Metal Molecules')).toBeInTheDocument();
-    expect(screen.getByText('Molecules')).toBeInTheDocument();
+    // Molecule dropdown has title "Add molecule"
+    expect(screen.getByTitle('Add molecule')).toBeInTheDocument();
   });
 
   it('should have water molecule preset in dropdown', () => {
     render(<ControlPanel />);
     
-    const commonSelect = screen.getByLabelText('Molecules');
-    expect(commonSelect).toBeInTheDocument();
-    // Check that H₂O option exists
-    const options = commonSelect.querySelectorAll('option');
-    const h2oOption = Array.from(options).find(opt => opt.textContent === 'H₂O');
+    const moleculeSelect = screen.getByTitle('Add molecule');
+    expect(moleculeSelect).toBeInTheDocument();
+    // Check that Water option exists in Common optgroup
+    const options = moleculeSelect.querySelectorAll('option');
+    const h2oOption = Array.from(options).find(opt => opt.textContent === 'Water (H₂O)');
     expect(h2oOption).toBeTruthy();
   });
 
   it('should have methane molecule preset in dropdown', () => {
     render(<ControlPanel />);
     
-    const commonSelect = screen.getByLabelText('Molecules');
-    const options = commonSelect.querySelectorAll('option');
-    const ch4Option = Array.from(options).find(opt => opt.textContent === 'CH₄');
+    const moleculeSelect = screen.getByTitle('Add molecule');
+    const options = moleculeSelect.querySelectorAll('option');
+    const ch4Option = Array.from(options).find(opt => opt.textContent === 'Methane (CH₄)');
     expect(ch4Option).toBeTruthy();
   });
 
   it('should dispatch LOAD_MOLECULE on molecule select', () => {
     render(<ControlPanel />);
     
-    const commonSelect = screen.getByLabelText('Molecules');
-    fireEvent.change(commonSelect, { target: { value: 'water' } });
+    const moleculeSelect = screen.getByTitle('Add molecule');
+    fireEvent.change(moleculeSelect, { target: { value: 'water' } });
     
     expect(mockDispatch).toHaveBeenCalledWith(
       expect.objectContaining({ type: 'LOAD_MOLECULE' })
     );
   });
 
-  it('should display display options', () => {
+  it('should display boundary & display section', () => {
     render(<ControlPanel />);
     
-    expect(screen.getByText('Display Options')).toBeInTheDocument();
+    // Section header in collapsible
+    expect(screen.getByText('Boundary & Display')).toBeInTheDocument();
   });
 
-  it('should have trail effect toggle', () => {
+  it('should have trails toggle in expanded section', () => {
     render(<ControlPanel />);
     
-    expect(screen.getByText('Trail Effect')).toBeInTheDocument();
+    // Click to expand the Boundary & Display section
+    const boundarySection = screen.getByText('Boundary & Display');
+    fireEvent.click(boundarySection);
+    
+    expect(screen.getByText('Trails')).toBeInTheDocument();
   });
 
-  it('should have show bonds toggle', () => {
+  it('should have bond lengths toggle in expanded section', () => {
     render(<ControlPanel />);
     
-    expect(screen.getByText('Show Bonds')).toBeInTheDocument();
-  });
-
-  it('should have physics enabled toggle', () => {
-    render(<ControlPanel />);
+    // Click to expand the Boundary & Display section
+    const boundarySection = screen.getByText('Boundary & Display');
+    fireEvent.click(boundarySection);
     
-    expect(screen.getByText('Physics Enabled')).toBeInTheDocument();
+    expect(screen.getByText('Bond Lengths')).toBeInTheDocument();
   });
 
-  it('should display simulation info', () => {
-    render(<ControlPanel />);
-    
-    expect(screen.getByText('Simulation Info')).toBeInTheDocument();
-  });
-
-  it('should display energy section', () => {
-    render(<ControlPanel />);
-    
-    expect(screen.getByText('Energy (kcal/mol)')).toBeInTheDocument();
-  });
-
-  it('should display instructions', () => {
-    render(<ControlPanel />);
-    
-    expect(screen.getByText('Controls')).toBeInTheDocument();
-  });
-
-  it('should display force field selector', () => {
+  it('should display force field section', () => {
     render(<ControlPanel />);
     
     expect(screen.getByText('Force Field')).toBeInTheDocument();
+  });
+
+  it('should display all presets section', () => {
+    render(<ControlPanel />);
+    
+    expect(screen.getByText('All Presets')).toBeInTheDocument();
+  });
+
+  it('should display inline temperature control', () => {
+    render(<ControlPanel />);
+    
+    // Temperature is now inline with emoji label
+    expect(screen.getByText(/Temp/)).toBeInTheDocument();
+  });
+
+  it('should display inline speed control', () => {
+    render(<ControlPanel />);
+    
+    // Speed is now inline with emoji label
+    expect(screen.getByText(/Speed/)).toBeInTheDocument();
+  });
+
+  it('should have boundary dropdown in expanded section', () => {
+    render(<ControlPanel />);
+    
+    // Click to expand the Boundary & Display section
+    const boundarySection = screen.getByText('Boundary & Display');
+    fireEvent.click(boundarySection);
+    
+    expect(screen.getByText('Boundary')).toBeInTheDocument();
   });
 });
 

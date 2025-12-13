@@ -1,0 +1,89 @@
+/* Zoom Controls Styles */
+
+.zoom-controls {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 4px;
+  z-index: 100;
+}
+
+.zoom-btn {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: #e2e8f0;
+  font-size: 18px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.zoom-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.zoom-btn:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(0.95);
+}
+
+.zoom-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.zoom-level {
+  min-width: 50px;
+  height: 32px;
+  padding: 0 8px;
+  border: none;
+  background: rgba(255, 255, 255, 0.05);
+  color: #94a3b8;
+  font-size: 12px;
+  font-family: 'SF Mono', Monaco, monospace;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.zoom-level:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+}
+
+/* Light mode */
+[data-theme="light"] .zoom-controls {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .zoom-btn {
+  color: #1a1a2e;
+}
+
+[data-theme="light"] .zoom-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] .zoom-level {
+  background: rgba(0, 0, 0, 0.05);
+  color: #666;
+}
+
+[data-theme="light"] .zoom-level:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: #1a1a2e;
+}

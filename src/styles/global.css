@@ -238,3 +238,46 @@ h6 { font-size: 1rem; }
 .animate-pulse {
   animation: pulse 2s ease-in-out infinite;
 }
+
+/* ===== LIGHT THEME ===== */
+[data-theme="light"] {
+  --color-bg: #f8fafc;
+  --color-bg-gradient: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 40%, #e2e8f0 100%);
+  --color-surface: rgba(255, 255, 255, 0.95);
+  --color-surface-elevated: rgba(255, 255, 255, 0.98);
+  --color-surface-hover: rgba(248, 250, 252, 0.98);
+  
+  /* Text Colors */
+  --color-text: #0f172a;
+  --color-text-secondary: #1e293b;
+  --color-text-muted: #475569;
+  --color-text-dim: #64748b;
+  
+  /* Border & Dividers */
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-border-light: rgba(0, 0, 0, 0.12);
+  --color-divider: rgba(0, 0, 0, 0.04);
+  
+  /* Shadows */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.05), 0 2px 4px rgba(0, 0, 0, 0.03);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.08), 0 4px 8px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 16px 48px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] body {
+  background: var(--color-bg-gradient);
+  color: var(--color-text);
+}
+
+[data-theme="light"] .app-header h1 {
+  background: linear-gradient(90deg, #1e293b 0%, #334155 50%, #475569 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-theme="light"] .glass {
+  background: rgba(255, 255, 255, 0.9);
+}

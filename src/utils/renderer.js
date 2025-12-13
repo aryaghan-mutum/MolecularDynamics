@@ -201,6 +201,177 @@ const drawAtomSymbol = (ctx, screenPos, radius, symbol, atomType) => {
 };
 
 /**
+ * Draw velocity vector arrow for an atom
+ */
+export const drawVelocityVector = (ctx, atom, scale, zoom = 1) => {
+  const screenPos = toScreenPos(atom.pos, scale);
+  const velMag = Math.sqrt(atom.vel.x ** 2 + atom.vel.y ** 2);
+  
+  if (velMag < 0.01) return; // Don't draw tiny vectors
+  
+  const arrowLength = Math.min(velMag * scale * 10, 50) * zoom;
+  const angle = Math.atan2(atom.vel.y, atom.vel.x);
+  
+  const endX = screenPos.x + Math.cos(angle) * arrowLength;
+  const endY = screenPos.y + Math.sin(angle) * arrowLength;
+  
+  ctx.save();
+  ctx.strokeStyle = 'rgba(255, 200, 50, 0.8)';
+  ctx.fillStyle = 'rgba(255, 200, 50, 0.8)';
+  ctx.lineWidth = 2;
+  
+  // Draw line
+  ctx.beginPath();
+  ctx.moveTo(screenPos.x, screenPos.y);
+  ctx.lineTo(endX, endY);
+  ctx.stroke();
+  
+  // Draw arrowhead
+  const headLength = 8;
+  const headAngle = Math.PI / 6;
+  ctx.beginPath();
+  ctx.moveTo(endX, endY);
+  ctx.lineTo(
+    endX - headLength * Math.cos(angle - headAngle),
+    endY - headLength * Math.sin(angle - headAngle)
+  );
+  ctx.lineTo(
+    endX - headLength * Math.cos(angle + headAngle),
+    endY - headLength * Math.sin(angle + headAngle)
+  );
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+};
+
+/**
+ * Draw bond with optional length label
+ */
+export const drawBondWithLength = (ctx, atom1, atom2, bondOrder, scale, showLength = false) => {
+  const pos1 = toScreenPos(atom1.pos, scale);
+  const pos2 = toScreenPos(atom2.pos, scale);
+  
+  const alpha = Math.min(1, bondOrder * 1.5);
+  const lineWidth = 2 + bondOrder * 4;
+  
+  // Create gradient for bond coloring
+  const gradient = ctx.createLinearGradient(pos1.x, pos1.y, pos2.x, pos2.y);
+  const color1 = atom1.color || DEFAULT_COLOR.main;
+  const color2 = atom2.color || DEFAULT_COLOR.main;
+  
+  gradient.addColorStop(0, color1);
+  gradient.addColorStop(1, color2);
+  
+  // Draw bond line
+  ctx.save();
+  ctx.strokeStyle = gradient;
+  ctx.lineWidth = lineWidth;
+  ctx.globalAlpha = alpha;
+  ctx.lineCap = 'round';
+  
+  ctx.beginPath();
+  ctx.moveTo(pos1.x, pos1.y);
+  ctx.lineTo(pos2.x, pos2.y);
+  ctx.stroke();
+  ctx.restore();
+  
+  // Draw length label if enabled
+  if (showLength) {
+    const dx = atom2.pos.x - atom1.pos.x;
+    const dy = atom2.pos.y - atom1.pos.y;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    
+    const midX = (pos1.x + pos2.x) / 2;
+    const midY = (pos1.y + pos2.y) / 2;
+    
+    ctx.save();
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    
+    // Background for better readability
+    const text = distance.toFixed(2) + 'Å';
+    const textWidth = ctx.measureText(text).width;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(midX - textWidth / 2 - 2, midY - 7, textWidth + 4, 14);
+    
+    ctx.fillStyle = 'rgba(200, 255, 200, 0.9)';
+    ctx.fillText(text, midX, midY);
+    ctx.restore();
+  }
+};
+
+/**
+ * Draw selection highlight for selected atom
+ */
+export const drawAtomSelection = (ctx, atom, scale) => {
+  const screenPos = toScreenPos(atom.pos, scale);
+  const radius = scale * atom.radius;
+  
+  ctx.save();
+  ctx.strokeStyle = 'rgba(100, 200, 255, 0.9)';
+  ctx.lineWidth = 3;
+  ctx.setLineDash([5, 5]);
+  ctx.beginPath();
+  ctx.arc(screenPos.x, screenPos.y, radius + 8, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.restore();
+};
+
+/**
+ * Draw atom info tooltip
+ */
+export const drawAtomInfo = (ctx, atom, scale, canvasWidth) => {
+  const screenPos = toScreenPos(atom.pos, scale);
+  
+  const lines = [
+    `${atom.name} (${atom.symbol})`,
+    `ID: ${atom.id}`,
+    `Pos: (${atom.pos.x.toFixed(2)}, ${atom.pos.y.toFixed(2)})`,
+    `Vel: ${Math.sqrt(atom.vel.x ** 2 + atom.vel.y ** 2).toFixed(3)}`,
+    `Mass: ${atom.mass.toFixed(2)}`,
+  ];
+  
+  ctx.save();
+  ctx.font = '11px monospace';
+  const maxWidth = Math.max(...lines.map(l => ctx.measureText(l).width));
+  const padding = 8;
+  const lineHeight = 16;
+  const boxWidth = maxWidth + padding * 2;
+  const boxHeight = lines.length * lineHeight + padding * 2;
+  
+  // Position tooltip
+  let tooltipX = screenPos.x + 20;
+  let tooltipY = screenPos.y - boxHeight / 2;
+  
+  // Keep within canvas bounds
+  if (tooltipX + boxWidth > canvasWidth) {
+    tooltipX = screenPos.x - boxWidth - 20;
+  }
+  
+  // Background
+  ctx.fillStyle = 'rgba(20, 20, 40, 0.9)';
+  ctx.strokeStyle = 'rgba(100, 200, 255, 0.5)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.roundRect(tooltipX, tooltipY, boxWidth, boxHeight, 6);
+  ctx.fill();
+  ctx.stroke();
+  
+  // Text
+  ctx.fillStyle = '#fff';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  lines.forEach((line, i) => {
+    ctx.fillText(line, tooltipX + padding, tooltipY + padding + i * lineHeight);
+  });
+  
+  ctx.restore();
+};
+
+/**
  * Draw an atom on the canvas - Composed function
  * @param {CanvasRenderingContext2D} ctx - Canvas context
  * @param {Object} atom - Atom object
@@ -319,6 +490,10 @@ export default {
   drawAtom,
   drawFireball,
   drawBond,
+  drawBondWithLength,
+  drawVelocityVector,
+  drawAtomSelection,
+  drawAtomInfo,
   clearCanvas,
   drawBorder,
 };

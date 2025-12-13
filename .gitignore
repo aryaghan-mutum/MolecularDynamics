@@ -40,6 +40,9 @@ Thumbs.db
 *.lcov
 .nyc_output
 
+# Documentation (auto-generated)
+/docs
+
 # Cache
 .cache/
 .parcel-cache/

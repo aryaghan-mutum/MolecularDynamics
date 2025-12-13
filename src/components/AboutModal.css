@@ -1,0 +1,196 @@
+/* About Button */
+.about-button {
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-muted);
+  padding: 0.4rem 0.8rem;
+  border-radius: var(--radius-md);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.about-button:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+  border-color: var(--color-border-light);
+}
+
+/* Modal Backdrop */
+.about-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+/* Modal Container */
+.about-modal {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.4);
+  max-width: 520px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  animation: slideUp 0.3s ease-out;
+}
+
+/* Close Button */
+.about-modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 0.3rem 0.5rem;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  line-height: 1;
+}
+
+.about-modal-close:hover {
+  background: var(--color-surface-hover);
+  color: var(--color-text);
+}
+
+/* Modal Title */
+.about-modal h2 {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--color-text);
+  padding: 1.5rem 2rem 1rem;
+  margin: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: linear-gradient(90deg, #e2e8f0 0%, #94a3b8 50%, #cbd5e1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Content Area */
+.about-content {
+  padding: 1.5rem 2rem 2rem;
+}
+
+/* Sections */
+.about-section {
+  margin-bottom: 1.5rem;
+}
+
+.about-section:last-child {
+  margin-bottom: 0;
+}
+
+.about-section h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  margin-bottom: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.about-section p {
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.about-section ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  color: var(--color-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+.about-section li {
+  margin-bottom: 0.3rem;
+}
+
+/* Keyboard Keys */
+.about-section kbd {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 0.15rem 0.4rem;
+  font-family: monospace;
+  font-size: 0.8rem;
+  color: var(--color-text);
+  box-shadow: 0 2px 0 var(--color-border);
+}
+
+/* Footer Section */
+.about-footer {
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 1px solid var(--color-border);
+  margin-top: 1.5rem;
+}
+
+.about-footer a {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--transition-fast);
+}
+
+.about-footer a:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+.about-footer .version {
+  color: var(--color-text-muted);
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Scrollbar for modal */
+.about-modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.about-modal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.about-modal::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: var(--radius-full);
+}

@@ -43,6 +43,40 @@ export const INITIAL_SIMULATION_STATE = Object.freeze({
   energy: Object.freeze({ kinetic: 0, potential: 0, total: 0 }),
   temperature: 0,
   selectedAtomType: 2,
+  // New features
+  targetTemperature: 300,      // Temperature control (Kelvin)
+  zoom: 1.0,                   // Zoom level
+  pan: Object.freeze({ x: 0, y: 0 }), // Pan offset
+  selectedAtomId: null,        // Selected atom for viewing properties
+  draggingAtomId: null,        // Atom being dragged
+  showVelocityVectors: false,  // Show velocity arrows
+  showAtomLabels: true,        // Show element symbols
+  showBondLengths: false,      // Show distance on bonds
+  boundaryCondition: 'reflective', // 'reflective', 'periodic', 'open'
+  timeStepMultiplier: 1.0,     // Speed control
+  atomCountWarning: 100,       // Warning threshold
+  undoStack: [],               // Undo history
+  redoStack: [],               // Redo history
+  theme: 'dark',               // 'dark' or 'light'
+  isFullscreen: false,         // Fullscreen mode
+  rdfData: [],                 // Radial distribution function data
+  // Phase 2 features
+  thermostatEnabled: true,     // Enable Berendsen thermostat
+  thermostatTau: 0.5,          // Thermostat coupling constant
+  enableCoulomb: false,        // Electrostatic interactions
+  coulombConstant: 332.0,      // kcal·Å/(mol·e²)
+  show3DDepth: false,          // 3D depth visualization
+  selectedAtomIds: [],         // Multi-selection
+  clipboard: [],               // Copy/paste buffer
+  measurementMode: false,      // Distance measurement tool
+  measurementAtoms: [],        // Atoms selected for measurement
+  isRecording: false,          // Animation recording
+  recordedFrames: [],          // Recorded frame data
+  energyHistory: [],           // Energy vs time data
+  msdData: [],                 // Mean square displacement
+  initialPositions: {},        // For MSD calculation
+  customAtomColors: {},        // Custom colors per atom type
+  playerForce: Object.freeze({ x: 0, y: 0 }), // External force from keyboard
 });
 
 // ============================================================================
@@ -82,9 +116,10 @@ const getAtomProps = (type) => ATOM_PROPERTIES[type] ?? ATOM_PROPERTIES[2];
  * @param {number} y - Y position
  * @param {number} z - Z position
  * @param {number} type - Atom type (1-4)
+ * @param {Object} options - Additional options
  * @returns {Object} Immutable atom object
  */
-const createAtom = (id, x, y, z, type) => {
+const createAtom = (id, x, y, z, type, options = {}) => {
   const props = getAtomProps(type);
   return Object.freeze({
     id,
@@ -97,6 +132,10 @@ const createAtom = (id, x, y, z, type) => {
     color: props.color,
     symbol: props.symbol,
     name: props.name,
+    // New properties
+    isFixed: options.isFixed || false,  // Frozen atom
+    charge: props.charge || 0,          // Partial charge for Coulomb
+    customColor: options.customColor || null, // Custom color override
   });
 };
 
@@ -180,7 +219,7 @@ const calculateBondOrder = (distance, sigma) => {
  * Implements velocity Verlet integration with damping
  */
 const updateAtomMotion = (atom, totalForce, dt, maxVel) => {
-  if (atom.mass <= 0) return atom;
+  if (atom.mass <= 0 || atom.isFixed) return atom;
   
   const damping = 0.995;
   const acceleration = scaleVec3(totalForce, 1 / atom.mass);
@@ -199,12 +238,81 @@ const updateAtomMotion = (atom, totalForce, dt, maxVel) => {
 };
 
 /**
+ * Calculate Coulomb force between two charged atoms
+ * F = k * q1 * q2 / r^2
+ */
+const calculateCoulombForce = (atom1, atom2, coulombConstant) => {
+  if (!atom1.charge || !atom2.charge) return { force: vec3(), energy: 0 };
+  
+  const dx = atom2.pos.x - atom1.pos.x;
+  const dy = atom2.pos.y - atom1.pos.y;
+  const dz = atom2.pos.z - atom1.pos.z;
+  const r = Math.sqrt(dx * dx + dy * dy + dz * dz);
+  
+  if (r < 0.5) return { force: vec3(), energy: 0 }; // Prevent singularity
+  
+  const forceMag = coulombConstant * atom1.charge * atom2.charge / (r * r);
+  const energy = coulombConstant * atom1.charge * atom2.charge / r;
+  
+  return {
+    force: vec3(forceMag * dx / r, forceMag * dy / r, forceMag * dz / r),
+    energy,
+  };
+};
+
+/**
+ * Apply Berendsen thermostat - velocity rescaling
+ * Scale velocities to approach target temperature
+ */
+const applyThermostat = (atoms, currentTemp, targetTemp, tau, dt) => {
+  if (currentTemp <= 0 || targetTemp <= 0) return atoms;
+  
+  const lambda = Math.sqrt(1 + (dt / tau) * (targetTemp / currentTemp - 1));
+  const clampedLambda = Math.max(0.9, Math.min(1.1, lambda)); // Prevent extreme scaling
+  
+  return atoms.map(atom => {
+    if (atom.isFixed) return atom;
+    return {
+      ...atom,
+      vel: scaleVec3(atom.vel, clampedLambda),
+    };
+  });
+};
+
+/**
  * Calculate kinetic energy of an atom - Pure function
  * KE = 0.5 * m * v^2
  */
 const calculateKineticEnergy = (atom) => {
   const v2 = atom.vel.x ** 2 + atom.vel.y ** 2 + atom.vel.z ** 2;
   return 0.5 * atom.mass * v2;
+};
+
+/**
+ * Calculate coordination number for each atom
+ * Count neighbors within cutoff distance
+ */
+const calculateCoordinationNumbers = (atoms, cutoff = 3.0) => {
+  const coordination = {};
+  atoms.forEach(atom => {
+    coordination[atom.id] = 0;
+  });
+  
+  for (let i = 0; i < atoms.length; i++) {
+    for (let j = i + 1; j < atoms.length; j++) {
+      const dx = atoms[j].pos.x - atoms[i].pos.x;
+      const dy = atoms[j].pos.y - atoms[i].pos.y;
+      const dz = atoms[j].pos.z - atoms[i].pos.z;
+      const r = Math.sqrt(dx * dx + dy * dy + dz * dz);
+      
+      if (r < cutoff) {
+        coordination[atoms[i].id]++;
+        coordination[atoms[j].id]++;
+      }
+    }
+  }
+  
+  return coordination;
 };
 
 // ============================================================================
@@ -216,14 +324,20 @@ const calculateKineticEnergy = (atom) => {
  * Composes force calculations, motion updates, and bond detection
  */
 const performPhysicsStep = (state) => {
-  const { atoms, size, wallSpring, dt, maxVel } = state;
+  const { atoms, size, wallSpring, dt, maxVel, enableCoulomb, coulombConstant, boundaryCondition } = state;
   
   if (atoms.length === 0) {
     return { atoms: [], bonds: [], energy: { kinetic: 0, potential: 0, total: 0 }, temperature: 0 };
   }
   
-  // Initialize atoms with reset forces
-  const atomsWithForces = atoms.map(atom => ({ ...atom, force: vec3() }));
+  // Initialize atoms with reset forces, but preserve player force
+  const { playerForce = { x: 0, y: 0 }, playerId } = state;
+  const atomsWithForces = atoms.map(atom => {
+    if (atom.id === playerId && (playerForce.x !== 0 || playerForce.y !== 0)) {
+      return { ...atom, force: vec3(playerForce.x, playerForce.y, 0) };
+    }
+    return { ...atom, force: vec3() };
+  });
   
   // Calculate pairwise interactions and collect bonds
   const bonds = [];
@@ -232,6 +346,7 @@ const performPhysicsStep = (state) => {
   // Process all pairs - accumulate forces
   for (let i = 0; i < atomsWithForces.length; i++) {
     for (let j = i + 1; j < atomsWithForces.length; j++) {
+      // Lennard-Jones force
       const { force, energy, distance } = calculateLJForce(atomsWithForces[i], atomsWithForces[j]);
       
       // Accumulate forces (Newton's third law)
@@ -239,6 +354,14 @@ const performPhysicsStep = (state) => {
       atomsWithForces[j].force = addVec3(atomsWithForces[j].force, scaleVec3(force, -1));
       
       totalPotentialEnergy += energy;
+      
+      // Coulomb force if enabled
+      if (enableCoulomb) {
+        const coulomb = calculateCoulombForce(atomsWithForces[i], atomsWithForces[j], coulombConstant);
+        atomsWithForces[i].force = addVec3(atomsWithForces[i].force, coulomb.force);
+        atomsWithForces[j].force = addVec3(atomsWithForces[j].force, scaleVec3(coulomb.force, -1));
+        totalPotentialEnergy += coulomb.energy;
+      }
       
       // Bond detection
       const sigma = (atomsWithForces[i].radius + atomsWithForces[j].radius) * 0.5;
@@ -258,18 +381,39 @@ const performPhysicsStep = (state) => {
   // Update positions and velocities, calculate kinetic energy
   let totalKineticEnergy = 0;
   
-  const updatedAtoms = atomsWithForces.map(atom => {
-    const wallForce = calculateWallForce(atom, size, wallSpring);
+  let updatedAtoms = atomsWithForces.map(atom => {
+    if (atom.isFixed) {
+      return { ...atom, vel: vec3() }; // Fixed atoms don't move
+    }
+    
+    const wallForce = boundaryCondition === 'reflective' 
+      ? calculateWallForce(atom, size, wallSpring) 
+      : vec3();
     const totalForce = addVec3(atom.force, wallForce);
     const updated = updateAtomMotion(atom, totalForce, dt, maxVel);
     totalKineticEnergy += calculateKineticEnergy(updated);
     return updated;
   });
   
+  // Apply periodic boundary conditions
+  if (boundaryCondition === 'periodic') {
+    updatedAtoms = updatedAtoms.map(atom => ({
+      ...atom,
+      pos: {
+        x: ((atom.pos.x % size.x) + size.x) % size.x,
+        y: ((atom.pos.y % size.y) + size.y) % size.y,
+        z: atom.pos.z,
+      },
+    }));
+  }
+  
   // Calculate temperature from kinetic energy
   // T = (2/3) * KE / (N * kB)
   const kB = 0.0019872; // kcal/(mol·K)
-  const temperature = (2 / 3) * totalKineticEnergy / (atoms.length * kB);
+  const nonFixedAtoms = atoms.filter(a => !a.isFixed).length;
+  const temperature = nonFixedAtoms > 0 
+    ? (2 / 3) * totalKineticEnergy / (nonFixedAtoms * kB)
+    : 0;
   
   return {
     atoms: updatedAtoms,
@@ -309,7 +453,49 @@ const handlePhysicsStep = (state) => {
     return state;
   }
   
-  const result = performPhysicsStep(state);
+  let result = performPhysicsStep(state);
+  
+  // Apply thermostat if enabled
+  if (state.thermostatEnabled && result.temperature > 0) {
+    result.atoms = applyThermostat(result.atoms, result.temperature, state.targetTemperature, state.thermostatTau, state.dt);
+    // Recalculate kinetic energy and temperature after thermostat
+    let totalKE = 0;
+    result.atoms.forEach(atom => {
+      totalKE += calculateKineticEnergy(atom);
+    });
+    const kB = 0.0019872;
+    const nonFixedAtoms = result.atoms.filter(a => !a.isFixed).length;
+    result.temperature = nonFixedAtoms > 0 ? (2 / 3) * totalKE / (nonFixedAtoms * kB) : 0;
+    result.energy.kinetic = totalKE;
+    result.energy.total = totalKE + result.energy.potential;
+  }
+  
+  // Track energy history for plotting
+  const maxHistory = 200;
+  const newEnergyHistory = [...state.energyHistory, { 
+    time: state.time, 
+    ...result.energy,
+    temperature: result.temperature
+  }].slice(-maxHistory);
+  
+  // Track MSD if we have initial positions
+  let newMsdData = state.msdData;
+  if (state.initialPositions.length > 0) {
+    let totalMsd = 0;
+    let count = 0;
+    result.atoms.forEach(atom => {
+      const initial = state.initialPositions.find(p => p.id === atom.id);
+      if (initial) {
+        const dx = atom.pos.x - initial.x;
+        const dy = atom.pos.y - initial.y;
+        const dz = atom.pos.z - initial.z;
+        totalMsd += dx * dx + dy * dy + dz * dz;
+        count++;
+      }
+    });
+    const msd = count > 0 ? totalMsd / count : 0;
+    newMsdData = [...state.msdData, { time: state.time, msd }].slice(-maxHistory);
+  }
   
   logPhysics.debug('Physics step', { 
     atomCount: result.atoms.length, 
@@ -324,6 +510,8 @@ const handlePhysicsStep = (state) => {
     energy: result.energy,
     temperature: result.temperature,
     time: state.time + 1,
+    energyHistory: newEnergyHistory,
+    msdData: newMsdData,
   };
 };
 
@@ -420,6 +608,11 @@ const handleToggleClear = (state) => ({ ...state, clearScreen: !state.clearScree
 
 const handleSetScale = (state, { scale }) => ({ ...state, scale });
 
+const handleUpdateSettings = (state, settings) => {
+  logSimulation.info('Settings updated', settings);
+  return { ...state, ...settings };
+};
+
 const handleSetSize = (state, size) => ({ ...state, size });
 
 const handleIncrementTime = (state) => ({ ...state, time: state.time + 1 });
@@ -435,13 +628,14 @@ const handleSetPlayerForce = (state, force) => {
   if (state.playerId === null) return state;
   return {
     ...state,
-    atoms: state.atoms.map(atom =>
-      atom.id === state.playerId
-        ? { ...atom, force: { ...atom.force, ...force } }
-        : atom
-    ),
+    playerForce: { x: force.x || 0, y: force.y || 0 },
   };
 };
+
+const handleClearPlayerForce = (state) => ({
+  ...state,
+  playerForce: { x: 0, y: 0 },
+});
 
 const handleSetStatus = (state, text) => ({ ...state, statusText: text });
 
@@ -455,6 +649,471 @@ const handleInitialize = (state) => {
     nextAtomId: 3,
   };
 };
+
+// ============================================================================
+// NEW FEATURE HANDLERS
+// ============================================================================
+
+const handleSetTargetTemperature = (state, temp) => ({ ...state, targetTemperature: temp });
+
+const handleSetZoom = (state, zoom) => ({ 
+  ...state, 
+  zoom: Math.max(0.25, Math.min(4, zoom)) 
+});
+
+const handleSetPan = (state, pan) => ({ ...state, pan });
+
+const handleSelectAtom = (state, atomId) => ({ ...state, selectedAtomId: atomId });
+
+const handleSetDraggingAtom = (state, atomId) => ({ ...state, draggingAtomId: atomId });
+
+const handleToggleVelocityVectors = (state) => ({ 
+  ...state, 
+  showVelocityVectors: !state.showVelocityVectors 
+});
+
+const handleToggleAtomLabels = (state) => ({ 
+  ...state, 
+  showAtomLabels: !state.showAtomLabels 
+});
+
+const handleToggleBondLengths = (state) => ({ 
+  ...state, 
+  showBondLengths: !state.showBondLengths 
+});
+
+const handleSetBoundaryCondition = (state, condition) => ({ 
+  ...state, 
+  boundaryCondition: condition 
+});
+
+const handleSetTimeStepMultiplier = (state, multiplier) => ({ 
+  ...state, 
+  timeStepMultiplier: Math.max(0.1, Math.min(5, multiplier)) 
+});
+
+const handleSetTheme = (state, theme) => ({ ...state, theme });
+
+const handleToggleFullscreen = (state) => ({ 
+  ...state, 
+  isFullscreen: !state.isFullscreen 
+});
+
+const handlePushUndo = (state) => {
+  const currentState = {
+    atoms: state.atoms.map(a => ({ ...a })),
+    bonds: [...state.bonds],
+    nextAtomId: state.nextAtomId,
+    playerId: state.playerId,
+  };
+  return {
+    ...state,
+    undoStack: [...state.undoStack.slice(-19), currentState], // Keep last 20
+    redoStack: [],
+  };
+};
+
+const handleUndo = (state) => {
+  if (state.undoStack.length === 0) return state;
+  
+  const currentState = {
+    atoms: state.atoms.map(a => ({ ...a })),
+    bonds: [...state.bonds],
+    nextAtomId: state.nextAtomId,
+    playerId: state.playerId,
+  };
+  
+  const prevState = state.undoStack[state.undoStack.length - 1];
+  
+  return {
+    ...state,
+    atoms: prevState.atoms,
+    bonds: prevState.bonds,
+    nextAtomId: prevState.nextAtomId,
+    playerId: prevState.playerId,
+    undoStack: state.undoStack.slice(0, -1),
+    redoStack: [...state.redoStack, currentState],
+  };
+};
+
+const handleRedo = (state) => {
+  if (state.redoStack.length === 0) return state;
+  
+  const currentState = {
+    atoms: state.atoms.map(a => ({ ...a })),
+    bonds: [...state.bonds],
+    nextAtomId: state.nextAtomId,
+    playerId: state.playerId,
+  };
+  
+  const nextState = state.redoStack[state.redoStack.length - 1];
+  
+  return {
+    ...state,
+    atoms: nextState.atoms,
+    bonds: nextState.bonds,
+    nextAtomId: nextState.nextAtomId,
+    playerId: nextState.playerId,
+    undoStack: [...state.undoStack, currentState],
+    redoStack: state.redoStack.slice(0, -1),
+  };
+};
+
+const handleCalculateRDF = (state) => {
+  if (state.atoms.length < 2) return { ...state, rdfData: [] };
+  
+  const maxR = Math.min(state.size.x, state.size.y) / 2;
+  const numBins = 50;
+  const dr = maxR / numBins;
+  const bins = new Array(numBins).fill(0);
+  
+  // Calculate all pairwise distances
+  for (let i = 0; i < state.atoms.length; i++) {
+    for (let j = i + 1; j < state.atoms.length; j++) {
+      const dx = state.atoms[j].pos.x - state.atoms[i].pos.x;
+      const dy = state.atoms[j].pos.y - state.atoms[i].pos.y;
+      const r = Math.sqrt(dx * dx + dy * dy);
+      const binIndex = Math.floor(r / dr);
+      if (binIndex < numBins) {
+        bins[binIndex] += 2; // Count for both i-j and j-i
+      }
+    }
+  }
+  
+  // Normalize by shell volume and density
+  const area = state.size.x * state.size.y;
+  const density = state.atoms.length / area;
+  const rdfData = bins.map((count, i) => {
+    const rInner = i * dr;
+    const rOuter = (i + 1) * dr;
+    const shellArea = Math.PI * (rOuter * rOuter - rInner * rInner);
+    const g = count / (state.atoms.length * density * shellArea);
+    return { r: (rInner + rOuter) / 2, g };
+  });
+  
+  return { ...state, rdfData };
+};
+
+const handleLoadSimulationState = (state, savedState) => {
+  logSimulation.info('Loading saved simulation state');
+  return {
+    ...state,
+    atoms: savedState.atoms || [],
+    bonds: savedState.bonds || [],
+    playerId: savedState.playerId ?? null,
+    nextAtomId: savedState.nextAtomId ?? 0,
+    time: 0,
+    energy: { kinetic: 0, potential: 0, total: 0 },
+    temperature: 0,
+  };
+};
+
+// New Phase 2 action handlers
+
+const handleToggleThermostat = (state) => ({
+  ...state,
+  thermostatEnabled: !state.thermostatEnabled,
+});
+
+const handleSetThermostatTau = (state, tau) => ({
+  ...state,
+  thermostatTau: tau,
+});
+
+const handleToggleCoulomb = (state) => ({
+  ...state,
+  enableCoulomb: !state.enableCoulomb,
+});
+
+const handleSetCoulombConstant = (state, value) => ({
+  ...state,
+  coulombConstant: value,
+});
+
+const handleToggle3DDepth = (state) => ({
+  ...state,
+  show3DDepth: !state.show3DDepth,
+});
+
+const handleToggleFixAtom = (state, atomId) => ({
+  ...state,
+  atoms: state.atoms.map(atom =>
+    atom.id === atomId ? { ...atom, isFixed: !atom.isFixed } : atom
+  ),
+});
+
+const handleSetAtomCharge = (state, { atomId, charge }) => ({
+  ...state,
+  atoms: state.atoms.map(atom =>
+    atom.id === atomId ? { ...atom, charge } : atom
+  ),
+});
+
+const handleMultiSelect = (state, atomIds) => ({
+  ...state,
+  selectedAtomIds: atomIds,
+});
+
+const handleAddToSelection = (state, atomId) => ({
+  ...state,
+  selectedAtomIds: state.selectedAtomIds.includes(atomId)
+    ? state.selectedAtomIds
+    : [...state.selectedAtomIds, atomId],
+});
+
+const handleRemoveFromSelection = (state, atomId) => ({
+  ...state,
+  selectedAtomIds: state.selectedAtomIds.filter(id => id !== atomId),
+});
+
+const handleClearSelection = (state) => ({
+  ...state,
+  selectedAtomIds: [],
+});
+
+const handleCopyAtoms = (state) => {
+  const selectedAtoms = state.atoms.filter(a => state.selectedAtomIds.includes(a.id));
+  if (selectedAtoms.length === 0) return state;
+  
+  // Find center of selection
+  const cx = selectedAtoms.reduce((sum, a) => sum + a.pos.x, 0) / selectedAtoms.length;
+  const cy = selectedAtoms.reduce((sum, a) => sum + a.pos.y, 0) / selectedAtoms.length;
+  
+  // Store relative positions
+  const clipboard = selectedAtoms.map(a => ({
+    relX: a.pos.x - cx,
+    relY: a.pos.y - cy,
+    relZ: a.pos.z,
+    type: a.type,
+    charge: a.charge,
+    isFixed: a.isFixed,
+    customColor: a.customColor,
+  }));
+  
+  return { ...state, clipboard };
+};
+
+const handlePasteAtoms = (state, { x, y }) => {
+  if (state.clipboard.length === 0) return state;
+  
+  const newAtoms = state.clipboard.map((atomData, i) =>
+    createAtom(
+      state.nextAtomId + i,
+      x + atomData.relX,
+      y + atomData.relY,
+      atomData.relZ,
+      atomData.type,
+      { charge: atomData.charge, isFixed: atomData.isFixed, customColor: atomData.customColor }
+    )
+  );
+  
+  return {
+    ...state,
+    atoms: [...state.atoms, ...newAtoms],
+    nextAtomId: state.nextAtomId + newAtoms.length,
+  };
+};
+
+const handleSetMeasurementMode = (state, mode) => ({
+  ...state,
+  measurementMode: mode,
+  measurementAtoms: [],
+});
+
+const handleAddMeasurementAtom = (state, atomId) => {
+  const newMeasurementAtoms = [...state.measurementAtoms, atomId];
+  
+  // If we have 2 atoms, we have a measurement
+  if (newMeasurementAtoms.length >= 2) {
+    return {
+      ...state,
+      measurementAtoms: newMeasurementAtoms.slice(0, 2),
+    };
+  }
+  
+  return { ...state, measurementAtoms: newMeasurementAtoms };
+};
+
+const handleClearMeasurement = (state) => ({
+  ...state,
+  measurementMode: null,
+  measurementAtoms: [],
+});
+
+const handleToggleRecording = (state) => {
+  if (state.isRecording) {
+    // Stop recording
+    return { ...state, isRecording: false };
+  } else {
+    // Start recording
+    return { ...state, isRecording: true, recordedFrames: [] };
+  }
+};
+
+const handleAddRecordedFrame = (state, frameData) => ({
+  ...state,
+  recordedFrames: [...state.recordedFrames, frameData],
+});
+
+const handleClearRecording = (state) => ({
+  ...state,
+  recordedFrames: [],
+});
+
+const handleSetCustomAtomColor = (state, { atomId, color }) => ({
+  ...state,
+  atoms: state.atoms.map(atom =>
+    atom.id === atomId ? { ...atom, customColor: color } : atom
+  ),
+  customAtomColors: { ...state.customAtomColors, [atomId]: color },
+});
+
+const handleDeleteSelectedAtoms = (state) => {
+  if (state.selectedAtomIds.length === 0) return state;
+  
+  return {
+    ...state,
+    atoms: state.atoms.filter(a => !state.selectedAtomIds.includes(a.id)),
+    selectedAtomIds: [],
+    playerId: state.selectedAtomIds.includes(state.playerId) ? null : state.playerId,
+  };
+};
+
+const handleSetInitialPositions = (state) => ({
+  ...state,
+  initialPositions: state.atoms.map(a => ({ id: a.id, x: a.pos.x, y: a.pos.y, z: a.pos.z })),
+  msdData: [],
+});
+
+const handleClearMsdTracking = (state) => ({
+  ...state,
+  initialPositions: [],
+  msdData: [],
+});
+
+const handleImportStructure = (state, { atoms: importedAtoms, format }) => {
+  logSimulation.info('Importing structure', { format, atomCount: importedAtoms.length });
+  
+  const cx = state.size.x / 2;
+  const cy = state.size.y / 2;
+  
+  // Find center of imported structure
+  const impCx = importedAtoms.reduce((s, a) => s + a.x, 0) / importedAtoms.length;
+  const impCy = importedAtoms.reduce((s, a) => s + a.y, 0) / importedAtoms.length;
+  
+  const newAtoms = importedAtoms.map((atomData, i) =>
+    createAtom(
+      state.nextAtomId + i,
+      cx + (atomData.x - impCx) * 10, // Scale factor
+      cy + (atomData.y - impCy) * 10,
+      (atomData.z || 0) * 10,
+      atomData.type || 1,
+      { charge: atomData.charge || 0 }
+    )
+  );
+  
+  return {
+    ...state,
+    atoms: [...state.atoms, ...newAtoms],
+    nextAtomId: state.nextAtomId + newAtoms.length,
+    playerId: state.playerId ?? state.nextAtomId,
+  };
+};
+
+// Preset molecular configurations
+const PRESET_CONFIGS = {
+  waterCluster: {
+    name: 'Water Cluster',
+    atoms: [
+      { x: 0, y: 0, z: 0, type: 3 },     // O
+      { x: 0.96, y: 0, z: 0, type: 2 },  // H
+      { x: -0.24, y: 0.93, z: 0, type: 2 }, // H
+      { x: 3, y: 0, z: 0, type: 3 },     // O
+      { x: 3.96, y: 0, z: 0, type: 2 },  // H
+      { x: 2.76, y: 0.93, z: 0, type: 2 }, // H
+      { x: 1.5, y: 2.5, z: 0, type: 3 }, // O
+      { x: 2.46, y: 2.5, z: 0, type: 2 }, // H
+      { x: 1.26, y: 3.43, z: 0, type: 2 }, // H
+    ],
+  },
+  crystalLattice: {
+    name: 'Crystal Lattice (2D)',
+    atoms: Array.from({ length: 16 }, (_, i) => ({
+      x: (i % 4) * 2,
+      y: Math.floor(i / 4) * 2,
+      z: 0,
+      type: 1, // Carbon
+    })),
+  },
+  methane: {
+    name: 'Methane (CH4)',
+    atoms: [
+      { x: 0, y: 0, z: 0, type: 1 },      // C
+      { x: 1.1, y: 0, z: 0, type: 2 },    // H
+      { x: -0.37, y: 1.04, z: 0, type: 2 }, // H
+      { x: -0.37, y: -0.52, z: 0.9, type: 2 }, // H
+      { x: -0.37, y: -0.52, z: -0.9, type: 2 }, // H
+    ],
+  },
+  benzene: {
+    name: 'Benzene Ring',
+    atoms: [
+      { x: 0, y: 1.4, z: 0, type: 1 },
+      { x: 1.21, y: 0.7, z: 0, type: 1 },
+      { x: 1.21, y: -0.7, z: 0, type: 1 },
+      { x: 0, y: -1.4, z: 0, type: 1 },
+      { x: -1.21, y: -0.7, z: 0, type: 1 },
+      { x: -1.21, y: 0.7, z: 0, type: 1 },
+      { x: 0, y: 2.5, z: 0, type: 2 },
+      { x: 2.17, y: 1.25, z: 0, type: 2 },
+      { x: 2.17, y: -1.25, z: 0, type: 2 },
+      { x: 0, y: -2.5, z: 0, type: 2 },
+      { x: -2.17, y: -1.25, z: 0, type: 2 },
+      { x: -2.17, y: 1.25, z: 0, type: 2 },
+    ],
+  },
+  randomGas: {
+    name: 'Random Gas (20 atoms)',
+    generate: (size) => Array.from({ length: 20 }, () => ({
+      x: (Math.random() - 0.5) * 8,
+      y: (Math.random() - 0.5) * 6,
+      z: 0,
+      type: Math.random() > 0.7 ? 3 : 2, // 70% H, 30% O
+    })),
+  },
+};
+
+const handleLoadPreset = (state, presetKey) => {
+  const preset = PRESET_CONFIGS[presetKey];
+  if (!preset) return state;
+  
+  const cx = state.size.x / 2;
+  const cy = state.size.y / 2;
+  
+  const atomDefs = preset.generate ? preset.generate(state.size) : preset.atoms;
+  
+  const newAtoms = atomDefs.map((atomDef, index) =>
+    createAtom(
+      state.nextAtomId + index,
+      cx + atomDef.x * 2,
+      cy + atomDef.y * 2,
+      atomDef.z * 2,
+      atomDef.type
+    )
+  );
+  
+  logSimulation.info('Preset loaded', { preset: presetKey, atomCount: newAtoms.length });
+  
+  return {
+    ...state,
+    atoms: [...state.atoms, ...newAtoms],
+    nextAtomId: state.nextAtomId + newAtoms.length,
+    playerId: state.playerId ?? state.nextAtomId,
+  };
+};
+
+// Export presets for UI
+export { PRESET_CONFIGS };
 
 // ============================================================================
 // REDUCER - Action dispatch mapping
@@ -477,13 +1136,59 @@ const actionHandlers = Object.freeze({
   TOGGLE_PAUSE: handleTogglePause,
   TOGGLE_CLEAR: handleToggleClear,
   SET_SCALE: handleSetScale,
+  UPDATE_SETTINGS: handleUpdateSettings,
   SET_SIZE: handleSetSize,
   INCREMENT_TIME: handleIncrementTime,
   ADD_FIREBALL: handleAddFireball,
   UPDATE_FIREBALLS: handleUpdateFireballs,
   SET_PLAYER_FORCE: handleSetPlayerForce,
+  CLEAR_PLAYER_FORCE: handleClearPlayerForce,
   SET_STATUS: handleSetStatus,
   INITIALIZE: handleInitialize,
+  // New feature actions
+  SET_TARGET_TEMPERATURE: handleSetTargetTemperature,
+  SET_ZOOM: handleSetZoom,
+  SET_PAN: handleSetPan,
+  SELECT_ATOM: handleSelectAtom,
+  SET_DRAGGING_ATOM: handleSetDraggingAtom,
+  TOGGLE_VELOCITY_VECTORS: handleToggleVelocityVectors,
+  TOGGLE_ATOM_LABELS: handleToggleAtomLabels,
+  TOGGLE_BOND_LENGTHS: handleToggleBondLengths,
+  SET_BOUNDARY_CONDITION: handleSetBoundaryCondition,
+  SET_TIME_STEP_MULTIPLIER: handleSetTimeStepMultiplier,
+  SET_THEME: handleSetTheme,
+  TOGGLE_FULLSCREEN: handleToggleFullscreen,
+  PUSH_UNDO: handlePushUndo,
+  UNDO: handleUndo,
+  REDO: handleRedo,
+  CALCULATE_RDF: handleCalculateRDF,
+  LOAD_SIMULATION_STATE: handleLoadSimulationState,
+  LOAD_PRESET: handleLoadPreset,
+  // Phase 2 feature actions
+  TOGGLE_THERMOSTAT: handleToggleThermostat,
+  SET_THERMOSTAT_TAU: handleSetThermostatTau,
+  TOGGLE_COULOMB: handleToggleCoulomb,
+  SET_COULOMB_CONSTANT: handleSetCoulombConstant,
+  TOGGLE_3D_DEPTH: handleToggle3DDepth,
+  TOGGLE_FIX_ATOM: handleToggleFixAtom,
+  SET_ATOM_CHARGE: handleSetAtomCharge,
+  MULTI_SELECT: handleMultiSelect,
+  ADD_TO_SELECTION: handleAddToSelection,
+  REMOVE_FROM_SELECTION: handleRemoveFromSelection,
+  CLEAR_SELECTION: handleClearSelection,
+  COPY_ATOMS: handleCopyAtoms,
+  PASTE_ATOMS: handlePasteAtoms,
+  SET_MEASUREMENT_MODE: handleSetMeasurementMode,
+  ADD_MEASUREMENT_ATOM: handleAddMeasurementAtom,
+  CLEAR_MEASUREMENT: handleClearMeasurement,
+  TOGGLE_RECORDING: handleToggleRecording,
+  ADD_RECORDED_FRAME: handleAddRecordedFrame,
+  CLEAR_RECORDING: handleClearRecording,
+  SET_CUSTOM_ATOM_COLOR: handleSetCustomAtomColor,
+  DELETE_SELECTED_ATOMS: handleDeleteSelectedAtoms,
+  SET_INITIAL_POSITIONS: handleSetInitialPositions,
+  CLEAR_MSD_TRACKING: handleClearMsdTracking,
+  IMPORT_STRUCTURE: handleImportStructure,
 });
 
 /**

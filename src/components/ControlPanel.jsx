@@ -1,108 +1,31 @@
+/**
+ * @fileoverview Control Panel Component for Molecular Dynamics Simulation
+ * @description Provides UI controls for simulation parameters, atom selection,
+ * molecule presets, force field selection, and display options.
+ * @module components/ControlPanel
+ */
+
 import { useState } from 'react';
 import { useSimulation, useSimulationDispatch } from '../context/SimulationContext';
 import { useParameters } from '../context/ParametersContext';
-import { ATOM_TYPES as PHYSICS_ATOM_TYPES } from '../simulation/physics';
+import { ATOM_TYPES as PHYSICS_ATOM_TYPES, MOLECULE_PRESETS } from '../simulation/physics';
 import { getAvailableForceFields, getForceFieldInfo } from '../simulation/forceFieldParser';
+import { PRESET_CONFIGS } from '../context/simulationReducer';
 import './ControlPanel.css';
 
-// Molecule presets organized by category
-const MOLECULE_PRESETS = {
-  // Common organic molecules
-  h2: {
-    name: 'H₂',
-    category: 'common',
-    atoms: [
-      { x: -0.37, y: 0, z: 0, type: 2 },
-      { x: 0.37, y: 0, z: 0, type: 2 },
-    ],
-  },
-  o2: {
-    name: 'O₂',
-    category: 'common',
-    atoms: [
-      { x: -0.6, y: 0, z: 0, type: 3 },
-      { x: 0.6, y: 0, z: 0, type: 3 },
-    ],
-  },
-  water: {
-    name: 'H₂O',
-    category: 'common',
-    atoms: [
-      { x: 0, y: 0, z: 0, type: 3 },
-      { x: 0.96, y: 0.5, z: 0, type: 2 },
-      { x: -0.96, y: 0.5, z: 0, type: 2 },
-    ],
-  },
-  co2: {
-    name: 'CO₂',
-    category: 'common',
-    atoms: [
-      { x: 0, y: 0, z: 0, type: 1 },
-      { x: 1.16, y: 0, z: 0, type: 3 },
-      { x: -1.16, y: 0, z: 0, type: 3 },
-    ],
-  },
-  methane: {
-    name: 'CH₄',
-    category: 'common',
-    atoms: [
-      { x: 0, y: 0, z: 0, type: 1 },
-      { x: 0.63, y: 0.63, z: 0, type: 2 },
-      { x: -0.63, y: -0.63, z: 0, type: 2 },
-      { x: 0.63, y: -0.63, z: 0, type: 2 },
-      { x: -0.63, y: 0.63, z: 0, type: 2 },
-    ],
-  },
-  ammonia: {
-    name: 'NH₃',
-    category: 'common',
-    atoms: [
-      { x: 0, y: 0, z: 0, type: 4 },
-      { x: 0.94, y: 0.38, z: 0, type: 2 },
-      { x: -0.47, y: 0.38, z: 0, type: 2 },
-      { x: 0, y: -0.76, z: 0, type: 2 },
-    ],
-  },
-  // Metal-containing molecules
-  silane: {
-    name: 'SiH₄',
-    category: 'metals',
-    atoms: [
-      { x: 0, y: 0, z: 0, type: 7 },
-      { x: 0.85, y: 0.85, z: 0, type: 2 },
-      { x: -0.85, y: -0.85, z: 0, type: 2 },
-      { x: 0.85, y: -0.85, z: 0, type: 2 },
-      { x: -0.85, y: 0.85, z: 0, type: 2 },
-    ],
-  },
-  zincOxide: {
-    name: 'ZnO',
-    category: 'metals',
-    atoms: [
-      { x: 0, y: 0, z: 0, type: 10 },
-      { x: 1.0, y: 0, z: 0, type: 3 },
-    ],
-  },
-  goldCluster: {
-    name: 'Au₃',
-    category: 'metals',
-    atoms: [
-      { x: 0, y: 0, z: 0, type: 8 },
-      { x: 1.4, y: 0, z: 0, type: 8 },
-      { x: 0.7, y: 1.2, z: 0, type: 8 },
-    ],
-  },
-  copperSulfate: {
-    name: 'CuS',
-    category: 'metals',
-    atoms: [
-      { x: 0, y: 0, z: 0, type: 11 },
-      { x: 1.2, y: 0, z: 0, type: 5 },
-    ],
-  },
-};
+/**
+ * UI-friendly atom type representation
+ * @typedef {Object} UIAtomType
+ * @property {number} id - Atom type identifier
+ * @property {string} name - Full element name
+ * @property {string} symbol - Chemical symbol
+ * @property {string} color - Display color in hex format
+ */
 
-// Convert physics atom types to array for UI
+/**
+ * Convert physics atom types to array for UI rendering
+ * @type {UIAtomType[]}
+ */
 const ATOM_TYPES = Object.entries(PHYSICS_ATOM_TYPES).map(([id, data]) => ({
   id: parseInt(id, 10),
   name: data.name,
@@ -111,29 +34,62 @@ const ATOM_TYPES = Object.entries(PHYSICS_ATOM_TYPES).map(([id, data]) => ({
 }));
 
 /**
+ * Collapsible Section Component
+ */
+function CollapsibleSection({ title, icon, children, defaultOpen = false }) {
+  const [isOpen, setIsOpen] = useState(defaultOpen);
+  
+  return (
+    <div className={`collapsible-section ${isOpen ? 'open' : ''}`}>
+      <button 
+        className="collapsible-header"
+        onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+      >
+        <span className="section-icon">{icon}</span>
+        <span className="section-title">{title}</span>
+        <span className="chevron">{isOpen ? '▾' : '▸'}</span>
+      </button>
+      {isOpen && (
+        <div className="collapsible-content">
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
  * Control Panel Component
- * Provides controls for the simulation
+ * Provides UI controls for simulation parameters, atoms, and molecules
+ * @returns {JSX.Element} Control panel with simulation controls
  */
 function ControlPanel() {
   const simulation = useSimulation();
   const parameters = useParameters();
   const dispatch = useSimulationDispatch();
   const [selectedForceField, setSelectedForceField] = useState('');
-  const [showMetals, setShowMetals] = useState(false);
 
-  // Split atom types into organic and metals
+  // Combine all atom types into a single categorized list
   const organicAtoms = ATOM_TYPES.filter(t => t.id <= 6);
   const metalAtoms = ATOM_TYPES.filter(t => t.id > 6);
 
-  const handleAddAtom = () => {
+  /**
+   * Add a single atom at random position within canvas bounds
+   */
+  const handleAddAtom = (atomType) => {
     const x = Math.random() * simulation.size.x * 0.6 + simulation.size.x * 0.2;
     const y = Math.random() * simulation.size.y * 0.6 + simulation.size.y * 0.2;
     dispatch({ 
       type: 'ADD_ATOM', 
-      payload: { x, y, z: 0, atomType: simulation.selectedAtomType } 
+      payload: { x, y, z: 0, atomType } 
     });
   };
 
+  /**
+   * Load a preset molecule configuration
+   * @param {string} moleculeKey - Key identifying the molecule preset
+   */
   const handleLoadMolecule = (moleculeKey) => {
     const molecule = MOLECULE_PRESETS[moleculeKey];
     if (molecule) {
@@ -142,10 +98,6 @@ function ControlPanel() {
         payload: { atoms: molecule.atoms } 
       });
     }
-  };
-
-  const handleAtomTypeChange = (typeId) => {
-    dispatch({ type: 'SET_ATOM_TYPE', payload: typeId });
   };
 
   const handleForceFieldChange = (event) => {
@@ -159,144 +111,120 @@ function ControlPanel() {
 
   return (
     <div className="control-panel">
-      <h3>Simulation Controls</h3>
-      
-      <div className="control-group">
-        <button 
-          className="control-button primary"
-          onClick={() => dispatch({ type: 'RESET_SIMULATION' })}
-        >
-          🔄 Restart
-        </button>
-        
-        <button 
-          className={`control-button ${simulation.isPaused ? 'paused' : 'running'}`}
-          onClick={() => dispatch({ type: 'TOGGLE_PAUSE' })}
-        >
-          {simulation.isPaused ? '▶ Play' : '⏸ Pause'}
-        </button>
-        
-        <button 
-          className="control-button danger"
-          onClick={() => dispatch({ type: 'CLEAR_ATOMS' })}
-        >
-          🗑 Clear All
-        </button>
-      </div>
+      <h3>⚙️ Controls</h3>
 
-      <div className="control-section">
-        <h4>Add Atom</h4>
-        <div className="molecule-category">
-          <label className="category-label" htmlFor="organic-atoms">Elements</label>
-          <select
-            id="organic-atoms"
-            className="molecule-select"
-            value=""
-            onChange={(e) => {
-              if (e.target.value) {
-                const atomType = parseInt(e.target.value, 10);
-                handleAtomTypeChange(atomType);
-                // Add atom immediately when selected
-                const x = Math.random() * simulation.size.x * 0.6 + simulation.size.x * 0.2;
-                const y = Math.random() * simulation.size.y * 0.6 + simulation.size.y * 0.2;
-                dispatch({
-                  type: 'ADD_ATOM',
-                  payload: { x, y, z: 0, atomType: atomType },
-                });
-              }
-            }}
-          >
-            <option value="">Select element...</option>
+      {/* Quick Actions - Always visible */}
+      <div className="quick-actions">
+        <select
+          className="quick-select"
+          value=""
+          onChange={(e) => {
+            if (e.target.value) {
+              handleAddAtom(parseInt(e.target.value, 10));
+            }
+          }}
+          title="Add atom"
+        >
+          <option value="">➕ Add Atom...</option>
+          <optgroup label="Elements">
             {organicAtoms.map(type => (
               <option key={type.id} value={type.id}>
                 {type.symbol} - {type.name}
               </option>
             ))}
-          </select>
-        </div>
-        <div className="molecule-category">
-          <label className="category-label" htmlFor="metal-atoms">Metals & Others</label>
-          <select
-            id="metal-atoms"
-            className="molecule-select"
-            value=""
-            onChange={(e) => {
-              if (e.target.value) {
-                const atomType = parseInt(e.target.value, 10);
-                handleAtomTypeChange(atomType);
-                // Add atom immediately when selected
-                const x = Math.random() * simulation.size.x * 0.6 + simulation.size.x * 0.2;
-                const y = Math.random() * simulation.size.y * 0.6 + simulation.size.y * 0.2;
-                dispatch({
-                  type: 'ADD_ATOM',
-                  payload: { x, y, z: 0, atomType: atomType },
-                });
-              }
-            }}
-          >
-            <option value="">Select metal atom...</option>
+          </optgroup>
+          <optgroup label="Metals">
             {metalAtoms.map(type => (
               <option key={type.id} value={type.id}>
                 {type.symbol} - {type.name}
               </option>
             ))}
-          </select>
-        </div>
-      </div>
+          </optgroup>
+        </select>
 
-      <div className="control-section molecules-section">
-        <div className="molecule-category">
-          <label className="category-label" htmlFor="metal-molecules">Metal Molecules</label>
-          <select
-            id="metal-molecules"
-            className="molecule-select"
-            value=""
-            onChange={(e) => {
-              if (e.target.value) {
-                handleLoadMolecule(e.target.value);
-                e.target.value = '';
-              }
-            }}
-          >
-            <option value="">Select a molecule...</option>
-            {Object.entries(MOLECULE_PRESETS)
-              .filter(([, mol]) => mol.category === 'metals')
-              .map(([key, mol]) => (
-                <option key={key} value={key}>
-                  {mol.name}
-                </option>
-              ))}
-          </select>
-        </div>
-        <div className="molecule-category">
-          <label className="category-label" htmlFor="common-molecules">Molecules</label>
-          <select
-            id="common-molecules"
-            className="molecule-select"
-            value=""
-            onChange={(e) => {
-              if (e.target.value) {
-                handleLoadMolecule(e.target.value);
-                e.target.value = '';
-              }
-            }}
-          >
-            <option value="">Select a molecule...</option>
+        <select
+          className="quick-select"
+          value=""
+          onChange={(e) => {
+            if (e.target.value) {
+              handleLoadMolecule(e.target.value);
+            }
+          }}
+          title="Add molecule"
+        >
+          <option value="">🔬 Add Molecule...</option>
+          <optgroup label="Common">
             {Object.entries(MOLECULE_PRESETS)
               .filter(([, mol]) => mol.category === 'common')
               .map(([key, mol]) => (
-                <option key={key} value={key}>
-                  {mol.name}
-                </option>
+                <option key={key} value={key}>{mol.name}</option>
               ))}
-          </select>
+          </optgroup>
+          <optgroup label="Metals">
+            {Object.entries(MOLECULE_PRESETS)
+              .filter(([, mol]) => mol.category === 'metals')
+              .map(([key, mol]) => (
+                <option key={key} value={key}>{mol.name}</option>
+              ))}
+          </optgroup>
+        </select>
+      </div>
+
+      {/* Preset Configurations - Compact buttons */}
+      <div className="presets-row">
+        {Object.entries(PRESET_CONFIGS).slice(0, 4).map(([key, preset]) => (
+          <button
+            key={key}
+            className="preset-chip"
+            onClick={() => {
+              dispatch({ type: 'PUSH_UNDO' });
+              dispatch({ type: 'LOAD_PRESET', payload: key });
+            }}
+            title={`Load ${preset.name}`}
+          >
+            {preset.name.split(' ')[0]}
+          </button>
+        ))}
+      </div>
+
+      {/* Temperature & Speed - Inline compact */}
+      <div className="inline-controls">
+        <div className="inline-control">
+          <label>🌡️ Temp</label>
+          <input
+            type="range"
+            min="0"
+            max="1000"
+            step="10"
+            value={simulation.targetTemperature}
+            onChange={(e) => dispatch({ 
+              type: 'SET_TARGET_TEMPERATURE', 
+              payload: parseFloat(e.target.value) 
+            })}
+          />
+          <span className="control-value">{simulation.targetTemperature}K</span>
+        </div>
+        <div className="inline-control">
+          <label>⚡ Speed</label>
+          <input
+            type="range"
+            min="0.1"
+            max="3"
+            step="0.1"
+            value={simulation.timeStepMultiplier}
+            onChange={(e) => dispatch({ 
+              type: 'SET_TIME_STEP_MULTIPLIER', 
+              payload: parseFloat(e.target.value) 
+            })}
+          />
+          <span className="control-value">{simulation.timeStepMultiplier.toFixed(1)}x</span>
         </div>
       </div>
 
-      <div className="control-section">
-        <h4>Force Field</h4>
+      {/* Collapsible Advanced Options */}
+      <CollapsibleSection title="Force Field" icon="⚛️" defaultOpen={false}>
         <select 
-          className="force-field-select"
+          className="full-select"
           value={selectedForceField}
           onChange={handleForceFieldChange}
         >
@@ -304,85 +232,73 @@ function ControlPanel() {
           {getAvailableForceFields().map(ff => {
             const info = getForceFieldInfo(ff);
             return (
-              <option key={ff} value={ff}>
-                {info.name}
-              </option>
+              <option key={ff} value={ff}>{info.name}</option>
             );
           })}
         </select>
         {selectedForceField && (
           <div className="force-field-info">
             <p>{getForceFieldInfo(selectedForceField).description}</p>
-            <small>
-              Elements: {getForceFieldInfo(selectedForceField).elements.join(', ')}
-            </small>
+            <small>Elements: {getForceFieldInfo(selectedForceField).elements.join(', ')}</small>
           </div>
         )}
-      </div>
+        {parameters.isLoaded && (
+          <div className="params-loaded">✓ ReaxFF loaded</div>
+        )}
+      </CollapsibleSection>
 
-      <div className="control-section">
-        <h4>Display Options</h4>
-        <label className="toggle-label">
-          <input
-            type="checkbox"
-            checked={!simulation.clearScreen}
-            onChange={() => dispatch({ type: 'TOGGLE_CLEAR' })}
-          />
-          Trail Effect
-        </label>
-        <label className="toggle-label">
-          <input
-            type="checkbox"
-            checked={simulation.showBonds}
-            onChange={() => dispatch({ type: 'TOGGLE_BONDS' })}
-          />
-          Show Bonds
-        </label>
-        <label className="toggle-label">
-          <input
-            type="checkbox"
-            checked={simulation.enablePhysics}
-            onChange={() => dispatch({ type: 'TOGGLE_PHYSICS' })}
-          />
-          Physics Enabled
-        </label>
-      </div>
-
-      <div className="info-section">
-        <h4>Simulation Info</h4>
-        <div className="info-grid">
-          <span>Atoms:</span><span>{simulation.atoms.length}</span>
-          <span>Bonds:</span><span>{simulation.bonds?.length || 0}</span>
-          <span>Time:</span><span>{simulation.time}</span>
-          <span>Status:</span><span>{simulation.isPaused ? 'Paused' : 'Running'}</span>
+      <CollapsibleSection title="Boundary & Display" icon="🖼️" defaultOpen={false}>
+        <div className="compact-control">
+          <label>Boundary</label>
+          <select 
+            className="compact-select"
+            value={simulation.boundaryCondition}
+            onChange={(e) => dispatch({ 
+              type: 'SET_BOUNDARY_CONDITION', 
+              payload: e.target.value 
+            })}
+          >
+            <option value="reflective">Reflective</option>
+            <option value="periodic">Periodic</option>
+            <option value="open">Open</option>
+          </select>
         </div>
-      </div>
-
-      <div className="energy-section">
-        <h4>Energy (kcal/mol)</h4>
-        <div className="energy-grid">
-          <span>Kinetic:</span><span>{simulation.energy?.kinetic?.toFixed(2) || '0.00'}</span>
-          <span>Potential:</span><span>{simulation.energy?.potential?.toFixed(2) || '0.00'}</span>
-          <span>Total:</span><span>{simulation.energy?.total?.toFixed(2) || '0.00'}</span>
-          <span>Temp (K):</span><span>{simulation.temperature?.toFixed(0) || '0'}</span>
+        <div className="checkbox-row">
+          <label className="mini-checkbox">
+            <input
+              type="checkbox"
+              checked={simulation.showBondLengths}
+              onChange={() => dispatch({ type: 'TOGGLE_BOND_LENGTHS' })}
+            />
+            Bond Lengths
+          </label>
+          <label className="mini-checkbox">
+            <input
+              type="checkbox"
+              checked={!simulation.clearScreen}
+              onChange={() => dispatch({ type: 'TOGGLE' })}
+            />
+            Trails
+          </label>
         </div>
-      </div>
+      </CollapsibleSection>
 
-      {parameters.isLoaded && (
-        <div className="params-section">
-          <h4>✓ ReaxFF Parameters</h4>
-          <p className="params-info">Force field loaded successfully</p>
+      <CollapsibleSection title="All Presets" icon="📋" defaultOpen={false}>
+        <div className="all-presets">
+          {Object.entries(PRESET_CONFIGS).map(([key, preset]) => (
+            <button
+              key={key}
+              className="preset-btn-full"
+              onClick={() => {
+                dispatch({ type: 'PUSH_UNDO' });
+                dispatch({ type: 'LOAD_PRESET', payload: key });
+              }}
+            >
+              {preset.name}
+            </button>
+          ))}
         </div>
-      )}
-
-      <div className="instructions">
-        <h4>Controls</h4>
-        <ul>
-          <li><kbd>←</kbd><kbd>→</kbd><kbd>↑</kbd><kbd>↓</kbd> Move selected atom</li>
-          <li>Click molecules to add to simulation</li>
-          <li>Upload .ff file for ReaxFF parameters</li>
-        </ul>
-      </div>
+      </CollapsibleSection>
     </div>
   );
 }

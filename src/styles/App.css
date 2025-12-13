@@ -11,7 +11,6 @@
 
 /* Header */
 .app-header {
-  text-align: center;
   padding: var(--space-3) var(--space-4) var(--space-4);
   position: relative;
 }
@@ -27,8 +26,33 @@
   background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
 }
 
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.header-title {
+  text-align: center;
+  flex: 1;
+}
+
+.header-actions {
+  display: flex;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
 .app-header h1 {
-  font-size: 1.75rem;
+  font-size: 1.25rem;
   font-weight: 600;
   font-family: 'Inter', 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: linear-gradient(90deg, #e2e8f0 0%, #94a3b8 50%, #cbd5e1 100%);
@@ -37,11 +61,22 @@
   background-clip: text;
   margin-bottom: var(--space-1);
   letter-spacing: -0.025em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+}
+
+.app-title-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  -webkit-text-fill-color: initial;
 }
 
 .app-header .subtitle {
   color: var(--color-text-muted);
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: 400;
   letter-spacing: 0.02em;
 }
@@ -63,6 +98,44 @@
   flex-direction: column;
   min-width: 0;
   gap: var(--space-4);
+}
+
+/* Canvas Wrapper - holds canvas and overlays */
+.canvas-wrapper {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.canvas-bottom-right {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 100;
+}
+
+/* Footer */
+.app-footer {
+  text-align: center;
+  padding: var(--space-6) 0 var(--space-4);
+  color: var(--color-text-dim);
+  font-size: 0.875rem;
+  border-top: 1px solid var(--color-divider);
+  margin-top: var(--space-6);
+}
+
+.app-footer kbd {
+  display: inline-block;
+  padding: 2px 6px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
 }
 
 /* Sidebar */
@@ -93,16 +166,6 @@
 
 .sidebar::-webkit-scrollbar-thumb:hover {
   background: var(--color-border-light);
-}
-
-/* Footer */
-.app-footer {
-  text-align: center;
-  padding: var(--space-6) 0 var(--space-4);
-  color: var(--color-text-dim);
-  font-size: 0.875rem;
-  border-top: 1px solid var(--color-divider);
-  margin-top: var(--space-6);
 }
 
 .app-footer a {

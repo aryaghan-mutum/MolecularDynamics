@@ -11,7 +11,7 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
     inset 0 0 0 1px rgba(255, 255, 255, 0.02);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .control-panel::before {
@@ -709,4 +709,512 @@
   font-size: 0.625rem;
   color: var(--color-text-dim);
   font-family: var(--font-mono);
+}
+
+/* =====================================================
+   PRESET CONFIGURATIONS
+   ===================================================== */
+.preset-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.preset-btn {
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  color: var(--color-text-secondary);
+  font-size: 0.65rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.preset-btn:hover {
+  border-color: var(--color-primary);
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.08) 100%);
+  color: var(--color-text);
+}
+
+/* =====================================================
+   TEMPERATURE CONTROL
+   ===================================================== */
+.temperature-control,
+.speed-control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.temperature-slider,
+.speed-slider {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  appearance: none;
+  cursor: pointer;
+}
+
+.temperature-slider::-webkit-slider-thumb,
+.speed-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+
+.temperature-slider::-webkit-slider-thumb:hover,
+.speed-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.temperature-value,
+.speed-value {
+  min-width: 50px;
+  font-size: 0.75rem;
+  font-family: var(--font-mono);
+  color: var(--color-text);
+  text-align: right;
+}
+
+.temperature-info {
+  margin-top: var(--space-1);
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+}
+
+/* =====================================================
+   BOUNDARY CONDITIONS
+   ===================================================== */
+.boundary-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%);
+  color: var(--color-text);
+  font-size: 0.75rem;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23999' d='M6 8L1 3h10L6 8z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  padding-right: 2rem;
+}
+
+.boundary-select:hover {
+  border-color: var(--color-border-light);
+}
+
+.boundary-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.boundary-select option {
+  background: #1a1a24;
+  color: var(--color-text);
+}
+
+/* =====================================================
+   DISPLAY OPTIONS CHECKBOXES
+   ===================================================== */
+.control-checkbox {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.control-checkbox:hover {
+  color: var(--color-text);
+}
+
+.control-checkbox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.05);
+  appearance: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.control-checkbox input[type="checkbox"]:checked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.control-checkbox input[type="checkbox"]:checked::after {
+  content: '✓';
+  display: block;
+  text-align: center;
+  line-height: 14px;
+  font-size: 10px;
+  color: white;
+}
+/* =====================================================
+   COMPACT REDESIGNED CONTROL PANEL
+   ===================================================== */
+
+/* Quick Actions - Always Visible */
+.quick-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  position: relative;
+  z-index: 1;
+}
+
+.quick-select {
+  width: 100%;
+  padding: 0.5rem 2rem 0.5rem 0.625rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.03) 100%);
+  color: var(--color-text);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M2.5 4.5L6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.625rem center;
+}
+
+.quick-select:hover {
+  border-color: rgba(59, 130, 246, 0.5);
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.18) 0%, rgba(59, 130, 246, 0.08) 100%);
+}
+
+.quick-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.quick-select option {
+  background: #1a1a24;
+  color: var(--color-text);
+}
+
+.quick-select optgroup {
+  color: var(--color-text-muted);
+  font-weight: 600;
+  font-style: normal;
+}
+
+/* Preset Chips Row */
+.presets-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: var(--space-3);
+  position: relative;
+  z-index: 1;
+}
+
+.preset-chip {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: rgba(139, 92, 246, 0.08);
+  color: var(--color-text-secondary);
+  font-size: 0.625rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.preset-chip:hover {
+  border-color: var(--color-primary);
+  background: rgba(139, 92, 246, 0.2);
+  color: var(--color-text);
+  transform: translateY(-1px);
+}
+
+/* Inline Controls - Temperature & Speed */
+.inline-controls {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  padding: var(--space-2);
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: var(--radius-md);
+  position: relative;
+  z-index: 1;
+}
+
+.inline-control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.inline-control label {
+  font-size: 0.65rem;
+  color: var(--color-text-muted);
+  min-width: 40px;
+  white-space: nowrap;
+}
+
+.inline-control input[type="range"] {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  appearance: none;
+  cursor: pointer;
+}
+
+.inline-control input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  cursor: pointer;
+  transition: transform var(--transition-fast);
+}
+
+.inline-control input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.control-value {
+  min-width: 38px;
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  color: var(--color-accent);
+  text-align: right;
+}
+
+/* Collapsible Sections */
+.collapsible-section {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-2);
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.15);
+  position: relative;
+  z-index: 1;
+}
+
+.collapsible-section.open {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.collapsible-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0.5rem 0.625rem;
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+
+.collapsible-header:hover {
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--color-text);
+}
+
+.collapsible-section.open .collapsible-header {
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.section-icon {
+  font-size: 0.75rem;
+}
+
+.section-title {
+  flex: 1;
+}
+
+.chevron {
+  font-size: 0.625rem;
+  color: var(--color-text-dim);
+  transition: transform var(--transition-fast);
+}
+
+.collapsible-content {
+  padding: var(--space-2) var(--space-3);
+  animation: slideDown 0.15s ease-out;
+}
+
+/* Full Width Select inside collapsible */
+.full-select {
+  width: 100%;
+  padding: 0.5rem 2rem 0.5rem 0.625rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  color: var(--color-text);
+  font-size: 0.6875rem;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M2.5 4.5L6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.5rem center;
+}
+
+.full-select:hover {
+  border-color: var(--color-border-light);
+}
+
+.full-select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+}
+
+.full-select option {
+  background: #1a1a24;
+  color: var(--color-text);
+}
+
+/* Parameters Loaded Badge */
+.params-loaded {
+  margin-top: var(--space-2);
+  padding: 0.25rem 0.5rem;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-sm);
+  font-size: 0.625rem;
+  color: var(--color-success-light);
+  display: inline-block;
+}
+
+/* Compact Control Row */
+.compact-control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.compact-control label {
+  font-size: 0.625rem;
+  color: var(--color-text-muted);
+  min-width: 50px;
+}
+
+.compact-select {
+  flex: 1;
+  padding: 0.375rem 1.5rem 0.375rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--color-text);
+  font-size: 0.625rem;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 12 12'%3E%3Cpath fill='%2394a3b8' d='M2.5 4.5L6 8l3.5-3.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.375rem center;
+}
+
+.compact-select option {
+  background: #1a1a24;
+  color: var(--color-text);
+}
+
+/* Checkbox Row */
+.checkbox-row {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.mini-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.625rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.mini-checkbox:hover {
+  color: var(--color-text);
+}
+
+.mini-checkbox input[type="checkbox"] {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.05);
+  appearance: none;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.mini-checkbox input[type="checkbox"]:checked {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.mini-checkbox input[type="checkbox"]:checked::after {
+  content: '✓';
+  display: block;
+  text-align: center;
+  line-height: 12px;
+  font-size: 9px;
+  color: white;
+}
+
+/* All Presets Grid */
+.all-presets {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.preset-btn-full {
+  padding: 0.375rem 0.5rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: rgba(139, 92, 246, 0.08);
+  color: var(--color-text-secondary);
+  font-size: 0.6rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.preset-btn-full:hover {
+  border-color: var(--color-primary);
+  background: rgba(139, 92, 246, 0.2);
+  color: var(--color-text);
 }

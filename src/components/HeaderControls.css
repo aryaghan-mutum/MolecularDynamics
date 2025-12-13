@@ -1,0 +1,159 @@
+/**
+ * Header Controls Styles
+ * Quick access simulation controls in header
+ */
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.header-control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.header-control-group.toggles {
+  padding-left: 16px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Header Buttons */
+.header-btn {
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.header-btn:hover {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+.header-btn.running {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.4);
+  color: #34d399;
+}
+
+.header-btn.running:hover {
+  background: rgba(16, 185, 129, 0.3);
+}
+
+.header-btn.paused {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+}
+
+.header-btn.paused:hover {
+  background: rgba(245, 158, 11, 0.3);
+}
+
+.header-btn.danger {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.header-btn.danger:hover {
+  background: rgba(239, 68, 68, 0.25);
+}
+
+.header-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.header-btn:disabled:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Toggle Switches */
+.header-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.header-toggle input {
+  display: none;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 32px;
+  height: 18px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 9px;
+  transition: all 0.2s;
+}
+
+.toggle-switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  background: #64748b;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.header-toggle input:checked + .toggle-switch {
+  background: rgba(139, 92, 246, 0.4);
+}
+
+.header-toggle input:checked + .toggle-switch::after {
+  left: 16px;
+  background: #a78bfa;
+}
+
+.toggle-text {
+  font-size: 11px;
+  font-weight: 500;
+  color: #94a3b8;
+  transition: color 0.2s;
+}
+
+.header-toggle input:checked ~ .toggle-text {
+  color: #e2e8f0;
+}
+
+.header-toggle:hover .toggle-text {
+  color: #e2e8f0;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .header-controls {
+    gap: 12px;
+  }
+  
+  .header-control-group.toggles {
+    padding-left: 12px;
+  }
+  
+  .toggle-text {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .header-controls {
+    display: none;
+  }
+}

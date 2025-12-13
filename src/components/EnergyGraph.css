@@ -1,0 +1,187 @@
+/**
+ * Energy Graph Panel Styles
+ * Real-time energy monitoring display
+ */
+
+.energy-graph-panel {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 8px;
+}
+
+.energy-graph-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.energy-graph-header h3 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.graph-icon {
+  font-size: 14px;
+}
+
+.energy-graph-controls {
+  display: flex;
+  gap: 4px;
+}
+
+.graph-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.graph-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Energy Values - Horizontal layout */
+.energy-values {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+.energy-value-btn {
+  flex: 1;
+  min-width: 70px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 4px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s;
+  overflow: hidden;
+}
+
+.energy-value-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.energy-value-btn.active {
+  border-color: var(--energy-color);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.energy-value-btn.active .energy-dot {
+  background: var(--energy-color);
+  box-shadow: 0 0 8px var(--energy-color);
+}
+
+.energy-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #444;
+  transition: all 0.2s;
+}
+
+.energy-label {
+  font-size: 10px;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.energy-num {
+  font-size: 10px;
+  font-weight: 600;
+  color: #e2e8f0;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* Graph Container */
+.energy-graph-container {
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 6px;
+  overflow: hidden;
+  margin-bottom: 8px;
+  animation: slideDown 0.3s ease;
+}
+
+.energy-canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+/* Temperature Display */
+.temperature-display {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.temp-icon {
+  font-size: 14px;
+}
+
+.temp-label {
+  font-size: 11px;
+  color: #888;
+}
+
+.temp-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #f59e0b;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+}
+
+/* Animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 200px;
+  }
+}
+
+/* Expanded State */
+.energy-graph-panel.expanded {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 400px) {
+  .energy-values {
+    flex-direction: column;
+  }
+  
+  .energy-value-btn {
+    flex-direction: row;
+    justify-content: space-between;
+  }
+}

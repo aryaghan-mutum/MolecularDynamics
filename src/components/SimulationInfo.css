@@ -1,0 +1,106 @@
+/**
+ * Simulation Info Bar Styles
+ * Compact horizontal display for simulation statistics
+ */
+
+.simulation-info-bar {
+  display: flex;
+  gap: 16px;
+  padding: 10px 16px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  flex-wrap: wrap;
+}
+
+.info-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.info-title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  padding-right: 12px;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  white-space: nowrap;
+}
+
+.info-items {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.info-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.info-label {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.info-value {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', monospace;
+}
+
+/* Status colors */
+.info-value.status-running {
+  color: #10b981;
+}
+
+.info-value.status-paused {
+  color: #f59e0b;
+}
+
+/* Energy colors */
+.info-value.kinetic {
+  color: #ef4444;
+}
+
+.info-value.potential {
+  color: #3b82f6;
+}
+
+.info-value.total {
+  color: #10b981;
+}
+
+.info-value.temp {
+  color: #f59e0b;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .simulation-info-bar {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .info-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .info-title {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-right: 0;
+    padding-bottom: 6px;
+    width: 100%;
+  }
+}
