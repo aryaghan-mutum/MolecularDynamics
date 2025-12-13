@@ -38,18 +38,15 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run linting
-        run: npm run lint --if-present
-        continue-on-error: true
-
       - name: Run tests
-        run: npm test -- --passWithNoTests --coverage
+        run: npm run test:coverage
         env:
           CI: true
 
       - name: Build for production
         run: npm run build
         env:
+          NODE_ENV: production
           PUBLIC_URL: /MolecularDynamics
 
       - name: Upload build artifacts
