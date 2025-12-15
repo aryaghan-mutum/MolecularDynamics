@@ -4,7 +4,7 @@
     "dictionaries": ["jsdoc", "closure"]
   },
   "source": {
-    "include": ["src/", "README.md"],
+    "include": ["src/"],
     "exclude": [
       "src/**/*.test.js",
       "src/**/*.spec.js",
@@ -12,7 +12,7 @@
       "src/**/__mocks__",
       "src/setupTests.js"
     ],
-    "includePattern": "\\.(jsx?|md)$"
+    "includePattern": "\\.jsx?$"
   },
   "plugins": ["plugins/markdown"],
   "opts": {

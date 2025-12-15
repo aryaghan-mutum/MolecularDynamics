@@ -48,37 +48,24 @@ describe('EnergyGraph', () => {
     });
   });
 
-  describe('Expand/Collapse', () => {
-    it('graph is collapsed by default', () => {
+  describe('Graph Display', () => {
+    it('graph is always visible', () => {
       renderWithProviders(<EnergyGraph />);
-      expect(screen.queryByRole('img')).not.toBeInTheDocument(); // canvas
-      const panel = document.querySelector('.energy-graph-panel');
-      expect(panel).not.toHaveClass('expanded');
-    });
-
-    it('expands when expand button is clicked', () => {
-      renderWithProviders(<EnergyGraph />);
-      const expandBtn = screen.getByTitle(/expand/i);
-      fireEvent.click(expandBtn);
-      const panel = document.querySelector('.energy-graph-panel');
-      expect(panel).toHaveClass('expanded');
-    });
-
-    it('shows canvas when expanded', () => {
-      renderWithProviders(<EnergyGraph />);
-      fireEvent.click(screen.getByTitle(/expand/i));
       const canvas = document.querySelector('.energy-canvas');
       expect(canvas).toBeInTheDocument();
     });
 
-    it('collapses when collapse button is clicked', () => {
+    it('shows canvas with correct dimensions', () => {
       renderWithProviders(<EnergyGraph />);
-      // Expand first
-      fireEvent.click(screen.getByTitle(/expand/i));
-      // Then collapse
-      fireEvent.click(screen.getByTitle(/collapse/i));
-      const panel = document.querySelector('.energy-graph-panel');
-      expect(panel).not.toHaveClass('expanded');
+      const canvas = document.querySelector('.energy-canvas');
+      expect(canvas).toHaveAttribute('width', '280');
+      expect(canvas).toHaveAttribute('height', '150');
+    });
+
+    it('shows graph container', () => {
+      renderWithProviders(<EnergyGraph />);
+      const container = document.querySelector('.energy-graph-container');
+      expect(container).toBeInTheDocument();
     });
   });
 
@@ -121,9 +108,8 @@ describe('EnergyGraph', () => {
   });
 
   describe('Canvas', () => {
-    it('canvas has correct dimensions when expanded', () => {
+    it('canvas has correct dimensions', () => {
       renderWithProviders(<EnergyGraph />);
-      fireEvent.click(screen.getByTitle(/expand/i));
       const canvas = document.querySelector('.energy-canvas');
       expect(canvas).toHaveAttribute('width', '280');
       expect(canvas).toHaveAttribute('height', '150');

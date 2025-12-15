@@ -1,6 +1,18 @@
 # Molecular Dynamics Simulation
 
+[![CI/CD Pipeline](https://github.com/aryaghan-mutum/MolecularDynamics/actions/workflows/deploy.yml/badge.svg)](https://github.com/aryaghan-mutum/MolecularDynamics/actions/workflows/deploy.yml)
+[![Unit Tests](https://img.shields.io/badge/tests-367%20passing-brightgreen)](https://aryaghan-mutum.github.io/MolecularDynamics/coverage/)
+[![Coverage](https://img.shields.io/badge/coverage-47%25-yellow)](https://aryaghan-mutum.github.io/MolecularDynamics/coverage/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-blue)](https://nodejs.org)
+
 ReaxFF Reactive Force Field implementation for Molecular Dynamics Simulations of Hydrocarbon Oxidation in JavaScript.
+
+🌐 **Live Demo**: [https://aryaghan-mutum.github.io/MolecularDynamics/](https://aryaghan-mutum.github.io/MolecularDynamics/)
+
+📖 **Documentation**: [JSDoc API Reference](https://aryaghan-mutum.github.io/MolecularDynamics/docs/)
+
+📊 **Coverage Report**: [Test Coverage](https://aryaghan-mutum.github.io/MolecularDynamics/coverage/)
 
 ## ReaxFF Potential Functions
 
@@ -19,17 +31,51 @@ npm run build   # Production build to dist/
 ```bash
 npm test              # Run all tests
 npm run test:watch    # Watch mode
-npm run test:coverage # Coverage report (thresholds: 80% statements/lines/functions, 70% branches)
+npm run test:coverage # Coverage report with HTML output
 ```
+
+### Coverage Report
+
+After running `npm run test:coverage`, open the HTML report:
+
+```bash
+# Windows
+start coverage/lcov-report/index.html
+
+# Mac/Linux
+open coverage/lcov-report/index.html
+```
+
+**Current Coverage Thresholds:**
+| Metric | Threshold |
+|--------|-----------|
+| Statements | 45% |
+| Branches | 30% |
+| Functions | 40% |
+| Lines | 45% |
 
 ## Documentation
 
 ```bash
 npm run docs          # Generate JSDoc to docs/
 npm run docs:watch    # Generate with live reload
-start docs/index.html # Open docs in browser (Windows)
-open docs/index.html  # Open docs in browser (Mac/Linux)
 ```
+
+### View Documentation
+
+```bash
+# Windows
+start docs/index.html
+
+# Mac/Linux  
+open docs/index.html
+```
+
+The JSDoc documentation includes:
+- API reference for all modules
+- Component documentation
+- Simulation physics documentation
+- Utility function documentation
 
 ## ReaxFF Parameter Files
 
@@ -75,10 +121,7 @@ docs/                   # Generated JSDoc
 
 React 18, Webpack 5, HTML5 Canvas, Jest, JSDoc
 
-## Contributors
-
-Jeffrey Comer (jeffcomer@ksu.edu), Anurag Muthyam (anu.drumcoder@gmail.com)
 
 ## License
 
-ISC
+MIT © Jeffrey Comer and Anurag Muthyam
