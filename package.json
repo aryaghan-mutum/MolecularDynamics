@@ -21,7 +21,7 @@
     "url": "git+https://github.com/aryaghan-mutum/MolecularDynamics.git"
   },
   "author": "jeffrey comer and anurag muthyam",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/aryaghan-mutum/MolecularDynamics/issues"
   },

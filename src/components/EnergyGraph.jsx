@@ -27,7 +27,6 @@ function EnergyGraph() {
   const simulation = useSimulation();
   const canvasRef = useRef(null);
   const lastTimeRef = useRef(null);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [showTypes, setShowTypes] = useState({
     kinetic: true,
     potential: true,
@@ -164,7 +163,7 @@ function EnergyGraph() {
   };
 
   return (
-    <div className={`energy-graph-panel ${isExpanded ? 'expanded' : ''}`}>
+    <div className="energy-graph-panel">
       <div className="energy-graph-header">
         <h3>
           <span className="graph-icon">📊</span>
@@ -177,13 +176,6 @@ function EnergyGraph() {
             title="Clear history"
           >
             🗑️
-          </button>
-          <button 
-            className="graph-btn" 
-            onClick={() => setIsExpanded(!isExpanded)}
-            title={isExpanded ? 'Collapse' : 'Expand'}
-          >
-            {isExpanded ? '▼' : '▲'}
           </button>
         </div>
       </div>
@@ -205,16 +197,14 @@ function EnergyGraph() {
         ))}
       </div>
 
-      {isExpanded && (
-        <div className="energy-graph-container">
-          <canvas 
-            ref={canvasRef} 
-            width={280} 
-            height={150}
-            className="energy-canvas"
-          />
-        </div>
-      )}
+      <div className="energy-graph-container">
+        <canvas 
+          ref={canvasRef} 
+          width={280} 
+          height={150}
+          className="energy-canvas"
+        />
+      </div>
 
       <div className="temperature-display">
         <span className="temp-icon">🌡️</span>

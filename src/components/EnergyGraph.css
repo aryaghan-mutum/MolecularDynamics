@@ -169,11 +169,6 @@
   }
 }
 
-/* Expanded State */
-.energy-graph-panel.expanded {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-}
-
 /* Responsive */
 @media (max-width: 400px) {
   .energy-values {
