@@ -1,7 +1,10 @@
 # Molecular Dynamics Simulation
 
 [![CI/CD Pipeline](https://github.com/aryaghan-mutum/MolecularDynamics/actions/workflows/deploy.yml/badge.svg)](https://github.com/aryaghan-mutum/MolecularDynamics/actions/workflows/deploy.yml)
+[![Unit Tests](https://img.shields.io/badge/tests-367%20passing-brightgreen)](https://aryaghan-mutum.github.io/MolecularDynamics/coverage/)
+[![Coverage](https://img.shields.io/badge/coverage-47%25-yellow)](https://aryaghan-mutum.github.io/MolecularDynamics/coverage/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D18.0.0-blue)](https://nodejs.org)
 
 ReaxFF Reactive Force Field implementation for Molecular Dynamics Simulations of Hydrocarbon Oxidation in JavaScript.
 
