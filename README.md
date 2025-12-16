@@ -48,14 +48,6 @@ start coverage/lcov-report/index.html
 open coverage/lcov-report/index.html
 ```
 
-**Current Coverage Thresholds:**
-| Metric | Threshold |
-|--------|-----------|
-| Statements | 45% |
-| Branches | 30% |
-| Functions | 40% |
-| Lines | 45% |
-
 ## Documentation
 
 ```bash

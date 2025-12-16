@@ -5,8 +5,10 @@
  */
 
 import { useState } from 'react';
-import { version } from '../../package.json';
+import packageJson from '../../package.json';
 import './AboutModal.css';
+
+const { version } = packageJson;
 
 /**
  * About Modal Component

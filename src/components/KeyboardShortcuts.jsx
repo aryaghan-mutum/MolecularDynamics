@@ -50,19 +50,26 @@ function KeyboardShortcuts() {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      // Show on ? key (Shift + /)
-      if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+      // Don't trigger if typing in an input field
+      const isInputField = ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName);
+      if (isInputField) return;
+      
+      // Show on ? key (Shift + / or direct ?)
+      if (e.key === '?' || (e.shiftKey && e.code === 'Slash')) {
         e.preventDefault();
+        e.stopPropagation();
         setIsVisible(prev => !prev);
       }
       // Close on Escape
       if (e.key === 'Escape' && isVisible) {
+        e.preventDefault();
         setIsVisible(false);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    // Use capture phase to ensure we get the event first
+    window.addEventListener('keydown', handleKeyDown, true);
+    return () => window.removeEventListener('keydown', handleKeyDown, true);
   }, [isVisible]);
 
   if (!isVisible) return null;
