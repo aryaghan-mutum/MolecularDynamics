@@ -105,6 +105,24 @@ function HeaderControls() {
           <span className="toggle-switch"></span>
           <span className="toggle-text">Labels</span>
         </label>
+        <label className="header-toggle" title="Color atoms by velocity (blue=slow, red=fast)">
+          <input
+            type="checkbox"
+            checked={simulation.colorByVelocity}
+            onChange={() => dispatch({ type: 'TOGGLE_COLOR_BY_VELOCITY' })}
+          />
+          <span className="toggle-switch"></span>
+          <span className="toggle-text">Heat</span>
+        </label>
+        <label className="header-toggle" title="Show motion trails behind atoms">
+          <input
+            type="checkbox"
+            checked={simulation.showMotionTrails}
+            onChange={() => dispatch({ type: 'TOGGLE_MOTION_TRAILS' })}
+          />
+          <span className="toggle-switch"></span>
+          <span className="toggle-text">Trails</span>
+        </label>
       </div>
 
       <div className="header-control-group">

@@ -79,6 +79,13 @@ export const INITIAL_SIMULATION_STATE = Object.freeze({
   playerForce: Object.freeze({ x: 0, y: 0 }), // External force from keyboard
   lockZoom: true,              // Lock zoom/scroll on canvas (static view)
   viewMode: '2d',              // '2d' or '3d' view mode
+  // Visual enhancement features
+  colorByVelocity: false,      // Color atoms based on velocity (blue=slow, red=fast)
+  showMotionTrails: false,     // Show motion trails behind atoms
+  trailLength: 20,             // Number of trail positions to keep
+  positionHistory: {},         // Track atom positions for trails: { atomId: [{x,y}, ...] }
+  autoSaveEnabled: true,       // Auto-save to localStorage
+  lastAutoSave: null,          // Timestamp of last auto-save
 });
 
 // ============================================================================
@@ -706,15 +713,60 @@ const handleToggleLockZoom = (state) => ({
   lockZoom: !state.lockZoom
 });
 
-const handleSetViewMode = (state, viewMode) => ({
-  ...state,
-  viewMode: viewMode === '3d' ? '3d' : '2d'
-});
-
 const handleResetView = (state) => ({
   ...state,
   zoom: 1.0,
   pan: Object.freeze({ x: 0, y: 0 })
+});
+
+// Visual enhancement handlers
+const handleToggleColorByVelocity = (state) => ({
+  ...state,
+  colorByVelocity: !state.colorByVelocity
+});
+
+const handleToggleMotionTrails = (state) => ({
+  ...state,
+  showMotionTrails: !state.showMotionTrails,
+  positionHistory: state.showMotionTrails ? {} : state.positionHistory // Clear history when disabling
+});
+
+const handleSetTrailLength = (state, length) => ({
+  ...state,
+  trailLength: Math.max(5, Math.min(50, length))
+});
+
+const handleUpdatePositionHistory = (state) => {
+  if (!state.showMotionTrails || state.isPaused) return state;
+  
+  const newHistory = { ...state.positionHistory };
+  const maxLength = state.trailLength;
+  
+  state.atoms.forEach(atom => {
+    const history = newHistory[atom.id] || [];
+    const newPos = { x: atom.pos.x, y: atom.pos.y };
+    newHistory[atom.id] = [...history, newPos].slice(-maxLength);
+  });
+  
+  return {
+    ...state,
+    positionHistory: newHistory
+  };
+};
+
+const handleToggleAutoSave = (state) => ({
+  ...state,
+  autoSaveEnabled: !state.autoSaveEnabled
+});
+
+const handleSetLastAutoSave = (state, timestamp) => ({
+  ...state,
+  lastAutoSave: timestamp
+});
+
+const handleClearPositionHistory = (state) => ({
+  ...state,
+  positionHistory: {}
 });
 
 const handlePushUndo = (state) => {
@@ -1209,8 +1261,15 @@ const actionHandlers = Object.freeze({
   IMPORT_STRUCTURE: handleImportStructure,
   // View control actions
   TOGGLE_LOCK_ZOOM: handleToggleLockZoom,
-  SET_VIEW_MODE: handleSetViewMode,
   RESET_VIEW: handleResetView,
+  // Visual enhancement actions
+  TOGGLE_COLOR_BY_VELOCITY: handleToggleColorByVelocity,
+  TOGGLE_MOTION_TRAILS: handleToggleMotionTrails,
+  SET_TRAIL_LENGTH: handleSetTrailLength,
+  UPDATE_POSITION_HISTORY: handleUpdatePositionHistory,
+  TOGGLE_AUTO_SAVE: handleToggleAutoSave,
+  SET_LAST_AUTO_SAVE: handleSetLastAutoSave,
+  CLEAR_POSITION_HISTORY: handleClearPositionHistory,
 });
 
 /**
