@@ -14,6 +14,8 @@ ReaxFF Reactive Force Field implementation for Molecular Dynamics Simulations of
 
 📊 **Coverage Report**: [Test Coverage](https://aryaghan-mutum.github.io/MolecularDynamics/coverage/)
 
+🔧 **CI/CD Pipeline**: [Pipeline Documentation](documents/CI_CD_PIPELINE.md)
+
 ## ReaxFF Potential Functions
 
 Bond Order, Bond Energy, Lone pair, Over/Under Coordination, Valence, Penalty, Coalition, Torsion, Four-body conjugation, Hydrogen bond, C2 Correction, Triple bond correction, Van der Waals, Coulomb interactions, Taper correction.
