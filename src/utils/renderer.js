@@ -1,6 +1,6 @@
 /**
  * Canvas Rendering Utilities - Functional Style
- * Pure functions for drawing atoms, bonds, and particles on the canvas
+ * Functions for drawing atoms, bonds, and particles on the canvas
  */
 
 // ============================================================================
@@ -34,7 +34,7 @@ const DEFAULT_COLOR = Object.freeze({ main: '#ffffff', light: '#ffffff' });
 // ============================================================================
 
 /**
- * Parse hex color to RGB components - Pure function
+ * Parse hex color to RGB components
  * @param {string} color - Hex color string (#RRGGBB)
  * @returns {Object} RGB components
  */
@@ -48,17 +48,17 @@ const parseHexColor = (color) => {
 };
 
 /**
- * Clamp a value between 0 and 255 - Pure function
+ * Clamp a value between 0 and 255
  */
 const clampColor = (value) => Math.max(0, Math.min(255, Math.round(value)));
 
 /**
- * Format RGB values as CSS string - Pure function
+ * Format RGB values as CSS string
  */
 const toRgbString = (r, g, b) => `rgb(${clampColor(r)}, ${clampColor(g)}, ${clampColor(b)})`;
 
 /**
- * Lighten a color by a given amount - Pure function
+ * Lighten a color by a given amount
  * @param {string} color - Hex color string
  * @param {number} amount - Amount to lighten (0-1)
  * @returns {string} RGB color string
@@ -73,7 +73,7 @@ const lightenColor = (color, amount) => {
 };
 
 /**
- * Darken a color by a given amount - Pure function
+ * Darken a color by a given amount
  * @param {string} color - Hex color string
  * @param {number} amount - Amount to darken (0-1)
  * @returns {string} RGB color string
@@ -161,7 +161,7 @@ export const drawMotionTrail = (ctx, positions, color, scale, radius) => {
 // ============================================================================
 
 /**
- * Calculate screen position from simulation position - Pure function
+ * Calculate screen position from simulation position
  */
 const toScreenPos = (pos, scale) => ({
   x: scale * pos.x,
@@ -169,7 +169,7 @@ const toScreenPos = (pos, scale) => ({
 });
 
 /**
- * Calculate gradient offset position - Pure function
+ * Calculate gradient offset position
  */
 const gradientOffset = (pos, radius, offsetFactor = 0.3) => ({
   x: pos.x - offsetFactor * radius,
@@ -181,7 +181,7 @@ const gradientOffset = (pos, radius, offsetFactor = 0.3) => ({
 // ============================================================================
 
 /**
- * Draw a bond between two atoms - Pure function with side effect
+ * Draw a bond between two atoms
  * @param {CanvasRenderingContext2D} ctx - Canvas context
  * @param {Object} atom1 - First atom
  * @param {Object} atom2 - Second atom
@@ -218,7 +218,7 @@ export const drawBond = (ctx, atom1, atom2, bondOrder, scale) => {
 };
 
 /**
- * Create radial gradient for atom - Pure function
+ * Create radial gradient for atom
  */
 const createAtomGradient = (ctx, screenPos, radius, mainColor, isPlayer, isFixed) => {
   const offset = gradientOffset(screenPos, radius);
@@ -487,7 +487,7 @@ export const drawAtom = (ctx, atom, scale, isPlayer = false, showLabel = true, c
 };
 
 /**
- * Calculate fireball color based on lifetime - Pure function
+ * Calculate fireball color based on lifetime
  */
 const calculateFireballColor = (tau) => {
   const tau1 = 0.25;

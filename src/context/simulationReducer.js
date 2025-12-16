@@ -1,6 +1,6 @@
 /**
  * Simulation Reducer - Functional Programming Style
- * Pure functions for state management with immutable data transformations
+ * State management with immutable data transformations
  */
 import { logSimulation, logPhysics } from '../utils/logger';
 import {
@@ -121,7 +121,7 @@ const clampVec3 = (v, min, max) => vec3(
 const getAtomProps = (type) => ATOM_PROPERTIES[type] ?? ATOM_PROPERTIES[2];
 
 /**
- * Create a new atom object - Pure function
+ * Create a new atom object
  * @param {number} id - Unique atom identifier
  * @param {number} x - X position
  * @param {number} y - Y position
@@ -166,7 +166,7 @@ const createInitialAtoms = () => {
 // ============================================================================
 
 /**
- * Calculate Lennard-Jones force between two atoms - Pure function
+ * Calculate Lennard-Jones force between two atoms
  * V(r) = 4ε[(σ/r)^12 - (σ/r)^6]
  * F(r) = 24ε/r * [2(σ/r)^12 - (σ/r)^6]
  */
@@ -196,7 +196,7 @@ const calculateLJForce = (atom1, atom2) => {
 };
 
 /**
- * Calculate wall boundary force for an atom - Pure function
+ * Calculate wall boundary force for an atom
  * Applies spring force when atom penetrates walls
  */
 const calculateWallForce = (atom, size, wallSpring) => {
@@ -216,7 +216,7 @@ const calculateWallForce = (atom, size, wallSpring) => {
 };
 
 /**
- * Calculate bond order between atoms based on distance - Pure function
+ * Calculate bond order between atoms based on distance
  * Uses Gaussian function for smooth bond visualization
  */
 const calculateBondOrder = (distance, sigma) => {
@@ -226,7 +226,7 @@ const calculateBondOrder = (distance, sigma) => {
 };
 
 /**
- * Update single atom with forces and velocity - Pure function
+ * Update single atom with forces and velocity
  * Implements velocity Verlet integration with damping
  */
 const updateAtomMotion = (atom, totalForce, dt, maxVel) => {
@@ -397,7 +397,7 @@ const applyThermostat = (atoms, currentTemp, targetTemp, tau, dt) => {
 };
 
 /**
- * Calculate kinetic energy of an atom - Pure function
+ * Calculate kinetic energy of an atom
  * KE = 0.5 * m * v^2
  */
 const calculateKineticEnergy = (atom) => {
@@ -433,11 +433,11 @@ const calculateCoordinationNumbers = (atoms, cutoff = 3.0) => {
 };
 
 // ============================================================================
-// SIMULATION STEP - Pure function composition
+// SIMULATION STEP
 // ============================================================================
 
 /**
- * Perform one physics simulation step - Pure function
+ * Perform one physics simulation step
  * Composes force calculations, motion updates, and bond detection
  */
 const performPhysicsStep = (state) => {
@@ -551,7 +551,7 @@ const performPhysicsStep = (state) => {
 };
 
 // ============================================================================
-// ACTION HANDLERS - Pure functions returning new state
+// ACTION HANDLERS
 // ============================================================================
 
 const handleAddAtom = (state, { x, y, z, atomType }) => {

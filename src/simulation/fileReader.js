@@ -1,6 +1,6 @@
 /**
  * ReaxFF Parameter File Parser - Functional Style
- * Pure functions for parsing ReaxFF force field parameter files
+ * Functions for parsing ReaxFF force field parameter files
  */
 import { logFile } from '../utils/logger';
 
@@ -192,7 +192,7 @@ const parameterFactories = Object.freeze({
 });
 
 /**
- * Filter empty values and create parameter object - Pure function
+ * Filter empty values and create parameter object
  */
 const cleanArray = (actual, type) => {
   const newArray = actual.filter(Boolean);
@@ -201,17 +201,17 @@ const cleanArray = (actual, type) => {
 };
 
 /**
- * Normalize whitespace in a string - Pure function
+ * Normalize whitespace in a string
  */
 const normalizeWhitespace = (str) => str?.replace(/\s\s+/g, ' ').trim() ?? '';
 
 /**
- * Split line into tokens - Pure function
+ * Split line into tokens
  */
 const tokenize = (line) => normalizeWhitespace(line).split(' ').filter(Boolean);
 
 /**
- * Load parameter values from lines - Pure function
+ * Load parameter values from lines
  */
 const loadAtoms = (lines, start, end, type) => {
   const safeEnd = Math.min(end, lines.length);
@@ -231,7 +231,7 @@ const loadAtoms = (lines, start, end, type) => {
 };
 
 /**
- * Parse integer from line - Pure function
+ * Parse integer from line
  */
 const parseLineCount = (line) => {
   const match = line?.match(/[0-9]+/);
@@ -239,7 +239,7 @@ const parseLineCount = (line) => {
 };
 
 /**
- * Safely set nested object property - Pure function
+ * Safely set nested object property
  */
 const setNestedProperty = (obj, keys, value) => {
   const result = { ...obj };
@@ -256,7 +256,7 @@ const setNestedProperty = (obj, keys, value) => {
 };
 
 /**
- * Combine one-body parameters into two-body parameters - Pure function
+ * Combine one-body parameters into two-body parameters
  */
 const combineParameters = (onebody, twobody) => {
   const result = { ...twobody };
@@ -300,7 +300,7 @@ const combineParameters = (onebody, twobody) => {
 };
 
 // ============================================================================
-// MAIN PARSER - Composition of pure functions
+// MAIN PARSER
 // ============================================================================
 
 /**
