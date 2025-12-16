@@ -192,12 +192,16 @@ function SimulationCanvas() {
     }
   }, [keys, simulation.playerId, simulation.atoms, simulation.thrust, dispatch]);
 
-  // Mouse wheel for zoom
+  // Mouse wheel for zoom (only if not locked)
   const handleWheel = useCallback((e) => {
+    if (simulation.lockZoom) {
+      // Don't prevent default if zoom is locked - let page scroll normally
+      return;
+    }
     e.preventDefault();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     dispatch({ type: 'SET_ZOOM', payload: simulation.zoom * delta });
-  }, [dispatch, simulation.zoom]);
+  }, [dispatch, simulation.zoom, simulation.lockZoom]);
 
   // Get canvas coordinates from mouse event
   const getCanvasCoords = useCallback((e) => {
@@ -303,6 +307,21 @@ function SimulationCanvas() {
     e.preventDefault();
   }, []);
 
+  // 3D projection helper - converts 3D coords to 2D screen coords with perspective
+  const project3D = useCallback((x, y, z, canvasWidth, canvasHeight, scale) => {
+    const fov = 500; // Field of view
+    const cameraZ = 200; // Camera distance
+    const depth = z + cameraZ;
+    const factor = fov / Math.max(depth, 1);
+    
+    return {
+      x: canvasWidth / 2 + (x - canvasWidth / (2 * scale)) * scale * factor,
+      y: canvasHeight / 2 + (y - canvasHeight / (2 * scale)) * scale * factor,
+      scale: factor / (fov / cameraZ), // Scale factor for size
+      depth: depth
+    };
+  }, []);
+
   // Render function
   const render = useCallback(() => {
     const canvas = canvasRef.current;
@@ -312,7 +331,7 @@ function SimulationCanvas() {
     const { 
       atoms, bonds, fireballs, clearScreen, scale, size, showBonds,
       zoom, pan, selectedAtomId, showVelocityVectors, showAtomLabels,
-      showBondLengths, theme
+      showBondLengths, theme, viewMode
     } = simulation;
 
     // Apply zoom and pan transforms
@@ -325,63 +344,195 @@ function SimulationCanvas() {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
-    // Apply transformations
-    ctx.translate(pan.x, pan.y);
-    ctx.scale(zoom, zoom);
+    // 3D View rendering
+    if (viewMode === '3d') {
+      // Sort atoms by z-depth for proper rendering order (back to front)
+      const sortedAtoms = [...atoms].sort((a, b) => a.pos.z - b.pos.z);
+      
+      // Draw 3D grid floor
+      ctx.strokeStyle = theme === 'light' ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
+      ctx.lineWidth = 1;
+      const gridSize = 20;
+      for (let i = 0; i <= size.x; i += gridSize) {
+        const p1 = project3D(i, 0, -50, canvas.width, canvas.height, scale);
+        const p2 = project3D(i, size.y, -50, canvas.width, canvas.height, scale);
+        ctx.beginPath();
+        ctx.moveTo(p1.x * zoom + pan.x, p1.y * zoom + pan.y);
+        ctx.lineTo(p2.x * zoom + pan.x, p2.y * zoom + pan.y);
+        ctx.stroke();
+      }
+      for (let j = 0; j <= size.y; j += gridSize) {
+        const p1 = project3D(0, j, -50, canvas.width, canvas.height, scale);
+        const p2 = project3D(size.x, j, -50, canvas.width, canvas.height, scale);
+        ctx.beginPath();
+        ctx.moveTo(p1.x * zoom + pan.x, p1.y * zoom + pan.y);
+        ctx.lineTo(p2.x * zoom + pan.x, p2.y * zoom + pan.y);
+        ctx.stroke();
+      }
 
-    // Draw boundary
-    ctx.strokeStyle = theme === 'light' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.3)';
-    ctx.lineWidth = 2 / zoom;
-    ctx.strokeRect(2 / zoom, 2 / zoom, size.x * scale - 4 / zoom, size.y * scale - 4 / zoom);
-
-    // Draw bonds first (behind atoms)
-    if (showBonds && bonds) {
-      bonds.forEach(bond => {
-        const atom1 = atoms.find(a => a.id === bond.atom1Id);
-        const atom2 = atoms.find(a => a.id === bond.atom2Id);
-        if (atom1 && atom2) {
-          if (showBondLengths) {
-            drawBondWithLength(ctx, atom1, atom2, bond.order, scale, true);
-          } else {
-            drawBond(ctx, atom1, atom2, bond.order, scale);
+      // Draw bonds in 3D
+      if (showBonds && bonds) {
+        bonds.forEach(bond => {
+          const atom1 = atoms.find(a => a.id === bond.atom1Id);
+          const atom2 = atoms.find(a => a.id === bond.atom2Id);
+          if (atom1 && atom2) {
+            const p1 = project3D(atom1.pos.x, atom1.pos.y, atom1.pos.z, canvas.width, canvas.height, scale);
+            const p2 = project3D(atom2.pos.x, atom2.pos.y, atom2.pos.z, canvas.width, canvas.height, scale);
+            
+            ctx.strokeStyle = theme === 'light' ? 'rgba(100, 100, 100, 0.6)' : 'rgba(200, 200, 200, 0.6)';
+            ctx.lineWidth = Math.max(1, bond.order * 2 * Math.min(p1.scale, p2.scale));
+            ctx.beginPath();
+            ctx.moveTo(p1.x * zoom + pan.x, p1.y * zoom + pan.y);
+            ctx.lineTo(p2.x * zoom + pan.x, p2.y * zoom + pan.y);
+            ctx.stroke();
           }
+        });
+      }
+
+      // Draw atoms in 3D with depth-based size and shading
+      sortedAtoms.forEach(atom => {
+        const projected = project3D(atom.pos.x, atom.pos.y, atom.pos.z, canvas.width, canvas.height, scale);
+        const screenX = projected.x * zoom + pan.x;
+        const screenY = projected.y * zoom + pan.y;
+        const radius = atom.radius * scale * projected.scale * zoom;
+        
+        // Depth-based shading (darker = further away)
+        const depthFactor = Math.max(0.3, Math.min(1, projected.scale));
+        
+        // Draw shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+        ctx.beginPath();
+        ctx.ellipse(screenX + 3, screenY + 5, radius * 0.9, radius * 0.4, 0, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw atom with gradient for 3D effect
+        const gradient = ctx.createRadialGradient(
+          screenX - radius * 0.3, screenY - radius * 0.3, 0,
+          screenX, screenY, radius
+        );
+        
+        const baseColor = atom.color || '#888888';
+        const r = parseInt(baseColor.slice(1, 3), 16);
+        const g = parseInt(baseColor.slice(3, 5), 16);
+        const b = parseInt(baseColor.slice(5, 7), 16);
+        
+        gradient.addColorStop(0, `rgba(${Math.min(255, r + 80)}, ${Math.min(255, g + 80)}, ${Math.min(255, b + 80)}, ${depthFactor})`);
+        gradient.addColorStop(0.5, `rgba(${r}, ${g}, ${b}, ${depthFactor})`);
+        gradient.addColorStop(1, `rgba(${Math.max(0, r - 60)}, ${Math.max(0, g - 60)}, ${Math.max(0, b - 60)}, ${depthFactor})`);
+        
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Highlight for player atom
+        if (atom.id === simulation.playerId) {
+          ctx.strokeStyle = 'rgba(255, 200, 50, 0.8)';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+        }
+        
+        // Selection highlight
+        if (atom.id === selectedAtomId) {
+          ctx.strokeStyle = 'rgba(100, 200, 255, 0.9)';
+          ctx.lineWidth = 3;
+          ctx.setLineDash([5, 5]);
+          ctx.beginPath();
+          ctx.arc(screenX, screenY, radius + 5, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        
+        // Draw label
+        if (showAtomLabels && radius > 8) {
+          ctx.fillStyle = theme === 'light' ? '#000' : '#fff';
+          ctx.font = `bold ${Math.max(10, radius * 0.8)}px sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(atom.symbol || 'X', screenX, screenY);
         }
       });
-    }
 
-    // Draw atoms
-    atoms.forEach(atom => {
-      drawAtom(ctx, atom, scale, atom.id === simulation.playerId, showAtomLabels);
-      
-      // Draw velocity vectors if enabled
-      if (showVelocityVectors) {
-        drawVelocityVector(ctx, atom, scale, zoom);
-      }
-    });
-
-    // Draw selection highlight
-    if (selectedAtomId !== null) {
-      const selectedAtom = atoms.find(a => a.id === selectedAtomId);
-      if (selectedAtom) {
-        const screenPos = { x: scale * selectedAtom.pos.x, y: scale * selectedAtom.pos.y };
-        const radius = scale * selectedAtom.radius;
+      // Draw fireballs in 3D
+      fireballs.forEach(fireball => {
+        const projected = project3D(fireball.pos.x, fireball.pos.y, 0, canvas.width, canvas.height, scale);
+        const screenX = projected.x * zoom + pan.x;
+        const screenY = projected.y * zoom + pan.y;
+        const radius = fireball.radius * scale * projected.scale * zoom;
+        const alpha = 1 - fireball.time / fireball.lifetime;
         
-        ctx.strokeStyle = 'rgba(100, 200, 255, 0.9)';
-        ctx.lineWidth = 3 / zoom;
-        ctx.setLineDash([5 / zoom, 5 / zoom]);
+        const gradient = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, radius);
+        gradient.addColorStop(0, `rgba(255, 200, 50, ${alpha})`);
+        gradient.addColorStop(0.5, `rgba(255, 100, 0, ${alpha * 0.7})`);
+        gradient.addColorStop(1, `rgba(255, 50, 0, 0)`);
+        
+        ctx.fillStyle = gradient;
         ctx.beginPath();
-        ctx.arc(screenPos.x, screenPos.y, radius + 8 / zoom, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
+        ctx.arc(screenX, screenY, radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      ctx.restore();
+    } else {
+      // Standard 2D rendering
+      // Apply transformations
+      ctx.translate(pan.x, pan.y);
+      ctx.scale(zoom, zoom);
+
+      // Draw boundary
+      ctx.strokeStyle = theme === 'light' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.3)';
+      ctx.lineWidth = 2 / zoom;
+      ctx.strokeRect(2 / zoom, 2 / zoom, size.x * scale - 4 / zoom, size.y * scale - 4 / zoom);
+
+      // Draw bonds first (behind atoms)
+      if (showBonds && bonds) {
+        bonds.forEach(bond => {
+          const atom1 = atoms.find(a => a.id === bond.atom1Id);
+          const atom2 = atoms.find(a => a.id === bond.atom2Id);
+          if (atom1 && atom2) {
+            if (showBondLengths) {
+              drawBondWithLength(ctx, atom1, atom2, bond.order, scale, true);
+            } else {
+              drawBond(ctx, atom1, atom2, bond.order, scale);
+            }
+          }
+        });
       }
+
+      // Draw atoms
+      atoms.forEach(atom => {
+        drawAtom(ctx, atom, scale, atom.id === simulation.playerId, showAtomLabels);
+        
+        // Draw velocity vectors if enabled
+        if (showVelocityVectors) {
+          drawVelocityVector(ctx, atom, scale, zoom);
+        }
+      });
+
+      // Draw selection highlight
+      if (selectedAtomId !== null) {
+        const selectedAtom = atoms.find(a => a.id === selectedAtomId);
+        if (selectedAtom) {
+          const screenPos = { x: scale * selectedAtom.pos.x, y: scale * selectedAtom.pos.y };
+          const radius = scale * selectedAtom.radius;
+          
+          ctx.strokeStyle = 'rgba(100, 200, 255, 0.9)';
+          ctx.lineWidth = 3 / zoom;
+          ctx.setLineDash([5 / zoom, 5 / zoom]);
+          ctx.beginPath();
+          ctx.arc(screenPos.x, screenPos.y, radius + 8 / zoom, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
+
+      // Draw fireballs
+      fireballs.forEach(fireball => {
+        drawFireball(ctx, fireball, scale);
+      });
+
+      ctx.restore();
     }
-
-    // Draw fireballs
-    fireballs.forEach(fireball => {
-      drawFireball(ctx, fireball, scale);
-    });
-
-    ctx.restore();
 
     // Draw atom info tooltip (outside transform)
     if (selectedAtomId !== null) {
@@ -467,6 +618,78 @@ function SimulationCanvas() {
       ref={containerRef}
       className={`canvas-container ${simulation.isFullscreen ? 'fullscreen' : ''}`}
     >
+      {/* View Controls Toolbar */}
+      <div className="view-controls-toolbar">
+        <button
+          className={`toolbar-btn ${simulation.viewMode === '2d' ? 'active' : ''}`}
+          onClick={() => dispatch({ type: 'SET_VIEW_MODE', payload: '2d' })}
+          title="2D View"
+        >
+          2D
+        </button>
+        <button
+          className={`toolbar-btn ${simulation.viewMode === '3d' ? 'active' : ''}`}
+          onClick={() => dispatch({ type: 'SET_VIEW_MODE', payload: '3d' })}
+          title="3D View"
+        >
+          3D
+        </button>
+        <div className="toolbar-divider" />
+        <button
+          className={`toolbar-btn ${simulation.lockZoom ? 'active' : ''}`}
+          onClick={() => dispatch({ type: 'TOGGLE_LOCK_ZOOM' })}
+          title={simulation.lockZoom ? 'Unlock Zoom (scroll disabled)' : 'Lock Zoom (scroll enabled)'}
+        >
+          {simulation.lockZoom ? '🔒' : '🔓'}
+        </button>
+        <button
+          className="toolbar-btn"
+          onClick={() => dispatch({ type: 'SET_ZOOM', payload: simulation.zoom * 1.2 })}
+          title="Zoom In"
+          disabled={simulation.lockZoom}
+        >
+          ➕
+        </button>
+        <button
+          className="toolbar-btn"
+          onClick={() => dispatch({ type: 'SET_ZOOM', payload: simulation.zoom * 0.8 })}
+          title="Zoom Out"
+          disabled={simulation.lockZoom}
+        >
+          ➖
+        </button>
+        <button
+          className="toolbar-btn"
+          onClick={() => dispatch({ type: 'RESET_VIEW' })}
+          title="Reset View"
+        >
+          🏠
+        </button>
+        <div className="toolbar-divider" />
+        <button
+          className="toolbar-btn"
+          onClick={() => dispatch({ type: 'TOGGLE_FULLSCREEN' })}
+          title="Fullscreen (F)"
+        >
+          ⛶
+        </button>
+        <button
+          className="toolbar-btn"
+          onClick={() => {
+            const dataUrl = canvasRef.current?.toDataURL('image/png');
+            if (dataUrl) {
+              const link = document.createElement('a');
+              link.download = `simulation-${Date.now()}.png`;
+              link.href = dataUrl;
+              link.click();
+            }
+          }}
+          title="Screenshot"
+        >
+          📷
+        </button>
+      </div>
+      
       <canvas
         ref={canvasRef}
         className="simulation-canvas"

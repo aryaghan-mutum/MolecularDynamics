@@ -77,6 +77,8 @@ export const INITIAL_SIMULATION_STATE = Object.freeze({
   initialPositions: {},        // For MSD calculation
   customAtomColors: {},        // Custom colors per atom type
   playerForce: Object.freeze({ x: 0, y: 0 }), // External force from keyboard
+  lockZoom: true,              // Lock zoom/scroll on canvas (static view)
+  viewMode: '2d',              // '2d' or '3d' view mode
 });
 
 // ============================================================================
@@ -699,6 +701,22 @@ const handleToggleFullscreen = (state) => ({
   isFullscreen: !state.isFullscreen 
 });
 
+const handleToggleLockZoom = (state) => ({
+  ...state,
+  lockZoom: !state.lockZoom
+});
+
+const handleSetViewMode = (state, viewMode) => ({
+  ...state,
+  viewMode: viewMode === '3d' ? '3d' : '2d'
+});
+
+const handleResetView = (state) => ({
+  ...state,
+  zoom: 1.0,
+  pan: Object.freeze({ x: 0, y: 0 })
+});
+
 const handlePushUndo = (state) => {
   const currentState = {
     atoms: state.atoms.map(a => ({ ...a })),
@@ -1189,6 +1207,10 @@ const actionHandlers = Object.freeze({
   SET_INITIAL_POSITIONS: handleSetInitialPositions,
   CLEAR_MSD_TRACKING: handleClearMsdTracking,
   IMPORT_STRUCTURE: handleImportStructure,
+  // View control actions
+  TOGGLE_LOCK_ZOOM: handleToggleLockZoom,
+  SET_VIEW_MODE: handleSetViewMode,
+  RESET_VIEW: handleResetView,
 });
 
 /**

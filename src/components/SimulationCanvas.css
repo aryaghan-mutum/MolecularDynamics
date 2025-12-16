@@ -178,6 +178,63 @@
   pointer-events: none;
 }
 
+/* View Controls Toolbar */
+.view-controls-toolbar {
+  position: absolute;
+  top: var(--space-3);
+  left: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1);
+  background: rgba(19, 19, 26, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  z-index: 100;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 28px;
+  padding: 0 var(--space-2);
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.toolbar-btn:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: var(--color-primary);
+  color: var(--color-text);
+}
+
+.toolbar-btn.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: white;
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--color-border);
+  margin: 0 var(--space-1);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .canvas-wrapper {
@@ -196,5 +253,16 @@
   .canvas-badge {
     font-size: 0.6875rem;
     padding: var(--space-1) var(--space-2);
+  }
+  
+  .view-controls-toolbar {
+    top: var(--space-2);
+    left: var(--space-2);
+  }
+  
+  .toolbar-btn {
+    min-width: 28px;
+    height: 24px;
+    font-size: 0.7rem;
   }
 }
