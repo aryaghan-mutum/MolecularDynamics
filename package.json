@@ -1,6 +1,6 @@
 {
   "name": "molecular-dynamics",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "MD is an atomistic simulation technique used to study broad set of biomolecules in diverse conditions.",
   "private": true,
   "type": "module",

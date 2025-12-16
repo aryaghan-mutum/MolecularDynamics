@@ -572,4 +572,59 @@ describe('Simulation Reducer', () => {
       expect(typeof initialState.autoSaveEnabled).toBe('boolean');
     });
   });
+
+  describe('QEq (Charge Equilibration) actions', () => {
+    it('should have enableQEq in initial state', () => {
+      expect(initialState.enableQEq).toBeDefined();
+      expect(typeof initialState.enableQEq).toBe('boolean');
+    });
+
+    it('should have qeqUpdateInterval in initial state', () => {
+      expect(initialState.qeqUpdateInterval).toBeDefined();
+      expect(initialState.qeqUpdateInterval).toBeGreaterThan(0);
+    });
+
+    it('should toggle enableQEq with TOGGLE_QEQ action', () => {
+      const originalValue = initialState.enableQEq;
+      const action = { type: 'TOGGLE_QEQ' };
+      
+      const newState = simulationReducer(initialState, action);
+      
+      expect(newState.enableQEq).toBe(!originalValue);
+    });
+
+    it('should toggle enableQEq back to original with two TOGGLE_QEQ actions', () => {
+      const originalValue = initialState.enableQEq;
+      const action = { type: 'TOGGLE_QEQ' };
+      
+      let newState = simulationReducer(initialState, action);
+      newState = simulationReducer(newState, action);
+      
+      expect(newState.enableQEq).toBe(originalValue);
+    });
+
+    it('should set qeqUpdateInterval with SET_QEQ_INTERVAL action', () => {
+      const action = { type: 'SET_QEQ_INTERVAL', payload: 25 };
+      
+      const newState = simulationReducer(initialState, action);
+      
+      expect(newState.qeqUpdateInterval).toBe(25);
+    });
+
+    it('should enforce minimum qeqUpdateInterval of 1', () => {
+      const action = { type: 'SET_QEQ_INTERVAL', payload: 0 };
+      
+      const newState = simulationReducer(initialState, action);
+      
+      expect(newState.qeqUpdateInterval).toBe(1);
+    });
+
+    it('should floor qeqUpdateInterval to integer', () => {
+      const action = { type: 'SET_QEQ_INTERVAL', payload: 15.7 };
+      
+      const newState = simulationReducer(initialState, action);
+      
+      expect(newState.qeqUpdateInterval).toBe(15);
+    });
+  });
 });

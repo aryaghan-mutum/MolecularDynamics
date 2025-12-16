@@ -75,6 +75,34 @@ describe('Physics Engine', () => {
         expect(atom).toHaveProperty('roSigma');
       });
     });
+
+    it('should have QEq parameters (electronegativity and hardness) for each atom type', () => {
+      Object.entries(ATOM_TYPES).forEach(([typeId, atom]) => {
+        expect(atom).toHaveProperty('electronegativity');
+        expect(atom).toHaveProperty('hardness');
+        expect(atom.electronegativity).toBeGreaterThan(0);
+        expect(atom.hardness).toBeGreaterThan(0);
+        // Electronegativity should be in reasonable range (eV)
+        expect(atom.electronegativity).toBeLessThan(15);
+        // Hardness should be positive and reasonable
+        expect(atom.hardness).toBeLessThan(15);
+      });
+    });
+
+    it('should have correct QEq parameters for Carbon', () => {
+      expect(ATOM_TYPES[1].electronegativity).toBeCloseTo(5.343, 2);
+      expect(ATOM_TYPES[1].hardness).toBeCloseTo(5.063, 2);
+    });
+
+    it('should have correct QEq parameters for Hydrogen', () => {
+      expect(ATOM_TYPES[2].electronegativity).toBeCloseTo(4.528, 2);
+      expect(ATOM_TYPES[2].hardness).toBeCloseTo(6.9452, 2);
+    });
+
+    it('should have correct QEq parameters for Oxygen', () => {
+      expect(ATOM_TYPES[3].electronegativity).toBeCloseTo(8.741, 2);
+      expect(ATOM_TYPES[3].hardness).toBeCloseTo(6.0824, 2);
+    });
   });
 
   describe('calculateDistance', () => {

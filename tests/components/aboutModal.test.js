@@ -97,6 +97,7 @@ describe('AboutModal Component', () => {
     render(<AboutModal />);
     fireEvent.click(screen.getByRole('button', { name: /about/i }));
     
-    expect(screen.getByText(/Version 1.0.0/)).toBeInTheDocument();
+    // Version is dynamically loaded from package.json
+    expect(screen.getByText(/Version \d+\.\d+\.\d+/)).toBeInTheDocument();
   });
 });

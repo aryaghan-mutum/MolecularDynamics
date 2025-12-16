@@ -65,6 +65,8 @@ export const INITIAL_SIMULATION_STATE = Object.freeze({
   thermostatTau: 0.5,          // Thermostat coupling constant
   enableCoulomb: false,        // Electrostatic interactions
   coulombConstant: 332.0,      // kcal·Å/(mol·e²)
+  enableQEq: true,             // Enable charge equilibration for stable molecules
+  qeqUpdateInterval: 10,       // Update charges every N steps (performance)
   show3DDepth: false,          // 3D depth visualization
   selectedAtomIds: [],         // Multi-selection
   clipboard: [],               // Copy/paste buffer
@@ -269,6 +271,112 @@ const calculateCoulombForce = (atom1, atom2, coulombConstant) => {
   };
 };
 
+// ============================================================================
+// CHARGE EQUILIBRATION (QEq) - Electronegativity Equalization Method
+// ============================================================================
+
+/**
+ * Solve charge equilibration using Gauss-Seidel iteration
+ * Based on Rappe & Goddard QEq method
+ * 
+ * The chemical potential for each atom:
+ * μᵢ = χᵢ + 2ηᵢqᵢ + Σⱼ(qⱼ * J(rᵢⱼ))
+ * 
+ * At equilibrium: μ₁ = μ₂ = ... = μₙ = μ_common
+ * Constraint: Σqᵢ = Q_total (charge conservation)
+ * 
+ * @param {Array} atoms - Array of atoms with electronegativity and hardness
+ * @param {number} totalCharge - Total system charge (default 0 for neutral)
+ * @returns {Array} Atoms with updated charges
+ */
+const equilibrateCharges = (atoms, totalCharge = 0) => {
+  if (atoms.length < 2) return atoms;
+  
+  const n = atoms.length;
+  const EV_TO_KCAL = 23.0605; // eV to kcal/mol conversion
+  
+  // Get QEq parameters for each atom
+  const chi = atoms.map(a => {
+    const props = getAtomProps(a.type);
+    return (props.electronegativity || 5.0) * EV_TO_KCAL;
+  });
+  
+  const eta = atoms.map(a => {
+    const props = getAtomProps(a.type);
+    return (props.hardness || 5.0) * EV_TO_KCAL;
+  });
+  
+  // Calculate Coulomb interaction matrix J(rᵢⱼ)
+  // Using shielded Coulomb: J(r) = 1/sqrt(r² + (1/(2η))²)
+  const calcJ = (i, j) => {
+    if (i === j) return 0;
+    const dx = atoms[j].pos.x - atoms[i].pos.x;
+    const dy = atoms[j].pos.y - atoms[i].pos.y;
+    const dz = atoms[j].pos.z - atoms[i].pos.z;
+    const r2 = dx * dx + dy * dy + dz * dz;
+    
+    // Shielding parameter from average hardness
+    const avgEta = (eta[i] + eta[j]) / 2;
+    const shieldR2 = 1 / (4 * avgEta * avgEta);
+    
+    return 332.0 / Math.sqrt(r2 + shieldR2 + 0.01); // 332 = kcal·Å/(mol·e²)
+  };
+  
+  // Initialize charges (use existing or zero)
+  const q = atoms.map(a => a.charge || 0);
+  
+  // Gauss-Seidel iteration to equilibrate charges
+  const maxIter = 50;
+  const tolerance = 1e-4;
+  
+  for (let iter = 0; iter < maxIter; iter++) {
+    let maxChange = 0;
+    
+    // Calculate common chemical potential (Lagrange multiplier)
+    let sumChi = 0;
+    let sumInvEta = 0;
+    
+    for (let i = 0; i < n; i++) {
+      let sumJ = 0;
+      for (let j = 0; j < n; j++) {
+        if (i !== j) sumJ += q[j] * calcJ(i, j);
+      }
+      sumChi += (chi[i] + sumJ) / (2 * eta[i]);
+      sumInvEta += 1 / (2 * eta[i]);
+    }
+    
+    const mu = (sumChi - totalCharge) / sumInvEta;
+    
+    // Update charges
+    for (let i = 0; i < n; i++) {
+      let sumJ = 0;
+      for (let j = 0; j < n; j++) {
+        if (i !== j) sumJ += q[j] * calcJ(i, j);
+      }
+      
+      const newQ = (mu - chi[i] - sumJ) / (2 * eta[i]);
+      const change = Math.abs(newQ - q[i]);
+      maxChange = Math.max(maxChange, change);
+      q[i] = newQ;
+    }
+    
+    // Enforce charge conservation
+    const qSum = q.reduce((a, b) => a + b, 0);
+    const correction = (totalCharge - qSum) / n;
+    for (let i = 0; i < n; i++) {
+      q[i] += correction;
+    }
+    
+    if (maxChange < tolerance) break;
+  }
+  
+  // Clamp charges to reasonable range (-2 to +2)
+  return atoms.map((atom, i) => ({
+    ...atom,
+    charge: Math.max(-2, Math.min(2, q[i])),
+  }));
+};
+
 /**
  * Apply Berendsen thermostat - velocity rescaling
  * Scale velocities to approach target temperature
@@ -333,15 +441,21 @@ const calculateCoordinationNumbers = (atoms, cutoff = 3.0) => {
  * Composes force calculations, motion updates, and bond detection
  */
 const performPhysicsStep = (state) => {
-  const { atoms, size, wallSpring, dt, maxVel, enableCoulomb, coulombConstant, boundaryCondition } = state;
+  const { atoms, size, wallSpring, dt, maxVel, enableCoulomb, coulombConstant, boundaryCondition, enableQEq, qeqUpdateInterval, time } = state;
   
   if (atoms.length === 0) {
     return { atoms: [], bonds: [], energy: { kinetic: 0, potential: 0, total: 0 }, temperature: 0 };
   }
   
+  // Apply charge equilibration periodically for stable molecules
+  let chargedAtoms = atoms;
+  if (enableQEq && atoms.length >= 2 && (time % qeqUpdateInterval === 0)) {
+    chargedAtoms = equilibrateCharges(atoms, 0);
+  }
+  
   // Initialize atoms with reset forces, but preserve player force
   const { playerForce = { x: 0, y: 0 }, playerId } = state;
-  const atomsWithForces = atoms.map(atom => {
+  const atomsWithForces = chargedAtoms.map(atom => {
     if (atom.id === playerId && (playerForce.x !== 0 || playerForce.y !== 0)) {
       return { ...atom, force: vec3(playerForce.x, playerForce.y, 0) };
     }
@@ -364,7 +478,7 @@ const performPhysicsStep = (state) => {
       
       totalPotentialEnergy += energy;
       
-      // Coulomb force if enabled
+      // Coulomb force if enabled (QEq provides the charges)
       if (enableCoulomb) {
         const coulomb = calculateCoulombForce(atomsWithForces[i], atomsWithForces[j], coulombConstant);
         atomsWithForces[i].force = addVec3(atomsWithForces[i].force, coulomb.force);
@@ -900,6 +1014,16 @@ const handleSetCoulombConstant = (state, value) => ({
   coulombConstant: value,
 });
 
+const handleToggleQEq = (state) => ({
+  ...state,
+  enableQEq: !state.enableQEq,
+});
+
+const handleSetQEqInterval = (state, value) => ({
+  ...state,
+  qeqUpdateInterval: Math.max(1, Math.floor(value)),
+});
+
 const handleToggle3DDepth = (state) => ({
   ...state,
   show3DDepth: !state.show3DDepth,
@@ -1239,6 +1363,8 @@ const actionHandlers = Object.freeze({
   SET_THERMOSTAT_TAU: handleSetThermostatTau,
   TOGGLE_COULOMB: handleToggleCoulomb,
   SET_COULOMB_CONSTANT: handleSetCoulombConstant,
+  TOGGLE_QEQ: handleToggleQEq,
+  SET_QEQ_INTERVAL: handleSetQEqInterval,
   TOGGLE_3D_DEPTH: handleToggle3DDepth,
   TOGGLE_FIX_ATOM: handleToggleFixAtom,
   SET_ATOM_CHARGE: handleSetAtomCharge,

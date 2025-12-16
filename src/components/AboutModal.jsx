@@ -5,6 +5,7 @@
  */
 
 import { useState } from 'react';
+import { version } from '../../package.json';
 import './AboutModal.css';
 
 /**
@@ -165,7 +166,7 @@ function AboutModal({ isOpenExternal, onCloseExternal }) {
                     View on GitHub
                   </a>
                 </p>
-                <p className="version">Version 1.0.0</p>
+                <p className="version">Version {version}</p>
               </section>
             </div>
           </div>

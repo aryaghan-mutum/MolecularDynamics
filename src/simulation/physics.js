@@ -30,6 +30,9 @@ export const ATOM_TYPES = {
     color: '#222222',         // CPK: Dark charcoal gray
     highlightColor: '#555555',
     charge: 0,
+    // QEq parameters (Rappe & Goddard, 1991)
+    electronegativity: 5.343,  // χ (eV)
+    hardness: 5.063,           // η (eV)
     roSigma: 1.3817,
     roPi: 1.1341,
     roPiPi: 1.2114,
@@ -43,6 +46,9 @@ export const ATOM_TYPES = {
     color: '#FFFFFF',         // CPK: White
     highlightColor: '#E8E8E8',
     charge: 0.1,
+    // QEq parameters
+    electronegativity: 4.528,  // χ (eV)
+    hardness: 6.9452,          // η (eV)
     roSigma: 0.8930,
     roPi: -0.1,
     roPiPi: -0.1,
@@ -56,6 +62,9 @@ export const ATOM_TYPES = {
     color: '#FF0D0D',         // CPK: Bright red
     highlightColor: '#FF6666',
     charge: -0.2,
+    // QEq parameters
+    electronegativity: 8.741,  // χ (eV)
+    hardness: 6.0824,          // η (eV)
     roSigma: 1.2450,
     roPi: 1.0548,
     roPiPi: 0.9049,
@@ -69,6 +78,9 @@ export const ATOM_TYPES = {
     color: '#3050F8',         // CPK: Deep blue
     highlightColor: '#7090FF',
     charge: -0.1,
+    // QEq parameters
+    electronegativity: 7.132,  // χ (eV)
+    hardness: 6.8986,          // η (eV)
     roSigma: 1.2333,
     roPi: 1.1748,
     roPiPi: 1.0433,
@@ -82,6 +94,9 @@ export const ATOM_TYPES = {
     color: '#FFFF30',         // CPK: Yellow
     highlightColor: '#FFFF80',
     charge: 0,
+    // QEq parameters
+    electronegativity: 6.928,  // χ (eV)
+    hardness: 4.486,           // η (eV)
     roSigma: 1.9673,
     roPi: 1.5359,
     roPiPi: 1.4601,
@@ -95,6 +110,9 @@ export const ATOM_TYPES = {
     color: '#FF8000',         // CPK: Orange
     highlightColor: '#FFAA55',
     charge: 0,
+    // QEq parameters
+    electronegativity: 5.463,  // χ (eV)
+    hardness: 4.88,            // η (eV)
     roSigma: 1.5994,
     roPi: 1.3000,
     roPiPi: -1.0,
@@ -109,6 +127,9 @@ export const ATOM_TYPES = {
     color: '#F0C8A0',         // CPK: Tan/Beige
     highlightColor: '#F5DCC8',
     charge: 0,
+    // QEq parameters
+    electronegativity: 4.168,  // χ (eV)
+    hardness: 3.4876,          // η (eV)
     roSigma: 2.0175,
     roPi: 1.2962,
     roPiPi: -1.0,
@@ -122,6 +143,9 @@ export const ATOM_TYPES = {
     color: '#FFD123',         // CPK: Gold
     highlightColor: '#FFE066',
     charge: 0,
+    // QEq parameters
+    electronegativity: 5.77,   // χ (eV)
+    hardness: 3.55,            // η (eV)
     roSigma: 1.9083,
     roPi: -1.0,
     roPiPi: -1.0,
@@ -135,6 +159,9 @@ export const ATOM_TYPES = {
     color: '#D0D0E0',         // CPK: Light Gray-Blue
     highlightColor: '#E8E8F0',
     charge: 0,
+    // QEq parameters
+    electronegativity: 5.60,   // χ (eV)
+    hardness: 3.45,            // η (eV)
     roSigma: 1.8582,
     roPi: 1.6054,
     roPiPi: -1.0,
@@ -148,6 +175,9 @@ export const ATOM_TYPES = {
     color: '#7D80B0',         // CPK: Slate Blue
     highlightColor: '#A0A3C8',
     charge: 0,
+    // QEq parameters
+    electronegativity: 5.106,  // χ (eV)
+    hardness: 4.285,           // η (eV)
     roSigma: 1.8200,
     roPi: -1.0,
     roPiPi: -1.0,
@@ -161,6 +191,9 @@ export const ATOM_TYPES = {
     color: '#C88033',         // CPK: Copper
     highlightColor: '#D9A066',
     charge: 0,
+    // QEq parameters
+    electronegativity: 4.200,  // χ (eV)
+    hardness: 3.850,           // η (eV)
     roSigma: 1.9202,
     roPi: 0.1,
     roPiPi: -1.0,
@@ -174,6 +207,9 @@ export const ATOM_TYPES = {
     color: '#8AFF00',         // CPK: Bright Green
     highlightColor: '#B5FF55',
     charge: 0,
+    // QEq parameters
+    electronegativity: 3.951,  // χ (eV)
+    hardness: 3.693,           // η (eV)
     roSigma: 1.8315,
     roPi: 1.0,
     roPiPi: -1.3,
@@ -187,6 +223,9 @@ export const ATOM_TYPES = {
     color: '#AB5CF2',         // CPK: Purple
     highlightColor: '#C88FF8',
     charge: 1,
+    // QEq parameters
+    electronegativity: 2.843,  // χ (eV)
+    hardness: 2.296,           // η (eV)
     roSigma: 2.0300,
     roPi: -1.0,
     roPiPi: -1.0,
@@ -200,6 +239,9 @@ export const ATOM_TYPES = {
     color: '#BFC2C7',         // CPK: Gray
     highlightColor: '#D5D8DD',
     charge: 0,
+    // QEq parameters
+    electronegativity: 3.470,  // χ (eV)
+    hardness: 3.050,           // η (eV)
     roSigma: 1.7403,
     roPi: -1.0,
     roPiPi: -1.0,
@@ -213,6 +255,9 @@ export const ATOM_TYPES = {
     color: '#50D050',         // CPK: Green
     highlightColor: '#80E080',
     charge: 0,
+    // QEq parameters
+    electronegativity: 4.190,  // χ (eV)
+    hardness: 3.495,           // η (eV)
     roSigma: 1.8099,
     roPi: -1.0,
     roPiPi: -1.0,
@@ -226,6 +271,9 @@ export const ATOM_TYPES = {
     color: '#94E0E0',         // CPK: Light Cyan
     highlightColor: '#B8F0F0',
     charge: 0,
+    // QEq parameters
+    electronegativity: 3.400,  // χ (eV)
+    hardness: 2.890,           // η (eV)
     roSigma: 1.9074,
     roPi: -1.0,
     roPiPi: -1.0,
@@ -239,6 +287,9 @@ export const ATOM_TYPES = {
     color: '#BFA6A6',         // CPK: Light Pink-Gray
     highlightColor: '#D5C8C8',
     charge: 0,
+    // QEq parameters
+    electronegativity: 3.210,  // χ (eV)
+    hardness: 2.770,           // η (eV)
     roSigma: 2.0254,
     roPi: -1.0,
     roPiPi: -1.0,
@@ -252,6 +303,9 @@ export const ATOM_TYPES = {
     color: '#FFB5B5',         // CPK: Salmon
     highlightColor: '#FFD5D5',
     charge: 0,
+    // QEq parameters (Rappe & Goddard 1991)
+    electronegativity: 4.290,  // χ (eV)
+    hardness: 4.443,           // η (eV)
     roSigma: 1.5600,
     roPi: 1.3100,
     roPiPi: -1.0,
