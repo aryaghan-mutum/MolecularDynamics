@@ -1,17 +1,19 @@
 # CI/CD Pipeline for Molecular Dynamics Simulation
-# Builds, tests, and deploys to GitHub Pages
+# Builds, tests, deploys to GitHub Pages, and creates releases
 
 name: CI/CD Pipeline
 
 on:
   push:
     branches: [main]
+    tags:
+      - 'v*'  # Trigger on version tags like v1.0.0, v2.1.0, etc.
   pull_request:
     branches: [main]
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
-  contents: read
+  contents: write  # Changed to write for creating releases
   pages: write
   id-token: write
 
@@ -76,3 +78,67 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  # Create GitHub Release
+  release:
+    needs: build-and-test
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Fetch all history for changelog generation
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build for production
+        run: npm run build
+        env:
+          NODE_ENV: production
+          PUBLIC_URL: /MolecularDynamics
+
+      - name: Create release zip
+        run: |
+          cd dist
+          zip -r ../molecular-dynamics-${{ github.ref_name }}.zip .
+          cd ..
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get the previous tag
+          PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          
+          if [ -z "$PREV_TAG" ]; then
+            # First release - get all commits
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges | head -50)
+          else
+            # Get commits since last tag
+            CHANGELOG=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          fi
+          
+          # Save changelog to file (handle multi-line)
+          echo "$CHANGELOG" > changelog.txt
+          echo "Generated changelog for ${{ github.ref_name }}"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: Release ${{ github.ref_name }}
+          body_path: changelog.txt
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') || contains(github.ref_name, '-rc') }}
+          files: |
+            molecular-dynamics-${{ github.ref_name }}.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -8,6 +8,8 @@ import {
   drawBond,
   drawBorder,
   drawFireball,
+  drawMotionTrail,
+  velocityToColor,
 } from '../../src/utils/renderer';
 
 // Mock canvas context
@@ -212,6 +214,151 @@ describe('Renderer Utility', () => {
       
       // Should not crash
       drawFireball(ctx, fireball, 1);
+    });
+  });
+
+  describe('velocityToColor', () => {
+    it('should return blue color for zero velocity', () => {
+      const color = velocityToColor(0);
+      
+      // Should be blue (low velocity)
+      expect(color).toMatch(/^#[0-9a-f]{6}$/i);
+      // Blue color should have high B component
+      const b = parseInt(color.slice(5, 7), 16);
+      expect(b).toBeGreaterThan(200);
+    });
+
+    it('should return red color for high velocity', () => {
+      const color = velocityToColor(10); // High velocity
+      
+      // Should be red (high velocity)
+      expect(color).toMatch(/^#[0-9a-f]{6}$/i);
+      // Red color should have high R component
+      const r = parseInt(color.slice(1, 3), 16);
+      expect(r).toBeGreaterThan(200);
+    });
+
+    it('should return color for medium velocity', () => {
+      const color = velocityToColor(2.5); // Medium velocity
+      
+      // Should be a valid hex color
+      expect(color).toMatch(/^#[0-9a-f]{6}$/i);
+    });
+
+    it('should handle negative velocity using absolute value', () => {
+      const colorPositive = velocityToColor(5);
+      const colorNegative = velocityToColor(-5);
+      
+      // Should return same color for same magnitude
+      expect(colorNegative).toBe(colorPositive);
+      expect(colorNegative).toMatch(/^#[0-9a-f]{6}$/i);
+    });
+
+    it('should return consistent colors for same velocity', () => {
+      const color1 = velocityToColor(2.0);
+      const color2 = velocityToColor(2.0);
+      
+      expect(color1).toBe(color2);
+    });
+
+    it('should produce gradient of colors from blue to red', () => {
+      const colorLow = velocityToColor(0);
+      const colorMed = velocityToColor(2.5);
+      const colorHigh = velocityToColor(5);
+      
+      // All should be valid colors
+      expect(colorLow).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(colorMed).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(colorHigh).toMatch(/^#[0-9a-f]{6}$/i);
+      
+      // They should be different
+      expect(colorLow).not.toBe(colorHigh);
+    });
+  });
+
+  describe('drawMotionTrail', () => {
+    it('should draw trail with multiple positions', () => {
+      const positions = [
+        { x: 100, y: 100 },
+        { x: 110, y: 110 },
+        { x: 120, y: 120 },
+      ];
+      
+      drawMotionTrail(ctx, positions, '#ff0000', 1, 10);
+      
+      expect(ctx.save).toHaveBeenCalled();
+      expect(ctx.restore).toHaveBeenCalled();
+      expect(ctx.beginPath).toHaveBeenCalled();
+      expect(ctx.arc).toHaveBeenCalled();
+      expect(ctx.fill).toHaveBeenCalled();
+    });
+
+    it('should not draw trail with less than 2 positions', () => {
+      const positions = [{ x: 100, y: 100 }];
+      
+      drawMotionTrail(ctx, positions, '#ff0000', 1, 10);
+      
+      // Should not call drawing functions
+      expect(ctx.save).not.toHaveBeenCalled();
+    });
+
+    it('should not draw trail with null positions', () => {
+      drawMotionTrail(ctx, null, '#ff0000', 1, 10);
+      
+      // Should not crash or call drawing functions
+      expect(ctx.save).not.toHaveBeenCalled();
+    });
+
+    it('should not draw trail with undefined positions', () => {
+      drawMotionTrail(ctx, undefined, '#ff0000', 1, 10);
+      
+      // Should not crash or call drawing functions
+      expect(ctx.save).not.toHaveBeenCalled();
+    });
+
+    it('should not draw trail with empty positions array', () => {
+      drawMotionTrail(ctx, [], '#ff0000', 1, 10);
+      
+      // Should not crash or call drawing functions
+      expect(ctx.save).not.toHaveBeenCalled();
+    });
+
+    it('should apply transparency to trail', () => {
+      const positions = [
+        { x: 100, y: 100 },
+        { x: 110, y: 110 },
+      ];
+      
+      drawMotionTrail(ctx, positions, '#ff0000', 1, 10);
+      
+      // globalAlpha should have been set (for transparency effect)
+      expect(ctx.globalAlpha).toBeDefined();
+    });
+
+    it('should scale trail positions by scale factor', () => {
+      const positions = [
+        { x: 100, y: 100 },
+        { x: 110, y: 110 },
+      ];
+      
+      drawMotionTrail(ctx, positions, '#ff0000', 2, 10);
+      
+      // Arc positions should be scaled
+      expect(ctx.arc).toHaveBeenCalled();
+    });
+
+    it('should handle different color formats', () => {
+      const positions = [
+        { x: 100, y: 100 },
+        { x: 110, y: 110 },
+      ];
+      
+      // Should not throw for different color formats
+      expect(() => {
+        drawMotionTrail(ctx, positions, '#ff0000', 1, 10);
+        drawMotionTrail(ctx, positions, 'rgb(255, 0, 0)', 1, 10);
+        drawMotionTrail(ctx, positions, 'red', 1, 10);
+      }).not.toThrow();
     });
   });
 });

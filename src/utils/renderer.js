@@ -7,6 +7,9 @@
 // CONSTANTS
 // ============================================================================
 
+/** Maximum velocity for color scaling (units per timestep) */
+const MAX_VELOCITY_FOR_COLOR = 5.0;
+
 /** Atom colors by type - CPK (Corey-Pauling-Koltun) coloring scheme */
 const ATOM_COLORS = Object.freeze({
   1: Object.freeze({ main: '#222222', light: '#555555' }),  // Carbon - dark charcoal gray
@@ -79,6 +82,78 @@ const darkenColor = (color, amount) => {
   const { r, g, b } = parseHexColor(color);
   const factor = 1 - amount;
   return toRgbString(r * factor, g * factor, b * factor);
+};
+
+/**
+ * Get color based on velocity magnitude (blue=slow, green=medium, red=fast)
+ * @param {number} velocity - Velocity magnitude
+ * @returns {string} Hex color string
+ */
+export const velocityToColor = (velocity) => {
+  // Use absolute value and normalize to 0-1 range
+  const absVelocity = Math.abs(velocity);
+  const normalized = Math.min(Math.max(absVelocity / MAX_VELOCITY_FOR_COLOR, 0), 1);
+  
+  // Color gradient: blue (0) -> cyan (0.25) -> green (0.5) -> yellow (0.75) -> red (1)
+  let r, g, b;
+  
+  if (normalized < 0.25) {
+    // Blue to Cyan
+    const t = normalized / 0.25;
+    r = 0;
+    g = Math.round(255 * t);
+    b = 255;
+  } else if (normalized < 0.5) {
+    // Cyan to Green
+    const t = (normalized - 0.25) / 0.25;
+    r = 0;
+    g = 255;
+    b = Math.round(255 * (1 - t));
+  } else if (normalized < 0.75) {
+    // Green to Yellow
+    const t = (normalized - 0.5) / 0.25;
+    r = Math.round(255 * t);
+    g = 255;
+    b = 0;
+  } else {
+    // Yellow to Red
+    const t = (normalized - 0.75) / 0.25;
+    r = 255;
+    g = Math.round(255 * (1 - t));
+    b = 0;
+  }
+  
+  return `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+};
+
+/**
+ * Draw motion trail for an atom
+ * @param {CanvasRenderingContext2D} ctx - Canvas context
+ * @param {Array} positions - Array of {x, y} positions (oldest first)
+ * @param {string} color - Base color for the trail
+ * @param {number} scale - Scale factor
+ * @param {number} radius - Atom radius
+ */
+export const drawMotionTrail = (ctx, positions, color, scale, radius) => {
+  if (!positions || positions.length < 2) return;
+  
+  ctx.save();
+  
+  const trailRadius = radius * scale * 0.3;
+  
+  positions.forEach((pos, i) => {
+    // Calculate alpha based on position in trail (older = more transparent)
+    const alpha = (i / positions.length) * 0.4;
+    const size = trailRadius * (0.3 + 0.7 * (i / positions.length));
+    
+    ctx.fillStyle = color;
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    ctx.arc(pos.x * scale, pos.y * scale, size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  
+  ctx.restore();
 };
 
 // ============================================================================
@@ -377,14 +452,22 @@ export const drawAtomInfo = (ctx, atom, scale, canvasWidth) => {
  * @param {Object} atom - Atom object
  * @param {number} scale - Scale factor
  * @param {boolean} isPlayer - Whether this is the player atom
+ * @param {boolean} showLabel - Whether to show atom label
+ * @param {boolean} colorByVelocity - Whether to color by velocity
  */
-export const drawAtom = (ctx, atom, scale, isPlayer = false) => {
+export const drawAtom = (ctx, atom, scale, isPlayer = false, showLabel = true, colorByVelocity = false) => {
   const screenPos = toScreenPos(atom.pos, scale);
   const radius = scale * atom.radius;
   
-  // Get colors based on atom type
-  const colors = ATOM_COLORS[atom.type] || DEFAULT_COLOR;
-  const mainColor = atom.color || colors.main;
+  // Get colors based on atom type or velocity
+  let mainColor;
+  if (colorByVelocity) {
+    const velocity = Math.sqrt(atom.vel.x ** 2 + atom.vel.y ** 2);
+    mainColor = velocityToColor(velocity);
+  } else {
+    const colors = ATOM_COLORS[atom.type] || DEFAULT_COLOR;
+    mainColor = atom.color || colors.main;
+  }
   
   // Create gradient and draw atom
   const isFixed = atom.mass <= 0;
@@ -398,7 +481,7 @@ export const drawAtom = (ctx, atom, scale, isPlayer = false) => {
   }
   
   // Draw atom symbol
-  if (atom.symbol && radius > 15) {
+  if (showLabel && atom.symbol && radius > 15) {
     drawAtomSymbol(ctx, screenPos, radius, atom.symbol, atom.type);
   }
 };
@@ -496,4 +579,6 @@ export default {
   drawAtomInfo,
   clearCanvas,
   drawBorder,
+  velocityToColor,
+  drawMotionTrail,
 };

@@ -327,4 +327,249 @@ describe('Simulation Reducer', () => {
       expect(newState).toEqual(initialState);
     });
   });
+
+  describe('TOGGLE_COLOR_BY_VELOCITY', () => {
+    it('should toggle colorByVelocity state', () => {
+      const action = { type: 'TOGGLE_COLOR_BY_VELOCITY' };
+      
+      const newState = simulationReducer(initialState, action);
+      
+      expect(newState.colorByVelocity).toBe(!initialState.colorByVelocity);
+    });
+
+    it('should toggle back to initial state', () => {
+      const action = { type: 'TOGGLE_COLOR_BY_VELOCITY' };
+      
+      const state1 = simulationReducer(initialState, action);
+      const state2 = simulationReducer(state1, action);
+      
+      expect(state2.colorByVelocity).toBe(initialState.colorByVelocity);
+    });
+  });
+
+  describe('TOGGLE_MOTION_TRAILS', () => {
+    it('should toggle showMotionTrails state', () => {
+      const action = { type: 'TOGGLE_MOTION_TRAILS' };
+      
+      const newState = simulationReducer(initialState, action);
+      
+      expect(newState.showMotionTrails).toBe(!initialState.showMotionTrails);
+    });
+
+    it('should clear position history when disabling trails', () => {
+      const stateWithHistory = {
+        ...initialState,
+        showMotionTrails: true,
+        positionHistory: { 0: [{ x: 10, y: 10 }, { x: 11, y: 11 }] },
+      };
+      
+      const action = { type: 'TOGGLE_MOTION_TRAILS' };
+      const newState = simulationReducer(stateWithHistory, action);
+      
+      expect(newState.showMotionTrails).toBe(false);
+      expect(newState.positionHistory).toEqual({});
+    });
+  });
+
+  describe('SET_TRAIL_LENGTH', () => {
+    it('should set trail length', () => {
+      const action = { type: 'SET_TRAIL_LENGTH', payload: 30 };
+      
+      const newState = simulationReducer(initialState, action);
+      
+      expect(newState.trailLength).toBe(30);
+    });
+
+    it('should enforce minimum trail length of 5', () => {
+      const action = { type: 'SET_TRAIL_LENGTH', payload: 2 };
+      
+      const newState = simulationReducer(initialState, action);
+      
+      expect(newState.trailLength).toBe(5);
+    });
+
+    it('should enforce maximum trail length of 50', () => {
+      const action = { type: 'SET_TRAIL_LENGTH', payload: 200 };
+      
+      const newState = simulationReducer(initialState, action);
+      
+      expect(newState.trailLength).toBe(50);
+    });
+  });
+
+  describe('UPDATE_POSITION_HISTORY', () => {
+    it('should add new positions to history when motion trails enabled', () => {
+      const stateWithAtoms = {
+        ...initialState,
+        showMotionTrails: true,
+        atoms: [
+          { id: 0, pos: { x: 100, y: 100 } },
+        ],
+        positionHistory: {},
+      };
+      
+      const action = { type: 'UPDATE_POSITION_HISTORY' };
+      const newState = simulationReducer(stateWithAtoms, action);
+      
+      expect(newState.positionHistory[0]).toBeDefined();
+      expect(newState.positionHistory[0].length).toBe(1);
+    });
+
+    it('should not update history when motion trails disabled', () => {
+      const stateWithAtoms = {
+        ...initialState,
+        showMotionTrails: false,
+        atoms: [
+          { id: 0, pos: { x: 100, y: 100 } },
+        ],
+        positionHistory: {},
+      };
+      
+      const action = { type: 'UPDATE_POSITION_HISTORY' };
+      const newState = simulationReducer(stateWithAtoms, action);
+      
+      expect(Object.keys(newState.positionHistory).length).toBe(0);
+    });
+
+    it('should not update history when simulation is paused', () => {
+      const stateWithAtoms = {
+        ...initialState,
+        showMotionTrails: true,
+        isPaused: true,
+        atoms: [
+          { id: 0, pos: { x: 100, y: 100 } },
+        ],
+        positionHistory: {},
+      };
+      
+      const action = { type: 'UPDATE_POSITION_HISTORY' };
+      const newState = simulationReducer(stateWithAtoms, action);
+      
+      expect(Object.keys(newState.positionHistory).length).toBe(0);
+    });
+
+    it('should limit history to trail length', () => {
+      const positions = Array(25).fill(null).map((_, i) => ({ x: i, y: i }));
+      const stateWithHistory = {
+        ...initialState,
+        showMotionTrails: true,
+        atoms: [{ id: 0, pos: { x: 50, y: 50 } }],
+        positionHistory: { 0: positions },
+        trailLength: 20,
+      };
+      
+      const action = { type: 'UPDATE_POSITION_HISTORY' };
+      const newState = simulationReducer(stateWithHistory, action);
+      
+      expect(newState.positionHistory[0].length).toBeLessThanOrEqual(20);
+    });
+  });
+
+  describe('CLEAR_POSITION_HISTORY', () => {
+    it('should clear all position history', () => {
+      const stateWithHistory = {
+        ...initialState,
+        positionHistory: {
+          0: [{ x: 10, y: 10 }],
+          1: [{ x: 20, y: 20 }],
+        },
+      };
+      
+      const action = { type: 'CLEAR_POSITION_HISTORY' };
+      const newState = simulationReducer(stateWithHistory, action);
+      
+      expect(newState.positionHistory).toEqual({});
+    });
+  });
+
+  describe('TOGGLE_AUTO_SAVE', () => {
+    it('should toggle autoSaveEnabled state', () => {
+      const action = { type: 'TOGGLE_AUTO_SAVE' };
+      
+      const newState = simulationReducer(initialState, action);
+      
+      expect(newState.autoSaveEnabled).toBe(!initialState.autoSaveEnabled);
+    });
+  });
+
+  describe('SET_LAST_AUTO_SAVE', () => {
+    it('should set last auto save timestamp', () => {
+      const timestamp = Date.now();
+      const action = { type: 'SET_LAST_AUTO_SAVE', payload: timestamp };
+      
+      const newState = simulationReducer(initialState, action);
+      
+      expect(newState.lastAutoSave).toBe(timestamp);
+    });
+  });
+
+  describe('LOAD_SIMULATION_STATE', () => {
+    it('should load saved simulation state atoms', () => {
+      const savedState = {
+        atoms: [{ id: 0, pos: { x: 50, y: 50 }, type: 1 }],
+        bonds: [{ atom1: 0, atom2: 1, order: 1 }],
+        nextAtomId: 5,
+        playerId: 2,
+      };
+      
+      const action = { type: 'LOAD_SIMULATION_STATE', payload: savedState };
+      const newState = simulationReducer(initialState, action);
+      
+      expect(newState.atoms).toEqual(savedState.atoms);
+      expect(newState.bonds).toEqual(savedState.bonds);
+      expect(newState.nextAtomId).toBe(5);
+      expect(newState.playerId).toBe(2);
+    });
+
+    it('should reset time and energy when loading state', () => {
+      const savedState = {
+        atoms: [{ id: 0, pos: { x: 50, y: 50 }, type: 1 }],
+      };
+      
+      const action = { type: 'LOAD_SIMULATION_STATE', payload: savedState };
+      const newState = simulationReducer(initialState, action);
+      
+      expect(newState.time).toBe(0);
+      expect(newState.energy.kinetic).toBe(0);
+      expect(newState.energy.potential).toBe(0);
+      expect(newState.temperature).toBe(0);
+    });
+
+    it('should handle empty saved state gracefully', () => {
+      const savedState = {};
+      
+      const action = { type: 'LOAD_SIMULATION_STATE', payload: savedState };
+      const newState = simulationReducer(initialState, action);
+      
+      expect(newState.atoms).toEqual([]);
+      expect(newState.bonds).toEqual([]);
+    });
+  });
+
+  describe('Visual enhancement state', () => {
+    it('should have colorByVelocity in initial state', () => {
+      expect(initialState.colorByVelocity).toBeDefined();
+      expect(typeof initialState.colorByVelocity).toBe('boolean');
+    });
+
+    it('should have showMotionTrails in initial state', () => {
+      expect(initialState.showMotionTrails).toBeDefined();
+      expect(typeof initialState.showMotionTrails).toBe('boolean');
+    });
+
+    it('should have trailLength in initial state', () => {
+      expect(initialState.trailLength).toBeDefined();
+      expect(initialState.trailLength).toBeGreaterThan(0);
+    });
+
+    it('should have positionHistory in initial state', () => {
+      expect(initialState.positionHistory).toBeDefined();
+      expect(typeof initialState.positionHistory).toBe('object');
+    });
+
+    it('should have autoSaveEnabled in initial state', () => {
+      expect(initialState.autoSaveEnabled).toBeDefined();
+      expect(typeof initialState.autoSaveEnabled).toBe('boolean');
+    });
+  });
 });

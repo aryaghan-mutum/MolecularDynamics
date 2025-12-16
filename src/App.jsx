@@ -17,6 +17,7 @@ import ZoomControls from './components/ZoomControls';
 import FullscreenButton from './components/FullscreenButton';
 import KeyboardShortcuts from './components/KeyboardShortcuts';
 import LoadingSpinner from './components/LoadingSpinner';
+import AutoSaveManager from './components/AutoSaveManager';
 import './styles/App.css';
 
 /**
@@ -91,6 +92,7 @@ function App({ skipLoading = false }) {
                 </footer>
 
                 <KeyboardShortcuts />
+                <AutoSaveManager />
               </div>
             </SimulationProvider>
           </ParametersProvider>

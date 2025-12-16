@@ -9,7 +9,8 @@ import {
   drawBond, 
   drawBondWithLength,
   drawVelocityVector,
-  drawAtomInfo 
+  drawAtomInfo,
+  drawMotionTrail
 } from '../utils/renderer';
 import './SimulationCanvas.css';
 
@@ -192,12 +193,16 @@ function SimulationCanvas() {
     }
   }, [keys, simulation.playerId, simulation.atoms, simulation.thrust, dispatch]);
 
-  // Mouse wheel for zoom
+  // Mouse wheel for zoom (only if not locked)
   const handleWheel = useCallback((e) => {
+    if (simulation.lockZoom) {
+      // Don't prevent default if zoom is locked - let page scroll normally
+      return;
+    }
     e.preventDefault();
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
     dispatch({ type: 'SET_ZOOM', payload: simulation.zoom * delta });
-  }, [dispatch, simulation.zoom]);
+  }, [dispatch, simulation.zoom, simulation.lockZoom]);
 
   // Get canvas coordinates from mouse event
   const getCanvasCoords = useCallback((e) => {
@@ -312,7 +317,7 @@ function SimulationCanvas() {
     const { 
       atoms, bonds, fireballs, clearScreen, scale, size, showBonds,
       zoom, pan, selectedAtomId, showVelocityVectors, showAtomLabels,
-      showBondLengths, theme
+      showBondLengths, theme, colorByVelocity, showMotionTrails, positionHistory
     } = simulation;
 
     // Apply zoom and pan transforms
@@ -325,6 +330,7 @@ function SimulationCanvas() {
       ctx.fillRect(0, 0, canvas.width, canvas.height);
     }
 
+    // 2D rendering
     // Apply transformations
     ctx.translate(pan.x, pan.y);
     ctx.scale(zoom, zoom);
@@ -343,45 +349,56 @@ function SimulationCanvas() {
           if (showBondLengths) {
             drawBondWithLength(ctx, atom1, atom2, bond.order, scale, true);
           } else {
-            drawBond(ctx, atom1, atom2, bond.order, scale);
+              drawBond(ctx, atom1, atom2, bond.order, scale);
+            }
           }
+        });
+      }
+
+      // Draw motion trails (behind atoms)
+      if (showMotionTrails) {
+        atoms.forEach(atom => {
+          const history = positionHistory[atom.id];
+          if (history && history.length > 1) {
+            const trailColor = atom.color || '#888888';
+            drawMotionTrail(ctx, history, trailColor, scale, atom.radius);
+          }
+        });
+      }
+
+      // Draw atoms
+      atoms.forEach(atom => {
+        drawAtom(ctx, atom, scale, atom.id === simulation.playerId, showAtomLabels, colorByVelocity);
+        
+        // Draw velocity vectors if enabled
+        if (showVelocityVectors) {
+          drawVelocityVector(ctx, atom, scale, zoom);
         }
       });
-    }
 
-    // Draw atoms
-    atoms.forEach(atom => {
-      drawAtom(ctx, atom, scale, atom.id === simulation.playerId, showAtomLabels);
-      
-      // Draw velocity vectors if enabled
-      if (showVelocityVectors) {
-        drawVelocityVector(ctx, atom, scale, zoom);
+      // Draw selection highlight
+      if (selectedAtomId !== null) {
+        const selectedAtom = atoms.find(a => a.id === selectedAtomId);
+        if (selectedAtom) {
+          const screenPos = { x: scale * selectedAtom.pos.x, y: scale * selectedAtom.pos.y };
+          const radius = scale * selectedAtom.radius;
+          
+          ctx.strokeStyle = 'rgba(100, 200, 255, 0.9)';
+          ctx.lineWidth = 3 / zoom;
+          ctx.setLineDash([5 / zoom, 5 / zoom]);
+          ctx.beginPath();
+          ctx.arc(screenPos.x, screenPos.y, radius + 8 / zoom, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
       }
-    });
 
-    // Draw selection highlight
-    if (selectedAtomId !== null) {
-      const selectedAtom = atoms.find(a => a.id === selectedAtomId);
-      if (selectedAtom) {
-        const screenPos = { x: scale * selectedAtom.pos.x, y: scale * selectedAtom.pos.y };
-        const radius = scale * selectedAtom.radius;
-        
-        ctx.strokeStyle = 'rgba(100, 200, 255, 0.9)';
-        ctx.lineWidth = 3 / zoom;
-        ctx.setLineDash([5 / zoom, 5 / zoom]);
-        ctx.beginPath();
-        ctx.arc(screenPos.x, screenPos.y, radius + 8 / zoom, 0, Math.PI * 2);
-        ctx.stroke();
-        ctx.setLineDash([]);
-      }
-    }
+      // Draw fireballs
+      fireballs.forEach(fireball => {
+        drawFireball(ctx, fireball, scale);
+      });
 
-    // Draw fireballs
-    fireballs.forEach(fireball => {
-      drawFireball(ctx, fireball, scale);
-    });
-
-    ctx.restore();
+      ctx.restore();
 
     // Draw atom info tooltip (outside transform)
     if (selectedAtomId !== null) {
@@ -426,6 +443,11 @@ function SimulationCanvas() {
       dispatch({ type: 'PHYSICS_STEP' });
     }
 
+    // Update position history for motion trails
+    if (simulation.showMotionTrails) {
+      dispatch({ type: 'UPDATE_POSITION_HISTORY' });
+    }
+
     // Update fireballs
     const updatedFireballs = simulation.fireballs
       .map(fb => ({
@@ -440,7 +462,7 @@ function SimulationCanvas() {
       .filter(fb => fb.time < fb.lifetime);
 
     dispatch({ type: 'UPDATE_FIREBALLS', payload: updatedFireballs });
-  }, [simulation.isPaused, simulation.fireballs, simulation.timeStepMultiplier, dispatch]);
+  }, [simulation.isPaused, simulation.fireballs, simulation.timeStepMultiplier, simulation.showMotionTrails, dispatch]);
 
   // Screenshot function
   const takeScreenshot = useCallback(() => {
@@ -467,6 +489,40 @@ function SimulationCanvas() {
       ref={containerRef}
       className={`canvas-container ${simulation.isFullscreen ? 'fullscreen' : ''}`}
     >
+      {/* View Controls Toolbar */}
+      <div className="view-controls-toolbar">
+        <button
+          className={`toolbar-btn ${simulation.lockZoom ? 'active' : ''}`}
+          onClick={() => dispatch({ type: 'TOGGLE_LOCK_ZOOM' })}
+          title={simulation.lockZoom ? 'Unlock Zoom (scroll disabled)' : 'Lock Zoom (scroll enabled)'}
+        >
+          {simulation.lockZoom ? '🔒' : '🔓'}
+        </button>
+        <button
+          className="toolbar-btn"
+          onClick={() => dispatch({ type: 'SET_ZOOM', payload: simulation.zoom * 1.2 })}
+          title="Zoom In"
+          disabled={simulation.lockZoom}
+        >
+          ➕
+        </button>
+        <button
+          className="toolbar-btn"
+          onClick={() => dispatch({ type: 'SET_ZOOM', payload: simulation.zoom * 0.8 })}
+          title="Zoom Out"
+          disabled={simulation.lockZoom}
+        >
+          ➖
+        </button>
+        <button
+          className="toolbar-btn"
+          onClick={() => dispatch({ type: 'RESET_VIEW' })}
+          title="Reset View"
+        >
+          🏠
+        </button>
+      </div>
+      
       <canvas
         ref={canvasRef}
         className="simulation-canvas"
