@@ -88,7 +88,7 @@ function App({ skipLoading = false }) {
                 </main>
 
                 <footer className="app-footer">
-                  <p>Use arrow keys to control the player atom • Press <kbd>?</kbd> for shortcuts</p>
+                  <p>Use arrow keys to control the player atom • Press <kbd>Shift</kbd> + <kbd>?</kbd> for shortcuts</p>
                 </footer>
 
                 <KeyboardShortcuts />
